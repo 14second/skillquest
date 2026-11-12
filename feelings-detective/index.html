@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Feelings Detective — Name the Feeling, Choose the Response</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(160deg,#6e1d4d,#c25a8f);color:#123;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:520px;padding:14px 14px 30px}
+h1{color:#fff;text-align:center;margin:8px 0 2px;font-size:30px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.sub{color:#ffd6ea;text-align:center;margin:0 0 14px;font-size:15px}
+.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.25);margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:19px;color:#6e1d4d}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:14px}
+.bigbtn{width:100%;min-height:60px;font-size:20px;font-weight:800;background:#ff9f1a;color:#fff;box-shadow:0 4px 0 #c77400;margin-top:12px}
+.bigbtn:active{transform:translateY(2px);box-shadow:none}
+.green{background:#2e7d32;box-shadow:0 4px 0 #1b4d1e}
+.ghost{width:100%;min-height:52px;font-size:16px;font-weight:700;background:#eef1f5;color:#334;margin-top:9px}
+#topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#muteBtn{background:rgba(255,255,255,.2);color:#fff;font-size:19px;width:48px;height:48px;border-radius:50%}
+#quitBtn{background:rgba(255,255,255,.2);color:#fff;font-size:15px;font-weight:700;padding:12px 16px;min-height:48px}
+#hud{display:flex;gap:8px;margin-bottom:10px}
+.hudbox{flex:1;background:rgba(255,255,255,.16);color:#fff;border-radius:12px;text-align:center;padding:7px 2px;font-size:13px}
+.hudbox b{display:block;font-size:21px}
+.qtype{color:#5a6b80;font-size:14px;font-weight:700;margin:2px 0 4px;text-transform:uppercase;letter-spacing:.6px}
+.qtext{font-size:21px;line-height:1.4;color:#14273f;margin:6px 0;font-weight:600}
+.choice{display:block;width:100%;min-height:58px;font-size:19px;font-weight:700;background:#f4f9ff;border:2px solid #bcd8ff;color:#14273f;margin:9px 0;padding:10px;text-align:left}
+.choice:active{transform:scale(.98)}
+.choice.right{background:#c8f2c0;border-color:#43a047}
+.choice.wrong{background:#ffd2d2;border-color:#e53935}
+.choice:disabled{cursor:default}
+#feedback{display:none;margin-top:10px;border-radius:12px;padding:12px}
+#feedback.ok{background:#eefbe9}
+#feedback.bad{background:#fdeeee}
+#fbTitle{font-size:20px;font-weight:800;color:#14273f}
+#fbEx{font-size:16px;line-height:1.45;margin:8px 0}
+.band{display:block;width:100%;min-height:56px;font-size:17px;font-weight:700;background:#eaf3ff;color:#6e1d4d;border:2px solid #bcd8ff;border-radius:14px;margin:8px 0;padding:8px}
+.band.sel{background:#ffd94d;border-color:#e0a800;color:#3a2a00}
+.study{font-size:16px;line-height:1.45}
+.study li{margin:8px 0}
+.small{font-size:14px;color:#5a6b80}
+.big{font-size:26px;font-weight:800;color:#6e1d4d;text-align:center}
+.center{text-align:center}
+table{width:100%;border-collapse:collapse;font-size:16px}
+td,th{padding:6px 4px;border-bottom:1px solid #e5e5e5;text-align:left}
+td:last-child,th:last-child{text-align:right}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar"><button id="muteBtn" aria-label="Mute or unmute">🔊</button><button id="quitBtn" class="hidden">✕ Quit case</button></div>
+  <h1>🔍 Feelings Detective</h1>
+  <p class="sub">Read the scene. Name the feeling. Choose the kindest next step.</p>
+
+  <div id="titleScr">
+    <div class="card"><h2>How it works</h2>
+      <p class="study">You're a <b>Feelings Detective</b>. Each case is a real-life scene. First, name the feeling from the clues in the scene. Then pick the best response.</p>
+      <p class="study">Each case is worth <b>2 clues</b>: 1 for the feeling, 1 for the response. A full case file has <b>8 cases</b> — can you solve them all?</p>
+      <button class="bigbtn" id="startBtn">▶ Open a Case File</button>
+      <p class="small center" id="bestLine"></p>
+    </div>
+  </div>
+
+  <div id="setupScr" class="hidden">
+    <div class="card"><h2>Pick your age band</h2><div id="bandList"></div></div>
+    <button class="bigbtn" id="beginBtn">▶ Start the Cases</button>
+    <button class="ghost" id="setupBack">Back</button>
+  </div>
+
+  <div id="gameScr" class="hidden">
+    <div id="hud">
+      <div class="hudbox">🔍 Case<b id="hCase">1/8</b></div>
+      <div class="hudbox">⭐ Clues<b id="hScore">0</b></div>
+      <div class="hudbox">🏆 Best<b id="hBest">0</b></div>
+    </div>
+    <div id="qScr" class="card">
+      <p class="qtype" id="qType"></p>
+      <p class="qtext" id="qtext"></p>
+      <div id="choiceList"></div>
+      <div id="feedback"><div id="fbTitle"></div><div id="fbEx"></div><button class="bigbtn green" id="nextBtn">Next ▶</button></div>
+    </div>
+  </div>
+
+  <div id="endScr" class="hidden">
+    <div class="card"><div class="big" id="endTitle">Case Closed!</div>
+      <p class="center" id="endSummary"></p>
+      <table id="feelTable"></table>
+    </div>
+    <div class="card"><h2>📝 Detective's notes — cases to review</h2><ul class="study" id="missList"></ul></div>
+    <button class="bigbtn" id="againBtn">↻ New Case File</button>
+    <button class="ghost" id="menuBtn">Back to menu</button>
+  </div>
+</div>
+<script>
+"use strict";
+/* ---------- audio: synthesized only, iOS playback route, close on hide ---------- */
+let actx = null, muted = safeGet("fd_muted") === "1";
+function safeGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+function setAudioSession(){ try{ if("audioSession" in navigator) navigator.audioSession.type = "playback"; }catch(e){} }
+function ensureAudio(){
+  setAudioSession();
+  if (muted) return null;
+  if (!actx || actx.state === "closed") {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); window.__maCtx = actx; }
+    catch(e){ return null; }
+  }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, dur, type, vol, when){
+  const ctx = ensureAudio(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type || "triangle"; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.15, ctx.currentTime + (when || 0));
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (when || 0) + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime + (when || 0)); o.stop(ctx.currentTime + (when || 0) + dur + 0.02);
+}
+const sClick = () => tone(520, 0.08, "triangle", 0.10);
+const sGood = () => { tone(523, 0.12, "triangle", 0.15); tone(659, 0.12, "triangle", 0.15, 0.10); tone(784, 0.22, "triangle", 0.15, 0.20); };
+const sBad = () => { tone(196, 0.25, "square", 0.10); tone(147, 0.35, "square", 0.10, 0.18); };
+const sWin = () => { [523,659,784,1047].forEach((f,i)=>tone(f, 0.25, "triangle", 0.15, i*0.13)); };
+document.addEventListener("pointerdown", setAudioSession, true);
+document.addEventListener("touchstart", setAudioSession, true);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && actx && actx.state === "running") { try { actx.close(); } catch(e){} }
+});
+function updateMuteBtn(){ document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊"; }
+document.getElementById("muteBtn").addEventListener("click", () => {
+  muted = !muted; safeSet("fd_muted", muted ? "1" : "0");
+  if (muted && actx) { try { actx.close(); } catch(e){} actx = null; }
+  updateMuteBtn(); sClick();
+});
+updateMuteBtn();
+
+/* ---------- data: [band, scene, feelingOptions[4], feelingCorrect, responseOptions[4], responseCorrect, explanation] ---------- */
+const CASES=[
+/* --- YOUNG (Grades 1-5) --- */
+["young","Mia's little brother breaks her favorite crayon box. Mia's face turns red and her hands shake.",
+ ["Happy","Angry","Sleepy","Hungry"],1,
+ ["Take a deep breath and tell him how you feel","Break his favorite toy too","Scream at him until he cries","Hide in your room and never speak to him"],0,
+ "A red face and shaking hands point to anger. The kindest move is to calm down first, then use words to say how you feel."],
+["young","Leo's dog runs away. Leo keeps looking out the window and can't eat his dinner.",
+ ["Bored","Worried","Proud","Silly"],1,
+ ["Pretend the dog never existed","Ask a grown-up to help look for the dog","Yell at your family","Hide under the bed"],1,
+ "Not eating and watching the window are signs of worry. Asking a grown-up for help is the brave, useful next step."],
+["young","Priya just won the spelling bee. She is jumping up and down and smiling at everyone.",
+ ["Sad","Scared","Joyful","Angry"],2,
+ ["Celebrate, and thank the people who helped you practice","Pretend it didn't happen","Brag that nobody else is as smart","Hide your trophy so no one sees it"],0,
+ "Jumping and smiling show joy. Celebrating — and thanking the people who helped — spreads the good feeling."],
+["young","Sam's best friend moves to another town. Sam sits alone at lunch and doesn't want to play.",
+ ["Excited","Lonely","Angry","Hungry"],1,
+ ["Tell a grown-up how you feel, and write a letter to your friend","Pretend your friend never existed","Push other kids away too","Keep it secret forever"],0,
+ "Sitting alone and losing interest in play point to loneliness. Sharing the feeling and staying in touch helps it heal."],
+["young","Ana has to read aloud in class. Her heart beats fast and her hands feel sweaty.",
+ ["Nervous","Bored","Angry","Proud"],0,
+ ["Take slow breaths and remember everyone makes mistakes","Refuse to ever read again","Run out of the classroom","Laugh at the next reader"],0,
+ "A racing heart and sweaty hands are classic nerves. Slow breaths calm the body, and remembering that mistakes are normal calms the mind."],
+["young","Ben's team loses the game. Ben kicks the ball away and shouts, “This is stupid!”",
+ ["Happy","Calm","Frustrated","Sleepy"],2,
+ ["Take a break, breathe, and talk about what to practice","Kick the ball even harder","Blame the referee for everything","Quit the team forever"],0,
+ "Kicking things and shouting after a loss show frustration. A break plus a plan turns the feeling into practice."],
+["young","Cleo finds a lost puppy and helps it get home. The owner is so happy, and Cleo smiles all day.",
+ ["Embarrassed","Proud","Scared","Bored"],1,
+ ["Enjoy the good feeling and tell someone about it","Pretend it never happened","Feel bad for helping","Keep the puppy without telling anyone"],0,
+ "Smiling all day after helping shows pride. Enjoying it and sharing the story is the healthy response."],
+["young","Max's friend takes his snack without asking. Max frowns and crosses his arms.",
+ ["Annoyed","Excited","Sleepy","Proud"],0,
+ ["Calmly say, “Please ask before taking my things”","Grab his friend's snack in revenge","Shout at everyone in the room","Never eat lunch again"],0,
+ "A frown and crossed arms show annoyance. A calm, clear sentence protects your things without starting a fight."],
+/* --- MIDDLE (Grades 6-8) --- */
+["middle","Jordan studied hard but got a D on the test. Jordan crumples the paper and mutters, “I'm just dumb.”",
+ ["Proud","Disappointed","Excited","Relaxed"],1,
+ ["Look at the mistakes, ask the teacher for help, and make a study plan","Throw away all the school books","Decide never to study again","Blame the teacher and give up"],0,
+ "Crumpling the paper and self-blame point to disappointment. Mistakes are information — a plan turns them into progress."],
+["middle","A new student sits alone every day. When you say hi, they smile but look down at their shoes.",
+ ["Shy","Angry","Bored","Rude"],0,
+ ["Invite them to sit with you and ask about their interests","Ignore them — they clearly want to be alone","Tease them for being quiet","Tell everyone they are weird"],0,
+ "A small smile plus looking down suggests shyness, not rudeness. A warm invitation is the kindest way in."],
+["middle","Your friend posts an embarrassing photo of you online, and everyone at school is laughing about it.",
+ ["Proud","Embarrassed","Hungry","Calm"],1,
+ ["Ask your friend privately to take it down, and tell them how it felt","Post an embarrassing photo of them in revenge","Laugh along even though it hurts","Never speak to anyone again"],0,
+ "Being laughed at by the whole school is embarrassing. A private, honest request respects the friendship and your feelings."],
+["middle","You see a classmate being teased in the hallway. Your stomach feels tight and you don't know what to do.",
+ ["Uncomfortable","Happy","Bored","Proud"],0,
+ ["Stand with the classmate and tell a trusted adult","Join in the teasing so you fit in","Walk past and pretend you saw nothing","Film it and share it"],0,
+ "A tight stomach is your conscience saying something is wrong. Standing with the person and getting adult help is brave and kind."],
+["middle","You worked for weeks on a project, and the teacher praises it in front of the whole class.",
+ ["Embarrassed","Proud","Angry","Nervous"],1,
+ ["Say thank you, and share credit with anyone who helped","Pretend you didn't care at all","Brag that your project was the best","Hide under your desk"],0,
+ "Praise after hard work brings pride. Thanking others and sharing credit keeps pride generous instead of boastful."],
+["middle","Your best friend starts hanging out with a new group and stops replying to your messages.",
+ ["Left out","Excited","Relaxed","Proud"],0,
+ ["Talk to your friend honestly about how you feel","Spread a rumor about the new group","Send angry messages every hour","Decide you never need friends"],0,
+ "Silence from a close friend stings — that's feeling left out. An honest talk gives the friendship a chance to recover."],
+["middle","You have a big game tomorrow and you can't sleep because your mind keeps racing.",
+ ["Bored","Anxious","Angry","Hungry"],1,
+ ["Do something calming, like reading, and remind yourself you've practiced","Stay up all night worrying","Skip the game entirely","Pretend the game doesn't matter"],0,
+ "A racing mind at bedtime is anxiety. A calm routine plus remembering your practice gives your brain something steady to hold."],
+["middle","A teammate takes credit for your idea in front of the whole group.",
+ ["Happy","Angry","Calm","Sleepy"],1,
+ ["Calmly say, “That was my idea — I'd like to explain it”","Shout at your teammate in front of everyone","Never share ideas again","Take credit for someone else's idea"],0,
+ "Being overlooked feels unfair — that's anger. A calm, clear correction defends your work without starting a fight."],
+/* --- OLDER (Grades 9-12) --- */
+["older","You didn't get the part in the play after months of rehearsing. You feel a lump in your throat when the cast list goes up.",
+ ["Relieved","Disappointed","Angry","Bored"],1,
+ ["Let yourself feel it, then ask for feedback and audition again","Quit acting forever","Tell everyone the play is terrible","Pretend you never wanted the part"],0,
+ "A lump in the throat after hard work is disappointment. Feeling it, learning from it, and trying again is how performers grow."],
+["older","A friend is going through a tough time at home, but says “I'm fine” every time you ask.",
+ ["Stressed","Happy","Bored","Angry"],0,
+ ["Let them know you're there whenever they're ready to talk","Demand they tell you everything right now","Tell everyone about their problems","Stop talking to them"],0,
+ "“I'm fine” can hide stress. Staying present without pressuring them keeps the door open for when they're ready."],
+["older","You see someone post a mean comment about a classmate. Dozens of people have liked it.",
+ ["Uncomfortable","Amused","Proud","Relaxed"],0,
+ ["Don't pile on — report it and check on the classmate","Like it too, so you fit in","Share it with more people","Laugh at the classmate in person"],0,
+ "That uneasy feeling is your sense of fairness speaking. Reporting it and checking on the person turns a bystander into an upstander."],
+["older","You got into your dream college. You keep re-reading the letter and grinning.",
+ ["Nervous","Overjoyed","Sad","Bored"],1,
+ ["Celebrate, and thank the people who supported you","Hide the news so nobody gets jealous","Pretend it doesn't matter","Brag to everyone you meet"],0,
+ "Re-reading the letter and grinning is pure joy. Celebrating — and thanking your supporters — makes the win bigger."],
+["older","Your group project partner hasn't done any work, and the deadline is tomorrow.",
+ ["Relaxed","Frustrated","Happy","Calm"],1,
+ ["Talk to them calmly, split the remaining work, and tell the teacher if needed","Do all their work silently and resent them","Yell at them in front of the class","Delete the whole project"],0,
+ "A missing partner near a deadline is frustrating. A calm talk, a clear split of what's left, and honesty with the teacher protects the project and you."],
+["older","You make a mistake in front of the whole class and everyone laughs.",
+ ["Proud","Embarrassed","Hungry","Excited"],1,
+ ["Laugh it off if you can, and remember everyone makes mistakes","Never speak in class again","Storm out of the room","Blame the teacher"],0,
+ "Being laughed at stings — that's embarrassment. Owning the moment lightly takes its power away, because everyone has been there."],
+["older","A friend tells you they failed a class and might have to repeat the year.",
+ ["Worried for them","Angry at them","Jealous","Bored"],0,
+ ["Listen without judging, and help them make a plan","Tell them they're hopeless","Tell everyone their news","Ignore them until it blows over"],0,
+ "Hearing a friend's bad news brings worry for them. Listening without judgment, then helping with a plan, is what friends are for."],
+["older","You keep comparing yourself to others online and feel like you're never good enough.",
+ ["Insecure","Proud","Relaxed","Excited"],0,
+ ["Take a break from the feed and focus on your own progress","Scroll even more to catch up","Delete all your own photos","Decide you're worthless"],0,
+ "Constant comparison breeds insecurity. Stepping back from the feed and measuring your own progress restores a fair view of yourself."],
+];
+
+/* ---------- game state ---------- */
+const $ = id => document.getElementById(id);
+const BANDS = [["young", "Ages 6–10 (Grades 1–5)"], ["middle", "Ages 11–13 (Grades 6–8)"], ["older", "Ages 14–18 (Grades 9–12)"]];
+const state = { band: "young", cases: [], idx: 0, score: 0, step: 0, feelingOK: false, stats: {}, missed: [] };
+let selBand = "young";
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function bestSaved(){ try { return JSON.parse(safeGet("fd_best") || "null"); } catch(e){ return null; } }
+function showBest(){
+  const b = bestSaved();
+  $("bestLine").textContent = b ? ("🏆 Best case file: " + b.score + " / 16 clues (" + b.band + ")") : "No case files solved yet — your best result will be saved here.";
+  $("hBest").textContent = b ? b.score : 0;
+}
+showBest();
+function show(id){
+  ["titleScr","setupScr","gameScr","endScr"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+  $("quitBtn").classList.toggle("hidden", id !== "gameScr");
+}
+const bl = $("bandList");
+BANDS.forEach(([id, label]) => {
+  const b = document.createElement("button"); b.className = "band" + (id === selBand ? " sel" : ""); b.textContent = label;
+  b.addEventListener("click", () => { selBand = id; state.band = id; sClick(); bl.querySelectorAll(".band").forEach(x => x.classList.remove("sel")); b.classList.add("sel"); });
+  bl.appendChild(b);
+});
+$("startBtn").addEventListener("click", () => { sClick(); show("setupScr"); });
+$("setupBack").addEventListener("click", () => { show("titleScr"); showBest(); });
+$("beginBtn").addEventListener("click", () => {
+  state.band = selBand;
+  state.cases = shuffle(CASES.filter(c => c[0] === state.band).slice());
+  state.idx = 0; state.score = 0; state.stats = {}; state.missed = [];
+  show("gameScr"); askStep(); sClick();
+});
+function renderHud(){
+  $("hCase").textContent = (state.idx + 1) + "/" + state.cases.length;
+  $("hScore").textContent = state.score;
+}
+function recordStat(feeling, ok){
+  state.stats[feeling] = state.stats[feeling] || { c: 0, t: 0 };
+  state.stats[feeling].t++; if (ok) state.stats[feeling].c++;
+}
+function askStep(){
+  const c = state.cases[state.idx];
+  state.step = 0; state.feelingOK = false;
+  $("feedback").style.display = "none";
+  renderHud();
+  showStep();
+}
+function showStep(){
+  const c = state.cases[state.idx];
+  const isFeeling = state.step === 0;
+  $("qType").textContent = "Case " + (state.idx + 1) + " · " + (isFeeling ? "Step 1 — Name the feeling" : "Step 2 — Choose the response");
+  $("qtext").textContent = c[1];
+  const opts = isFeeling ? c[2] : c[4];
+  const correct = isFeeling ? c[3] : c[5];
+  const order = shuffle([0, 1, 2, 3]);
+  const list = $("choiceList"); list.innerHTML = "";
+  order.forEach(oi => {
+    const b = document.createElement("button");
+    b.className = "choice"; b.dataset.opt = oi;
+    b.innerHTML = "<b>" + "ABCD"[order.indexOf(oi)] + ".</b> " + opts[oi];
+    b.addEventListener("click", () => {
+      if (b.disabled) return;
+      list.querySelectorAll(".choice").forEach(x => x.disabled = true);
+      if (oi === correct){
+        b.classList.add("right"); sGood();
+        if (isFeeling){ state.feelingOK = true; state.score++; recordStat(opts[correct], true); }
+        else { state.score++; }
+        showFeedback(true, isFeeling ? "✅ Feeling found!" : "✅ Great response!");
+      } else {
+        b.classList.add("wrong"); sBad();
+        const rb = list.querySelector('[data-opt="' + correct + '"]');
+        if (rb) rb.classList.add("right");
+        if (isFeeling) recordStat(opts[correct], false);
+        showFeedback(false, isFeeling ? "❌ The feeling was: " + opts[correct] : "❌ The best response was: " + opts[correct]);
+      }
+      renderHud();
+    });
+    list.appendChild(b);
+  });
+}
+function showFeedback(ok, title){
+  const c = state.cases[state.idx];
+  const fb = $("feedback"); fb.style.display = "block"; fb.className = ok ? "ok" : "bad";
+  $("fbTitle").textContent = title;
+  $("fbEx").textContent = c[6];
+  const nb = $("nextBtn");
+  if (state.step === 0){
+    nb.textContent = "Now choose the response ▶";
+    nb.onclick = () => { state.step = 1; $("feedback").style.display = "none"; showStep(); sClick(); };
+  } else {
+    if (!ok) state.missed.push(c);
+    nb.textContent = state.idx === state.cases.length - 1 ? "Close the case file 🏆" : "Next case ▶";
+    nb.onclick = () => {
+      sClick();
+      state.idx++;
+      if (state.idx >= state.cases.length) endRun(); else askStep();
+    };
+  }
+}
+function endRun(){
+  const total = state.score, max = state.cases.length * 2;
+  const b = bestSaved();
+  const better = !b || total > b.score;
+  if (better) safeSet("fd_best", JSON.stringify({ score: total, band: state.band }));
+  $("endTitle").textContent = total === max ? "🕵️ Master Detective!" : total >= max * 0.75 ? "🔍 Case Closed — Great Detecting!" : "🔍 Case Closed!";
+  $("endSummary").innerHTML = "You found <b>" + total + " of " + max + " clues</b>" + (better ? "<br>🎉 New best result!" : "");
+  const t = $("feelTable");
+  const feelings = Object.keys(state.stats).sort();
+  t.innerHTML = "<tr><th>Feeling</th><th>Named right</th></tr>" + feelings.map(f => "<tr><td>" + f + "</td><td>" + state.stats[f].c + " / " + state.stats[f].t + "</td></tr>").join("");
+  const ml = $("missList");
+  ml.innerHTML = state.missed.length ? state.missed.map(c =>
+    "<li><b>" + c[2][c[3]] + ":</b> " + c[1] + "<br>✅ Best response: <b>" + c[4][c[5]] + "</b> — " + c[6] + "</li>").join("")
+    : "<li>🎉 Nothing missed — every feeling and response was spot on!</li>";
+  if (total >= max * 0.75) sWin();
+  show("endScr"); showBest();
+}
+$("againBtn").addEventListener("click", () => { show("setupScr"); });
+$("menuBtn").addEventListener("click", () => { show("titleScr"); showBest(); });
+$("quitBtn").addEventListener("click", () => { if (confirm("Quit this case file? Your progress will be lost.")) { show("titleScr"); showBest(); } });
+document.addEventListener("keydown", e => {
+  if ($("gameScr").classList.contains("hidden")) return;
+  const n = ["1","2","3","4"].indexOf(e.key);
+  if (n >= 0){ const btns = document.querySelectorAll(".choice:not(:disabled)"); if (btns[n]) btns[n].click(); }
+  if (e.key === "Enter" && $("feedback").style.display === "block") $("nextBtn").click();
+});
+window.__fd = { state, CASES };
+</script>
+</body>
+</html>

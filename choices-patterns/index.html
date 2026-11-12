@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Choices &amp; Patterns — What Your Choices Say About You</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(160deg,#4d1d6e,#8a4dc2);color:#123;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:520px;padding:14px 14px 30px}
+h1{color:#fff;text-align:center;margin:8px 0 2px;font-size:29px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.sub{color:#e8d6ff;text-align:center;margin:0 0 14px;font-size:15px}
+.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.25);margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:19px;color:#4d1d6e}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:14px}
+.bigbtn{width:100%;min-height:60px;font-size:20px;font-weight:800;background:#ff9f1a;color:#fff;box-shadow:0 4px 0 #c77400;margin-top:12px}
+.bigbtn:active{transform:translateY(2px);box-shadow:none}
+.green{background:#2e7d32;box-shadow:0 4px 0 #1b4d1e}
+.ghost{width:100%;min-height:52px;font-size:16px;font-weight:700;background:#eef1f5;color:#334;margin-top:9px}
+#topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#muteBtn{background:rgba(255,255,255,.2);color:#fff;font-size:19px;width:48px;height:48px;border-radius:50%}
+#quitBtn{background:rgba(255,255,255,.2);color:#fff;font-size:15px;font-weight:700;padding:12px 16px;min-height:48px}
+#hud{display:flex;gap:8px;margin-bottom:10px}
+.hudbox{flex:1;background:rgba(255,255,255,.16);color:#fff;border-radius:12px;text-align:center;padding:7px 2px;font-size:13px}
+.hudbox b{display:block;font-size:21px}
+.qtext{font-size:21px;line-height:1.4;color:#14273f;margin:6px 0;font-weight:600}
+.choice{display:block;width:100%;min-height:58px;font-size:19px;font-weight:700;background:#f4f9ff;border:2px solid #bcd8ff;color:#14273f;margin:9px 0;padding:10px;text-align:left}
+.choice:active{transform:scale(.98)}
+.choice.picked{background:#e8d6ff;border-color:#8a4dc2}
+.bar{height:22px;border-radius:999px;background:#e8e8e8;overflow:hidden;margin:6px 0 2px;position:relative}
+.barFill{height:100%;background:#8a4dc2}
+.barLabels{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#5a6b80}
+.study{font-size:16px;line-height:1.45}
+.study li{margin:8px 0}
+.small{font-size:14px;color:#5a6b80}
+.big{font-size:26px;font-weight:800;color:#4d1d6e;text-align:center}
+.center{text-align:center}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar"><button id="muteBtn" aria-label="Mute or unmute">🔊</button><button id="quitBtn" class="hidden">✕ Quit story</button></div>
+  <h1>🪞 Choices &amp; Patterns</h1>
+  <p class="sub">A story with no wrong answers — just yours.</p>
+
+  <div id="titleScr">
+    <div class="card"><h2>How it works</h2>
+      <p class="study">You run a stall at the school fair. At each of <b>8 moments</b>, you choose what to do. There are <b>no right or wrong answers</b> — your choices paint a picture of your style.</p>
+      <p class="study">At the end, the game reflects your pattern back to you: planner or improviser? Team player or solo star? Careful or bold? Head or heart? Your profile is saved, so next time you can see how you've changed.</p>
+      <button class="bigbtn" id="startBtn">▶ Start the Story</button>
+      <p class="small center" id="bestLine"></p>
+    </div>
+  </div>
+
+  <div id="gameScr" class="hidden">
+    <div id="hud">
+      <div class="hudbox">📖 Moment<b id="hMoment">1/8</b></div>
+      <div class="hudbox">🪞 Choices made<b id="hChoices">0</b></div>
+    </div>
+    <div class="card">
+      <p class="qtext" id="sceneText"></p>
+      <div id="choiceList"></div>
+      <p class="small center" id="stepNote">Pick the one that feels most like you.</p>
+      <button class="bigbtn green hidden" id="nextBtn">Next Moment ▶</button>
+    </div>
+  </div>
+
+  <div id="endScr" class="hidden">
+    <div class="card"><div class="big" id="endTitle">Your Style</div>
+      <p class="center" id="endSummary"></p>
+      <div id="profileBox"></div>
+    </div>
+    <div class="card"><h2>📖 Your story, moment by moment</h2><ul class="study" id="storyList"></ul></div>
+    <div class="card"><h2>📈 How your style has changed</h2><div id="historyBox"></div></div>
+    <button class="bigbtn" id="againBtn">↻ Play Again</button>
+    <button class="ghost" id="menuBtn">Back to menu</button>
+  </div>
+</div>
+<script>
+"use strict";
+/* ---------- audio: synthesized only, iOS playback route, close on hide ---------- */
+let actx = null, muted = safeGet("cp_muted") === "1";
+function safeGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+function setAudioSession(){ try{ if("audioSession" in navigator) navigator.audioSession.type = "playback"; }catch(e){} }
+function ensureAudio(){
+  setAudioSession();
+  if (muted) return null;
+  if (!actx || actx.state === "closed") {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); window.__maCtx = actx; }
+    catch(e){ return null; }
+  }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, dur, type, vol, when){
+  const ctx = ensureAudio(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type || "triangle"; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.15, ctx.currentTime + (when || 0));
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (when || 0) + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime + (when || 0)); o.stop(ctx.currentTime + (when || 0) + dur + 0.02);
+}
+const sClick = () => tone(520, 0.08, "triangle", 0.10);
+const sGood = () => { tone(523, 0.12, "triangle", 0.15); tone(659, 0.12, "triangle", 0.15, 0.10); tone(784, 0.22, "triangle", 0.15, 0.20); };
+document.addEventListener("pointerdown", setAudioSession, true);
+document.addEventListener("touchstart", setAudioSession, true);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && actx && actx.state === "running") { try { actx.close(); } catch(e){} }
+});
+function updateMuteBtn(){ document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊"; }
+document.getElementById("muteBtn").addEventListener("click", () => {
+  muted = !muted; safeSet("cp_muted", muted ? "1" : "0");
+  if (muted && actx) { try { actx.close(); } catch(e){} actx = null; }
+  updateMuteBtn(); sClick();
+});
+updateMuteBtn();
+
+/* ---------- data: 4 style axes; each scene: [text, [[choiceText, axis, side], x3]] ---------- */
+const AXES = [
+  { id: "plan", left: "Planner", right: "Improviser", leftBlurb: "You like a plan before you start.", rightBlurb: "You like to figure it out as you go." },
+  { id: "team", left: "Team Player", right: "Solo Star", leftBlurb: "You do your best work with others.", rightBlurb: "You do your best work on your own." },
+  { id: "risk", left: "Careful", right: "Bold", leftBlurb: "You think twice before you leap.", rightBlurb: "You leap — and learn on the way down." },
+  { id: "mind", left: "Head First", right: "Heart First", leftBlurb: "You decide with logic and facts.", rightBlurb: "You decide with feelings and people in mind." }
+];
+const SCENES = [
+["It's the morning of the school fair, and your stall isn't ready yet. The gates open in one hour.",
+ [["Make a quick checklist and work through it top to bottom","plan","left"],
+  ["Just start setting up and see how it goes","plan","right"],
+  ["Ask your friends to come help you set up","team","left"]]],
+["A friend asks you to cover their stall too, while they run an errand. Your own stall still needs work.",
+ [["Say yes — friends help friends","team","left"],
+  ["Say you can't right now — your stall comes first","team","right"],
+  ["Offer to swap: you'll cover theirs if they help you finish yours","mind","right"]]],
+["You find a box of extra supplies nobody claimed. Your stall could use them — so could the stall next door.",
+ [["Share them with the stall next door","mind","right"],
+  ["Keep them for your stall — finders keepers","team","right"],
+  ["Put them in a shared pile for anyone who needs them","team","left"]]],
+["A customer is upset about the price of your lemonade. They're raising their voice.",
+ [["Listen first, apologize, and offer to make it right","mind","right"],
+  ["Calmly explain the price and stand firm","mind","left"],
+  ["Offer a discount right away to end the argument","risk","right"]]],
+["Dark clouds roll in — rain starts. Your stall has paper decorations and a cardboard sign.",
+ [["Move everything under cover fast, before it gets wet","risk","right"],
+  ["Wait it out — it might just be a shower","risk","left"],
+  ["Ask the stalls nearby to help you move everything together","team","left"]]],
+["You have 30 free minutes before the fair gets busy again.",
+ [["Go help another stall that looks overwhelmed","team","left"],
+  ["Take a break — you've earned a rest","plan","right"],
+  ["Use the time to plan the rest of your day","plan","left"]]],
+["The fair is ending. It's time to count the money your stall made.",
+ [["Count it carefully, twice, and write it down","risk","left"],
+  ["Count it once quickly — close enough","risk","right"],
+  ["Ask a friend to count with you so you can check each other","team","left"]]],
+["The fair is over. Your teacher asks: what would you do differently next year?",
+ [["Start planning earlier, with a real schedule","plan","left"],
+  ["Keep the same approach — it worked out fine","mind","left"],
+  ["Try something completely new and see what happens","plan","right"]]]
+];
+
+/* ---------- game state ---------- */
+const $ = id => document.getElementById(id);
+const state = { idx: 0, picks: [], counts: { plan: 0, team: 0, risk: 0, mind: 0 }, totals: { plan: 0, team: 0, risk: 0, mind: 0 } };
+function history(){ try { return JSON.parse(safeGet("cp_history") || "[]"); } catch(e){ return []; } }
+function showBest(){
+  const h = history();
+  $("bestLine").textContent = h.length ? ("📈 " + h.length + " stor" + (h.length === 1 ? "y" : "ies") + " played — your last style is saved below.") : "No stories played yet — your style profile will be saved here.";
+}
+showBest();
+function show(id){
+  ["titleScr","gameScr","endScr"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+  $("quitBtn").classList.toggle("hidden", id !== "gameScr");
+}
+function startStory(){
+  state.idx = 0; state.picks = [];
+  state.counts = { plan: 0, team: 0, risk: 0, mind: 0 };
+  state.totals = { plan: 0, team: 0, risk: 0, mind: 0 };
+  SCENES.forEach(s => s[1].forEach(c => { state.totals[c[1]]++; }));
+  show("gameScr"); renderScene(); sClick();
+}
+function renderScene(){
+  const [text, opts] = SCENES[state.idx];
+  $("hMoment").textContent = (state.idx + 1) + "/" + SCENES.length;
+  $("hChoices").textContent = state.picks.length;
+  $("sceneText").textContent = text;
+  $("nextBtn").classList.add("hidden");
+  const list = $("choiceList"); list.innerHTML = "";
+  opts.forEach(([label, axis, side], i) => {
+    const b = document.createElement("button");
+    b.className = "choice"; b.dataset.i = i; b.textContent = label;
+    b.addEventListener("click", () => {
+      if (b.disabled) return;
+      list.querySelectorAll(".choice").forEach(x => { x.disabled = true; });
+      b.classList.add("picked");
+      state.picks.push(i);
+      $("hChoices").textContent = state.picks.length;
+      if (side === "left") state.counts[axis]++;
+      sGood();
+      const nb = $("nextBtn");
+      nb.classList.remove("hidden");
+      nb.textContent = state.idx === SCENES.length - 1 ? "See My Style 🪞" : "Next Moment ▶";
+    });
+    list.appendChild(b);
+  });
+}
+$("nextBtn").addEventListener("click", () => {
+  sClick();
+  state.idx++;
+  if (state.idx >= SCENES.length) endStory(); else renderScene();
+});
+function axisResult(axis){
+  const n = state.totals[axis.id], left = state.counts[axis.id];
+  const pct = n ? Math.round((left / n) * 100) : 50;
+  const side = pct >= 60 ? "left" : pct <= 40 ? "right" : "balanced";
+  return { pct, side };
+}
+function endStory(){
+  const profile = {};
+  AXES.forEach(a => { profile[a.id] = axisResult(a); });
+  const h = history();
+  h.push({ date: new Date().toISOString().slice(0, 10), profile });
+  try { safeSet("cp_history", JSON.stringify(h.slice(-10))); } catch(e){}
+  const lean = AXES.map(a => {
+    const r = profile[a.id];
+    return r.side === "left" ? a.left : r.side === "right" ? a.right : "balanced " + a.left.toLowerCase() + "/" + a.right.toLowerCase();
+  });
+  $("endTitle").textContent = "🪞 Your Style";
+  $("endSummary").innerHTML = "You lean <b>" + lean.join(" · ") + "</b>.<br><span class='small'>No style is better than another — this is just your pattern today.</span>";
+  $("profileBox").innerHTML = AXES.map(a => {
+    const r = profile[a.id];
+    const blurb = r.side === "left" ? a.leftBlurb : r.side === "right" ? a.rightBlurb : "You balance both sides — it depends on the moment.";
+    return "<h3>" + a.left + " ↔ " + a.right + "</h3>" +
+      "<div class='bar'><div class='barFill' style='width:" + r.pct + "%'></div></div>" +
+      "<div class='barLabels'><span>" + a.left + " " + r.pct + "%</span><span>" + a.right + " " + (100 - r.pct) + "%</span></div>" +
+      "<p class='study'>" + blurb + "</p>";
+  }).join("");
+  $("storyList").innerHTML = SCENES.map((s, i) => {
+    const pick = s[1][state.picks[i]];
+    return "<li><b>Moment " + (i + 1) + ":</b> " + s[0] + "<br>→ You chose: <b>" + pick[0] + "</b></li>";
+  }).join("");
+  const hb = $("historyBox");
+  if (h.length <= 1) hb.innerHTML = "<p class='study'>This was your first story — play again another day and watch your pattern change.</p>";
+  else hb.innerHTML = "<p class='study'>Past profiles (most recent last):</p><ul class='study'>" +
+    h.map(p => "<li>" + p.date + ": " + AXES.map(a => {
+      const r = p.profile[a.id];
+      return a.left + " " + r.pct + "%";
+    }).join(" · ") + "</li>").join("") + "</ul>";
+  sGood();
+  show("endScr");
+}
+$("startBtn").addEventListener("click", startStory);
+$("againBtn").addEventListener("click", startStory);
+$("menuBtn").addEventListener("click", () => { show("titleScr"); showBest(); });
+$("quitBtn").addEventListener("click", () => { if (confirm("Quit this story? Your choices so far will be lost.")) { show("titleScr"); showBest(); } });
+document.addEventListener("keydown", e => {
+  if ($("gameScr").classList.contains("hidden")) return;
+  const n = ["1","2","3"].indexOf(e.key);
+  if (n >= 0){ const btns = document.querySelectorAll(".choice:not(:disabled)"); if (btns[n]) btns[n].click(); }
+  if (e.key === "Enter" && !$("nextBtn").classList.contains("hidden")) $("nextBtn").click();
+});
+window.__cp = { state, SCENES, AXES };
+</script>
+</body>
+</html>

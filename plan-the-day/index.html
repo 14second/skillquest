@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Plan the Day — ADAPT / Self-Management</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f2f6ff; color: #1c2b45; min-height: 100vh;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 12px 14px 28px; }
+  .hidden { display: none !important; }
+  h1 { font-size: 30px; margin: 6px 0 2px; color: #14346b; text-align: center; }
+  h2 { font-size: 21px; margin: 10px 0 6px; color: #14346b; }
+  h3 { font-size: 16px; margin: 12px 0 6px; color: #14346b; }
+  .sub { text-align: center; color: #4a5a75; margin: 0 0 10px; font-size: 15px; }
+  .tags { display: flex; gap: 8px; justify-content: center; margin: 8px 0 4px; flex-wrap: wrap; }
+  .tag { background: #14346b; color: #fff; border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+  .tag.skill { background: #0e7a5f; }
+  .tag.solo { background: #e8eefc; color: #14346b; border: 1px solid #b9c8ea; }
+  .card { background: #fff; border: 1px solid #d7e0f2; border-radius: 14px; padding: 14px; margin: 10px 0; box-shadow: 0 2px 6px rgba(20,52,107,.06); }
+  .stats { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 8px 0; }
+  .stat { background: #fff; border: 1px solid #d7e0f2; border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+  .stat b { color: #14346b; }
+  button { font-family: inherit; cursor: pointer; }
+  .bigbtn {
+    display: block; width: 100%; min-height: 56px; border: none; border-radius: 14px;
+    background: #14346b; color: #fff; font-size: 19px; font-weight: 800; margin: 10px 0;
+  }
+  .bigbtn:disabled { background: #9aa8c2; }
+  .bigbtn.green { background: #0e7a5f; }
+  .bigbtn.orange { background: #c25e00; }
+  .diffrow { display: flex; gap: 8px; margin: 8px 0; }
+  .diffbtn {
+    flex: 1; min-height: 52px; border-radius: 12px; border: 2px solid #b9c8ea;
+    background: #fff; font-size: 15px; font-weight: 700; color: #14346b;
+  }
+  .diffbtn.sel { background: #14346b; color: #fff; border-color: #14346b; }
+  .diffbtn small { display: block; font-size: 12px; font-weight: 400; opacity: .85; }
+  .daybtn {
+    display: block; width: 100%; text-align: left; min-height: 56px; border-radius: 12px;
+    border: 2px solid #d7e0f2; background: #fff; padding: 10px 12px; margin: 8px 0; font-size: 16px; color: #1c2b45;
+  }
+  .daybtn.sel { border-color: #14346b; background: #e8eefc; }
+  .daybtn b { color: #14346b; }
+  .daybtn small { display: block; color: #4a5a75; font-size: 13px; margin-top: 2px; }
+  .rowbtns { display: flex; gap: 8px; }
+  .rowbtns button { flex: 1; min-height: 48px; border-radius: 12px; border: 2px solid #b9c8ea; background: #fff; font-size: 15px; font-weight: 700; color: #14346b; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; }
+  .mutebtn { min-width: 48px; min-height: 48px; border-radius: 12px; border: 2px solid #b9c8ea; background: #fff; font-size: 20px; }
+  .helpbox { font-size: 15px; line-height: 1.5; color: #33445e; }
+  .helpbox li { margin-bottom: 6px; }
+  /* timeline */
+  .timeline { display: flex; gap: 4px; margin: 8px 0; }
+  .slot {
+    flex: 1; min-height: 64px; border-radius: 10px; border: 2px dashed #b9c8ea;
+    background: #f7f9ff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 11px; text-align: center; padding: 3px 1px; color: #4a5a75; overflow: hidden;
+  }
+  .slot.filled { border-style: solid; border-color: #14346b; background: #dfe9ff; color: #14346b; font-weight: 700; }
+  .slot.filled.fun { background: #ffe9c9; border-color: #c25e00; color: #7a3c00; }
+  .slot.done { opacity: .55; }
+  .slot .em { font-size: 18px; line-height: 1; }
+  .slot.now { outline: 3px solid #0e7a5f; }
+  .budget { font-size: 16px; text-align: center; margin: 4px 0; }
+  .budget b { color: #14346b; }
+  /* item bank */
+  .bank { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .itembtn {
+    min-height: 64px; border-radius: 12px; border: 2px solid #d7e0f2; background: #fff;
+    padding: 8px; font-size: 15px; text-align: left; color: #1c2b45;
+  }
+  .itembtn .em { font-size: 20px; margin-right: 4px; }
+  .itembtn small { display: block; color: #4a5a75; font-size: 12px; margin-top: 2px; }
+  .itembtn.goal { border-left: 6px solid #14346b; }
+  .itembtn.fun { border-left: 6px solid #c25e00; }
+  .itembtn.placed { background: #e8eefc; border-color: #14346b; }
+  .itembtn.placed.fun { background: #ffefd6; border-color: #c25e00; }
+  .itembtn:disabled { opacity: .45; }
+  .sched { list-style: none; margin: 6px 0; padding: 0; }
+  .sched li {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    background: #f7f9ff; border: 1px solid #d7e0f2; border-radius: 10px; padding: 10px 12px;
+    margin: 6px 0; font-size: 15px; min-height: 48px;
+  }
+  .sched li button { min-width: 44px; min-height: 44px; border-radius: 10px; border: 2px solid #d7e0f2; background: #fff; font-size: 16px; }
+  .log { font-size: 15px; line-height: 1.55; min-height: 24px; }
+  .log p { margin: 6px 0; }
+  .disrupt { border: 3px solid #c25e00; background: #fff7ec; }
+  .disrupt h3 { color: #7a3c00; margin-top: 0; }
+  .optbtn {
+    display: block; width: 100%; text-align: left; min-height: 56px; border-radius: 12px;
+    border: 2px solid #c25e00; background: #fff; padding: 10px 12px; margin: 8px 0; font-size: 15px; color: #1c2b45;
+  }
+  .scorebig { font-size: 44px; font-weight: 900; color: #14346b; text-align: center; margin: 4px 0; }
+  .breakdown { font-size: 15px; line-height: 1.6; }
+  .well { font-size: 15px; line-height: 1.6; }
+  .well li { margin-bottom: 6px; }
+  .tip { background: #eafaf3; border: 1px solid #9fd8c0; border-radius: 10px; padding: 10px 12px; font-size: 15px; }
+  .kbd-hint { font-size: 13px; color: #4a5a75; text-align: center; }
+  @media (max-width: 360px) {
+    h1 { font-size: 26px; }
+    .bank { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ TITLE ============ -->
+  <div id="titleScr">
+    <div class="topbar">
+      <span></span>
+      <button id="muteBtn" class="mutebtn" aria-label="Mute or unmute sound">🔊</button>
+    </div>
+    <h1>🗓️ Plan the Day</h1>
+    <div class="tags">
+      <span class="tag">ADAPT</span>
+      <span class="tag skill">Self-Management</span>
+      <span class="tag solo">Solo · Grades 1–12</span>
+    </div>
+    <p class="sub">You get a few free hours after school. Fit in your goals, leave room for fun — then press <b>Play Day</b> and watch it happen. Surprises included!</p>
+    <div class="stats">
+      <span class="stat">🏆 Best score: <b id="bestLine">0</b></span>
+      <span class="stat">✅ Days finished: <b id="daysLine">0</b></span>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">Pick a difficulty</h2>
+      <div class="diffrow" role="group" aria-label="Difficulty">
+        <button id="diffEasy" class="diffbtn sel" data-diff="easy">😊 Easy<small>4 hours · gentle surprises</small></button>
+        <button id="diffMed" class="diffbtn" data-diff="medium">🙂 Medium<small>6 hours · one surprise</small></button>
+        <button id="diffHard" class="diffbtn" data-diff="hard">😬 Hard<small>8 hours · two surprises</small></button>
+      </div>
+      <h2>Pick a day</h2>
+      <div id="dayList"></div>
+    </div>
+    <button id="startBtn" class="bigbtn green">▶ Start Planning</button>
+    <button id="howBtn" class="bigbtn" style="background:#fff;color:#14346b;border:2px solid #b9c8ea">❓ How to Play</button>
+    <div id="helpBox" class="card helpbox hidden">
+      <ol>
+        <li><b>Tap items</b> to add them to your day (or tap again to remove one). Each item takes hours — you only have as many hours as the day gives you.</li>
+        <li>Mix <b>goals</b> (homework, reading, practice) with <b>fun</b> (games, TV, playing outside). A balanced day scores extra points!</li>
+        <li>Press <b>▶ Play Day</b> and watch each hour play out.</li>
+        <li>A <b>surprise</b> will pop up mid-day. Pick the smartest fix — good choices earn points, rushed ones cost them.</li>
+        <li>Finish your goals, keep some balance, and handle surprises well for the best score.</li>
+      </ol>
+      <p class="kbd-hint">Keyboard: keys 1–9 add or remove items · P = Play Day · M = mute</p>
+    </div>
+    <p class="kbd-hint">Original game · no ads · works offline</p>
+  </div>
+
+  <!-- ============ PLAN / PLAY ============ -->
+  <div id="planScr" class="hidden">
+    <div class="topbar">
+      <button id="backBtn" class="mutebtn" aria-label="Back to day picker">←</button>
+      <button id="muteBtn2" class="mutebtn" aria-label="Mute or unmute sound">🔊</button>
+    </div>
+    <h1 id="dayTitle" style="font-size:24px">Day</h1>
+    <p id="dayBlurb" class="sub"></p>
+    <p class="budget">⏰ Day length: <b id="budgetLine">0 hours</b> · Free: <b id="remainLine">0 hours</b></p>
+    <div id="timeline" class="timeline" aria-label="Your timeline"></div>
+    <div class="card">
+      <h3 style="margin-top:0">What will you do? <span style="font-weight:400;color:#4a5a75">(tap to add / remove)</span></h3>
+      <div id="itemBank" class="bank"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Your schedule</h3>
+      <ul id="schedList" class="sched"></ul>
+      <p id="emptySched" style="color:#4a5a75;margin:4px 0">Nothing scheduled yet — tap an item above.</p>
+    </div>
+    <div id="disruptBox" class="card disrupt hidden">
+      <h3>⚠️ Surprise!</h3>
+      <p id="disruptText" style="font-size:16px;line-height:1.5"></p>
+      <div id="disruptOpts"></div>
+    </div>
+    <div id="dayLog" class="card log hidden"></div>
+    <button id="playBtn" class="bigbtn green">▶ Play Day</button>
+    <div class="rowbtns">
+      <button id="clearBtn">🧹 Clear Day</button>
+      <button id="skipBtn" class="hidden">⏩ Skip to End</button>
+    </div>
+  </div>
+
+  <!-- ============ DEBRIEF ============ -->
+  <div id="debriefScr" class="hidden">
+    <h1>🌟 Day Complete!</h1>
+    <p class="sub" id="debriefDay"></p>
+    <div class="scorebig"><span id="finalScore">0</span> pts</div>
+    <p style="text-align:center;margin:0">Best score: <b id="bestLine2">0</b></p>
+    <div class="card">
+      <h3 style="margin-top:0">How you scored</h3>
+      <div id="scoreBreak" class="breakdown"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">✅ What went well</h3>
+      <ul id="wentWell" class="well"></ul>
+    </div>
+    <div id="tipBox" class="tip"></div>
+    <button id="againBtn" class="bigbtn green">↻ Plan This Day Again</button>
+    <button id="chooseBtn" class="bigbtn">📅 Choose Another Day</button>
+  </div>
+
+</div>
+<script>
+"use strict";
+/* ---------- storage guards: EVERY localStorage access goes through these ---------- */
+function safeGet(key) { try { return window.localStorage.getItem(key); } catch (e) { return null; } }
+function safeSet(key, val) { try { window.localStorage.setItem(key, val); } catch (e) { /* storage denied: play on without saving */ } }
+
+/* ---------- audio: synthesized only, iOS playback route, close-on-hide ---------- */
+let actx = null, muted = false;
+function ensureAudio() {
+  try { if ("audioSession" in navigator) navigator.audioSession.type = "playback"; } catch (e) {}
+  if (muted) return null;
+  try {
+    if (!window.__maCtx || window.__maCtx.state === "closed") {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      window.__maCtx = new AC();
+    }
+    actx = window.__maCtx;
+    if (actx.state === "suspended") actx.resume();
+    return actx;
+  } catch (e) { return null; }
+}
+function tone(freq, dur, type, vol, when) {
+  if (muted) return;
+  const c = ensureAudio(); if (!c) return;
+  try {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type || "triangle"; o.frequency.value = freq; /* all fundamentals >= 130 Hz */
+    g.gain.setValueAtTime(vol || 0.12, c.currentTime + (when || 0));
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + (when || 0) + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(c.currentTime + (when || 0)); o.stop(c.currentTime + (when || 0) + dur + 0.02);
+  } catch (e) {}
+}
+function sfx(kind) {
+  if (muted) return;
+  if (kind === "click") tone(660, 0.08, "triangle", 0.10);
+  else if (kind === "place") { tone(523, 0.10, "triangle", 0.12); tone(784, 0.12, "triangle", 0.10, 0.08); }
+  else if (kind === "remove") tone(392, 0.10, "triangle", 0.10);
+  else if (kind === "start") { tone(523, 0.12, "triangle", 0.12); tone(659, 0.12, "triangle", 0.12, 0.10); tone(784, 0.18, "triangle", 0.12, 0.20); }
+  else if (kind === "surprise") { tone(196, 0.25, "square", 0.10); tone(165, 0.30, "square", 0.10, 0.18); }
+  else if (kind === "done") { tone(523, 0.15, "triangle", 0.12); tone(659, 0.15, "triangle", 0.12, 0.12); tone(784, 0.15, "triangle", 0.12, 0.24); tone(1047, 0.30, "triangle", 0.12, 0.36); }
+  else if (kind === "hour") tone(440, 0.07, "triangle", 0.07);
+}
+document.addEventListener("pointerdown", function () {
+  try { if ("audioSession" in navigator) navigator.audioSession.type = "playback"; } catch (e) {}
+  ensureAudio();
+}, true);
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "hidden") {
+    if (playTimer) { clearTimeout(playTimer); playTimer = null; playPaused = true; }
+    try { if (window.__maCtx && window.__maCtx.state !== "closed") window.__maCtx.close(); } catch (e) {}
+  } else if (playPaused && playing) {
+    playPaused = false; stepHour();
+  }
+});
+
+/* ---------- data: 9 days, 3 per difficulty ---------- */
+const DAYS = [
+  { id: "calm-tuesday", title: "A Calm Tuesday", diff: "easy", budget: 4,
+    blurb: "School finished early. A quiet afternoon — what will you fit in?",
+    items: [
+      { id: "hw", name: "Homework", kind: "goal", hrs: 2, pts: 20, icon: "📚", desc: "Finish today's schoolwork" },
+      { id: "read", name: "Reading", kind: "goal", hrs: 1, pts: 10, icon: "📖", desc: "Read a chapter of your book" },
+      { id: "piano", name: "Piano practice", kind: "goal", hrs: 1, pts: 10, icon: "🎹", desc: "Practice your song" },
+      { id: "outside", name: "Play outside", kind: "fun", hrs: 1, pts: 5, icon: "⚽", desc: "Kick a ball in the yard" },
+      { id: "tv", name: "Watch TV", kind: "fun", hrs: 1, pts: 5, icon: "📺", desc: "One episode of your show" },
+      { id: "draw", name: "Drawing", kind: "fun", hrs: 1, pts: 5, icon: "🎨", desc: "Draw something new" }
+    ],
+    disruptions: [
+      { hour: 2, text: "Your friend Maya drops by and wants to play! She is at the door right now.",
+        options: [
+          { label: "Ask Maya to play outside for 1 hour, then do homework", pts: 10, apply: "keep", note: "You kept your plan and still saw your friend. Great balance!" },
+          { label: "Invite Maya to do homework with you first", pts: 15, apply: "keep", note: "Homework together is faster — and more fun!" },
+          { label: "Drop everything and play all afternoon", pts: -10, apply: "dropGoal", note: "Fun won the whole afternoon, and the homework is still waiting." }
+        ] }
+    ] },
+  { id: "rainy-saturday", title: "Rainy Saturday Morning", diff: "easy", budget: 4,
+    blurb: "Rain is tapping on the window. A slow morning at home.",
+    items: [
+      { id: "hw", name: "Homework", kind: "goal", hrs: 1, pts: 10, icon: "📚", desc: "Finish today's schoolwork" },
+      { id: "read", name: "Reading", kind: "goal", hrs: 1, pts: 10, icon: "📖", desc: "Read a chapter of your book" },
+      { id: "tidy", name: "Tidy your room", kind: "goal", hrs: 1, pts: 10, icon: "🧹", desc: "Put everything back in place" },
+      { id: "board", name: "Board game", kind: "fun", hrs: 1, pts: 5, icon: "🎲", desc: "A game with the family" },
+      { id: "bake", name: "Baking", kind: "fun", hrs: 1, pts: 5, icon: "🧁", desc: "Bake muffins with a grown-up" },
+      { id: "tv", name: "Watch TV", kind: "fun", hrs: 1, pts: 5, icon: "📺", desc: "One episode of your show" },
+      { id: "puzzle", name: "Puzzle", kind: "fun", hrs: 1, pts: 5, icon: "🧩", desc: "Work on a jigsaw puzzle" }
+    ],
+    disruptions: [
+      { hour: 2, text: "The rain gets heavier and the power flickers — the TV goes off for the rest of the morning!",
+        options: [
+          { label: "Switch to the board game instead", pts: 10, apply: "swapFun", note: "You swapped one kind of fun for another. Smart!" },
+          { label: "Use the time to read instead", pts: 15, apply: "addGoal", note: "Turning a surprise into reading time — excellent!" },
+          { label: "Sit and wait for the TV to come back", pts: -5, apply: "keep", note: "Waiting used up an hour that could have been fun." }
+        ] }
+    ] },
+  { id: "after-school", title: "After-School Wind-Down", diff: "easy", budget: 4,
+    blurb: "You are home from school with a snack and four free hours.",
+    items: [
+      { id: "hw", name: "Homework", kind: "goal", hrs: 2, pts: 20, icon: "📚", desc: "Finish today's schoolwork" },
+      { id: "spell", name: "Spelling practice", kind: "goal", hrs: 1, pts: 10, icon: "✏️", desc: "Practice this week's words" },
+      { id: "bike", name: "Bike ride", kind: "fun", hrs: 1, pts: 5, icon: "🚲", desc: "Ride around the block" },
+      { id: "snack", name: "Snack & chat", kind: "fun", hrs: 1, pts: 5, icon: "🍎", desc: "A snack and a chat at the table" },
+      { id: "game", name: "Game time", kind: "fun", hrs: 1, pts: 5, icon: "🎮", desc: "Play your favourite game" }
+    ],
+    disruptions: [
+      { hour: 3, text: "The bus was late, so you got home an hour later than planned. One hour of your day is gone!",
+        options: [
+          { label: "Trim game time and keep homework", pts: 10, apply: "dropFun", note: "You protected the goal and trimmed the fun. Well judged!" },
+          { label: "Do homework first, then fit in what fun you can", pts: 10, apply: "keep", note: "Goals first means the important thing gets done." },
+          { label: "Skip homework — there is always tomorrow", pts: -10, apply: "dropGoal", note: "Tomorrow's homework pile just got bigger." }
+        ] }
+    ] },
+  { id: "busy-wednesday", title: "A Busy Wednesday", diff: "medium", budget: 6,
+    blurb: "Homework, reading and soccer practice — can you fit it all in?",
+    items: [
+      { id: "hw", name: "Homework", kind: "goal", hrs: 2, pts: 20, icon: "📚", desc: "Finish today's schoolwork" },
+      { id: "read", name: "Reading", kind: "goal", hrs: 1, pts: 10, icon: "📖", desc: "Read a chapter of your book" },
+      { id: "soccer", name: "Soccer practice", kind: "goal", hrs: 2, pts: 20, icon: "⚽", desc: "Practice with your team" },
+      { id: "game", name: "Game time", kind: "fun", hrs: 1, pts: 5, icon: "🎮", desc: "Play your favourite game" },
+      { id: "tv", name: "Watch TV", kind: "fun", hrs: 1, pts: 5, icon: "📺", desc: "One episode of your show" },
+      { id: "music", name: "Listen to music", kind: "fun", hrs: 1, pts: 5, icon: "🎵", desc: "Your favourite songs" },
+      { id: "draw", name: "Drawing", kind: "fun", hrs: 1, pts: 5, icon: "🎨", desc: "Draw something new" }
+    ],
+    disruptions: [
+      { hour: 3, text: "Your friend drops by with a new board game and really wants you to try it!",
+        options: [
+          { label: "Play one quick round, then back to the plan", pts: 10, apply: "keep", note: "A short break, then straight back to the plan." },
+          { label: "Ask your friend to join soccer practice", pts: 15, apply: "keep", note: "You turned a distraction into a teammate!" },
+          { label: "Play all afternoon and skip practice", pts: -15, apply: "dropGoal", note: "The team missed you at practice today." }
+        ] }
+    ] },
+  { id: "science-fair", title: "Science Fair Week", diff: "medium", budget: 6,
+    blurb: "The science fair is Friday. Your project needs real work today.",
+    items: [
+      { id: "project", name: "Project work", kind: "goal", hrs: 3, pts: 30, icon: "🔬", desc: "Build and test your experiment" },
+      { id: "read", name: "Reading", kind: "goal", hrs: 1, pts: 10, icon: "📖", desc: "Read about your topic" },
+      { id: "talk", name: "Practice your talk", kind: "goal", hrs: 1, pts: 10, icon: "🎤", desc: "Rehearse what you will say" },
+      { id: "game", name: "Game time", kind: "fun", hrs: 1, pts: 5, icon: "🎮", desc: "Play your favourite game" },
+      { id: "dog", name: "Walk the dog", kind: "fun", hrs: 1, pts: 5, icon: "🐕", desc: "A walk around the block" },
+      { id: "tv", name: "Watch TV", kind: "fun", hrs: 1, pts: 5, icon: "📺", desc: "One episode of your show" }
+    ],
+    disruptions: [
+      { hour: 2, text: "Oh no — you are out of glue, and the project needs it! The shop is a 30-minute walk away.",
+        options: [
+          { label: "Walk to the shop now, then get back to work", pts: 10, apply: "shorten", note: "You lost a little fun time but saved the project." },
+          { label: "Work on the talk while a grown-up fetches glue", pts: 15, apply: "keep", note: "You kept working on something useful while waiting." },
+          { label: "Give up on the project for today", pts: -15, apply: "dropGoal", note: "The project is still unfinished — Friday is close!" }
+        ] }
+    ] },
+  { id: "holiday-homework", title: "Holiday Homework Day", diff: "medium", budget: 6,
+    blurb: "A day off school, but homework is due next week. Plan it well!",
+    items: [
+      { id: "hw", name: "Homework", kind: "goal", hrs: 2, pts: 20, icon: "📚", desc: "Finish the holiday homework" },
+      { id: "read", name: "Reading", kind: "goal", hrs: 2, pts: 20, icon: "📖", desc: "Read two chapters" },
+      { id: "exercise", name: "Exercise", kind: "goal", hrs: 1, pts: 10, icon: "🏃", desc: "A run or a workout" },
+      { id: "movie", name: "Movie", kind: "fun", hrs: 2, pts: 10, icon: "🎬", desc: "Watch a film together" },
+      { id: "game", name: "Game time", kind: "fun", hrs: 1, pts: 5, icon: "🎮", desc: "Play your favourite game" },
+      { id: "bake", name: "Bake cookies", kind: "fun", hrs: 1, pts: 5, icon: "🍪", desc: "Bake a batch of cookies" }
+    ],
+    disruptions: [
+      { hour: 3, text: "Your cousin visits unexpectedly and wants to hang out!",
+        options: [
+          { label: "Bake cookies together — fun and a snack!", pts: 15, apply: "keep", note: "You folded the visit into your fun time. Perfect!" },
+          { label: "Play a quick game, then finish homework", pts: 10, apply: "keep", note: "A short visit, then back to the plan." },
+          { label: "Spend the whole day playing", pts: -15, apply: "dropGoal", note: "Great day with your cousin — but the homework is still there." }
+        ] }
+    ] },
+  { id: "big-saturday", title: "The Big Saturday", diff: "hard", budget: 8,
+    blurb: "A whole Saturday, a long list, and two surprises waiting. Good luck!",
+    items: [
+      { id: "hw", name: "Homework", kind: "goal", hrs: 3, pts: 30, icon: "📚", desc: "The weekend homework pile" },
+      { id: "read", name: "Reading", kind: "goal", hrs: 1, pts: 10, icon: "📖", desc: "Read a chapter of your book" },
+      { id: "piano", name: "Piano practice", kind: "goal", hrs: 1, pts: 10, icon: "🎹", desc: "Practice your song" },
+      { id: "chores", name: "Chores", kind: "goal", hrs: 1, pts: 10, icon: "🧹", desc: "Help around the house" },
+      { id: "game", name: "Game time", kind: "fun", hrs: 2, pts: 10, icon: "🎮", desc: "Play your favourite game" },
+      { id: "bike", name: "Bike ride", kind: "fun", hrs: 1, pts: 5, icon: "🚲", desc: "Ride around the block" },
+      { id: "tv", name: "Watch TV", kind: "fun", hrs: 1, pts: 5, icon: "📺", desc: "One episode of your show" },
+      { id: "friends", name: "Time with friends", kind: "fun", hrs: 1, pts: 5, icon: "👋", desc: "Hang out with friends" }
+    ],
+    disruptions: [
+      { hour: 3, text: "Rain starts pouring — your bike ride is cancelled!",
+        options: [
+          { label: "Swap the bike ride for a board game indoors", pts: 10, apply: "swapFun", note: "Same fun, different place. Nicely adapted!" },
+          { label: "Use the hour to get ahead on reading", pts: 15, apply: "addGoal", note: "Rainy hour turned into reading time — brilliant!" },
+          { label: "Wait by the window hoping it stops", pts: -5, apply: "keep", note: "The rain did not stop, and the hour slipped away." }
+        ] },
+      { hour: 6, text: "Your little brother needs help with his puzzle and will not stop asking!",
+        options: [
+          { label: "Help him for a bit, then return to your plan", pts: 10, apply: "shorten", note: "A kind pause — and you still got back on track." },
+          { label: "Teach him the puzzle during your fun time", pts: 15, apply: "keep", note: "You mixed helping with fun. That is real self-management!" },
+          { label: "Tell him to go away and keep going", pts: -10, apply: "keep", note: "He is upset now, and the house feels tense." }
+        ] }
+    ] },
+  { id: "tournament-eve", title: "Tournament Eve", diff: "hard", budget: 8,
+    blurb: "Big game tomorrow! Practice, homework and packing — all today.",
+    items: [
+      { id: "hw", name: "Homework", kind: "goal", hrs: 2, pts: 20, icon: "📚", desc: "Finish today's schoolwork" },
+      { id: "practice", name: "Team practice", kind: "goal", hrs: 3, pts: 30, icon: "🏆", desc: "Final practice before the game" },
+      { id: "read", name: "Reading", kind: "goal", hrs: 1, pts: 10, icon: "📖", desc: "Read a chapter of your book" },
+      { id: "pack", name: "Pack your kit", kind: "goal", hrs: 1, pts: 10, icon: "🎒", desc: "Pack everything for tomorrow" },
+      { id: "game", name: "Game time", kind: "fun", hrs: 1, pts: 5, icon: "🎮", desc: "Play your favourite game" },
+      { id: "tv", name: "Watch TV", kind: "fun", hrs: 1, pts: 5, icon: "📺", desc: "One episode of your show" },
+      { id: "relax", name: "Relax", kind: "fun", hrs: 1, pts: 5, icon: "😌", desc: "Quiet time to rest your legs" }
+    ],
+    disruptions: [
+      { hour: 2, text: "Practice runs long — your coach keeps the team an extra hour!",
+        options: [
+          { label: "Trim TV time and keep homework", pts: 10, apply: "dropFun", note: "You protected the goal and trimmed the fun. Well judged!" },
+          { label: "Do homework on the way home in the car", pts: 15, apply: "keep", note: "Clever — you found time hiding in the journey!" },
+          { label: "Skip homework tonight", pts: -10, apply: "dropGoal", note: "Homework skipped — it will be waiting tomorrow." }
+        ] },
+      { hour: 6, text: "The bus home is late. You are stuck waiting with nothing to do.",
+        options: [
+          { label: "Read your book while you wait", pts: 15, apply: "keep", note: "Waiting time became reading time. Excellent!" },
+          { label: "Plan tomorrow's game in your head", pts: 10, apply: "keep", note: "A calm wait — and a smart head start on tomorrow." },
+          { label: "Just stare at the road and grumble", pts: -5, apply: "keep", note: "The bus was still late, and the wait felt longer." }
+        ] }
+    ] },
+  { id: "exam-crunch", title: "Exam Week Crunch", diff: "hard", budget: 8,
+    blurb: "Exams start Monday. This is your biggest study day yet.",
+    items: [
+      { id: "revise", name: "Revision", kind: "goal", hrs: 3, pts: 30, icon: "🧠", desc: "Study your exam notes" },
+      { id: "hw", name: "Homework", kind: "goal", hrs: 2, pts: 20, icon: "📚", desc: "Finish the set homework" },
+      { id: "read", name: "Reading", kind: "goal", hrs: 1, pts: 10, icon: "📖", desc: "Read a chapter of your book" },
+      { id: "flash", name: "Flashcards", kind: "goal", hrs: 1, pts: 10, icon: "🗂️", desc: "Quiz yourself with cards" },
+      { id: "walk", name: "Walk", kind: "fun", hrs: 1, pts: 5, icon: "🚶", desc: "A walk to clear your head" },
+      { id: "game", name: "Game time", kind: "fun", hrs: 1, pts: 5, icon: "🎮", desc: "Play your favourite game" },
+      { id: "music", name: "Listen to music", kind: "fun", hrs: 1, pts: 5, icon: "🎵", desc: "Your favourite songs" }
+    ],
+    disruptions: [
+      { hour: 3, text: "The power goes out! No lights, no computer — for one whole hour.",
+        options: [
+          { label: "Study by the window with flashcards", pts: 15, apply: "keep", note: "No power, no problem — flashcards work anywhere!" },
+          { label: "Take a walk and come back fresh", pts: 10, apply: "swapFun", note: "A break now, sharper studying later." },
+          { label: "Wait in the dark doing nothing", pts: -10, apply: "keep", note: "An hour gone with nothing to show for it." }
+        ] },
+      { hour: 6, text: "Your friend calls — they are stuck on the same homework and need help!",
+        options: [
+          { label: "Help them for a bit — teaching helps you learn too", pts: 15, apply: "keep", note: "Explaining it made it stick for you as well!" },
+          { label: "Say you will help after your revision", pts: 10, apply: "keep", note: "Your plan first, then a kind hand." },
+          { label: "Ignore the call completely", pts: -5, apply: "keep", note: "They figured it out alone — but a friend felt let down." }
+        ] }
+    ] }
+];
+const APPLY = ["keep", "dropFun", "dropGoal", "swapFun", "addGoal", "shorten"];
+</script>
+<script>
+"use strict";
+/* ---------- state ---------- */
+const $ = id => document.getElementById(id);
+let diff = "easy", selDayId = "calm-tuesday";
+let day = null, schedule = []; /* [{item, start}] */
+let playing = false, playPaused = false, playTimer = null;
+let hourIdx = 0, shownDisruptions = 0, disruptPts = 0, disruptNotes = [];
+let completed = [], dropped = [];
+let best = 0, daysDone = [];
+
+function loadProgress() {
+  const b = safeGet("ptd_best");
+  best = b === null ? 0 : (parseInt(b, 10) || 0);
+  try { daysDone = JSON.parse(safeGet("ptd_days") || "[]"); if (!Array.isArray(daysDone)) daysDone = []; }
+  catch (e) { daysDone = []; }
+  const m = safeGet("ptd_muted");
+  muted = m === "1";
+}
+function saveProgress() {
+  safeSet("ptd_best", String(best));
+  safeSet("ptd_days", JSON.stringify(daysDone));
+}
+function refreshTitleStats() {
+  $("bestLine").textContent = String(best);
+  $("daysLine").textContent = String(daysDone.length);
+  $("bestLine2").textContent = String(best);
+}
+function setMuted(m) {
+  muted = m;
+  safeSet("ptd_muted", muted ? "1" : "0");
+  const label = muted ? "🔇" : "🔊";
+  $("muteBtn").textContent = label; $("muteBtn2").textContent = label;
+}
+function show(id) { ["titleScr", "planScr", "debriefScr"].forEach(s => $(s).classList.toggle("hidden", s !== id)); }
+
+/* ---------- title screen ---------- */
+function renderDayList() {
+  const list = $("dayList");
+  list.innerHTML = "";
+  const days = DAYS.filter(d => d.diff === diff);
+  if (!days.some(d => d.id === selDayId)) selDayId = days[0].id;
+  days.forEach(d => {
+    const b = document.createElement("button");
+    b.className = "daybtn" + (d.id === selDayId ? " sel" : "");
+    b.dataset.day = d.id;
+    const done = daysDone.indexOf(d.id) !== -1 ? " ✅ done" : "";
+    b.innerHTML = "<b>" + d.title + "</b>" + done +
+      "<small>" + d.budget + " hours · " + d.items.filter(i => i.kind === "goal").length + " goals · " +
+      d.items.filter(i => i.kind === "fun").length + " fun choices · " + d.disruptions.length +
+      (d.disruptions.length === 1 ? " surprise" : " surprises") + " — " + d.blurb + "</small>";
+    b.addEventListener("click", () => { selDayId = d.id; sfx("click"); renderDayList(); });
+    list.appendChild(b);
+  });
+}
+document.querySelectorAll(".diffbtn").forEach(b => {
+  b.addEventListener("click", () => {
+    diff = b.dataset.diff;
+    document.querySelectorAll(".diffbtn").forEach(x => x.classList.toggle("sel", x === b));
+    sfx("click"); renderDayList();
+  });
+});
+$("howBtn").addEventListener("click", () => { sfx("click"); $("helpBox").classList.toggle("hidden"); });
+$("muteBtn").addEventListener("click", () => { setMuted(!muted); if (!muted) sfx("click"); });
+$("muteBtn2").addEventListener("click", () => { setMuted(!muted); if (!muted) sfx("click"); });
+
+/* ---------- planning ---------- */
+function usedHours() { return schedule.reduce((s, e) => s + e.item.hrs, 0); }
+function freeHours() { return day ? day.budget - usedHours() : 0; }
+function entryStart(idx) { let s = 0; for (let i = 0; i < idx; i++) s += schedule[i].item.hrs; return s; }
+
+function renderPlan() {
+  $("dayTitle").textContent = "🗓️ " + day.title;
+  $("dayBlurb").textContent = day.blurb;
+  $("budgetLine").textContent = day.budget + " hours";
+  $("remainLine").textContent = freeHours() + " hour" + (freeHours() === 1 ? "" : "s");
+  /* timeline slots */
+  const tl = $("timeline"); tl.innerHTML = "";
+  const slotItem = new Array(day.budget).fill(null);
+  schedule.forEach((e, i) => {
+    const st = entryStart(i);
+    for (let h = 0; h < e.item.hrs; h++) slotItem[st + h] = { item: e.item, done: hourIdx > st + h };
+  });
+  for (let h = 0; h < day.budget; h++) {
+    const s = document.createElement("div");
+    const it = slotItem[h];
+    s.className = "slot" + (it ? " filled " + it.item.kind : "") + (it && it.done ? " done" : "") + ((playing && hourIdx === h) ? " now" : "");
+    s.innerHTML = it
+      ? "<span class='em'>" + it.item.icon + "</span><span>" + it.item.name + "</span><span>hr " + (h + 1) + (it.done ? " ✓" : "") + "</span>"
+      : "<span>hr " + (h + 1) + "</span><span>free</span>";
+    tl.appendChild(s);
+  }
+  /* item bank */
+  const bank = $("itemBank"); bank.innerHTML = "";
+  day.items.forEach((it, i) => {
+    const placed = schedule.some(e => e.item.id === it.id);
+    const b = document.createElement("button");
+    b.className = "itembtn " + it.kind + (placed ? " placed" : "");
+    b.dataset.item = it.id;
+    b.id = "item-" + it.id;
+    b.disabled = playing || (!placed && it.hrs > freeHours());
+    b.draggable = true;
+    b.innerHTML = "<span class='em'>" + it.icon + "</span><b>" + it.name + "</b>" +
+      "<small>" + it.desc + " · " + it.hrs + "h · " + it.pts + " pts · " + (i + 1) + "</small>";
+    b.addEventListener("click", () => toggleItem(it.id));
+    b.addEventListener("dragstart", ev => { try { ev.dataTransfer.setData("text/plain", it.id); } catch (e) {} });
+    bank.appendChild(b);
+  });
+  /* schedule list */
+  const sl = $("schedList"); sl.innerHTML = "";
+  $("emptySched").classList.toggle("hidden", schedule.length > 0);
+  schedule.forEach(e => {
+    const li = document.createElement("li");
+    li.innerHTML = "<span>" + e.item.icon + " <b>" + e.item.name + "</b> — " + e.item.hrs + "h · " + e.item.pts + " pts</span>";
+    const rm = document.createElement("button");
+    rm.textContent = "✕"; rm.setAttribute("aria-label", "Remove " + e.item.name);
+    rm.disabled = playing;
+    rm.addEventListener("click", () => toggleItem(e.item.id));
+    li.appendChild(rm); sl.appendChild(li);
+  });
+  $("playBtn").disabled = playing || schedule.length === 0;
+  $("clearBtn").disabled = playing;
+}
+$("timeline").addEventListener("dragover", ev => ev.preventDefault());
+$("timeline").addEventListener("drop", ev => {
+  ev.preventDefault();
+  let id = null;
+  try { id = ev.dataTransfer.getData("text/plain"); } catch (e) {}
+  if (id) toggleItem(id);
+});
+function toggleItem(id) {
+  if (playing) return;
+  const it = day.items.find(x => x.id === id);
+  if (!it) return;
+  const idx = schedule.findIndex(e => e.item.id === id);
+  if (idx !== -1) { schedule.splice(idx, 1); sfx("remove"); }
+  else {
+    if (it.hrs > freeHours()) return;
+    schedule.push({ item: it }); sfx("place");
+  }
+  renderPlan();
+}
+$("clearBtn").addEventListener("click", () => { if (playing) return; schedule = []; sfx("remove"); renderPlan(); });
+$("backBtn").addEventListener("click", () => { stopPlayback(); show("titleScr"); refreshTitleStats(); });
+
+/* ---------- playback ---------- */
+function logLine(html) {
+  const log = $("dayLog");
+  log.classList.remove("hidden");
+  const p = document.createElement("p");
+  p.innerHTML = html;
+  log.appendChild(p);
+}
+function startDay() {
+  if (schedule.length === 0 || playing) return;
+  playing = true; hourIdx = 0; shownDisruptions = 0; disruptPts = 0; disruptNotes = [];
+  completed = []; dropped = [];
+  $("dayLog").innerHTML = ""; $("dayLog").classList.add("hidden");
+  $("disruptBox").classList.add("hidden");
+  $("skipBtn").classList.remove("hidden");
+  $("playBtn").textContent = "▶ Playing…";
+  sfx("start");
+  logLine("🌅 <b>Your day begins!</b> " + day.budget + " hours to use.");
+  renderPlan();
+  stepHour();
+}
+function entryAtHour(h) { /* h is 0-based hour index; returns {entry, start} or null */
+  let s = 0;
+  for (const e of schedule) { if (h >= s && h < s + e.item.hrs) return { entry: e, start: s }; s += e.item.hrs; }
+  return null;
+}
+function stepHour() {
+  if (!playing) return;
+  /* disruption check: a surprise waits at the START of its hour */
+  const next = day.disruptions[shownDisruptions];
+  if (next && hourIdx + 1 === next.hour) { showDisruption(next); return; }
+  if (hourIdx >= day.budget) { finishDay(); return; }
+  const h = hourIdx;
+  const at = entryAtHour(h);
+  if (at) {
+    const firstHour = (h === at.start);
+    logLine("🕐 <b>Hour " + (h + 1) + ":</b> " + at.entry.item.icon + " " + at.entry.item.name +
+      (firstHour ? " — " + at.entry.item.desc + "." : " (continued)"));
+    if (h === at.start + at.entry.item.hrs - 1) completed.push(at.entry.item);
+  } else {
+    logLine("🕐 <b>Hour " + (h + 1) + ":</b> free time — you rest and recharge. 😌");
+  }
+  sfx("hour");
+  hourIdx++;
+  renderPlan();
+  playTimer = setTimeout(stepHour, 550);
+}
+function showDisruption(d) {
+  sfx("surprise");
+  $("disruptText").textContent = d.text;
+  const box = $("disruptOpts"); box.innerHTML = "";
+  d.options.forEach((opt, i) => {
+    const b = document.createElement("button");
+    b.className = "optbtn"; b.dataset.opt = String(i);
+    b.textContent = opt.label;
+    b.addEventListener("click", () => chooseOption(d, opt));
+    box.appendChild(b);
+  });
+  $("disruptBox").classList.remove("hidden");
+  try { $("disruptBox").scrollIntoView({ block: "nearest" }); } catch (e) {}
+}
+function applyEffect(opt) {
+  /* effects only touch items not yet started (start >= hourIdx) */
+  const remaining = () => schedule.filter(e => entryStart(schedule.indexOf(e)) >= hourIdx);
+  if (opt.apply === "dropFun" || opt.apply === "dropGoal") {
+    const kind = opt.apply === "dropFun" ? "fun" : "goal";
+    const idx = schedule.findIndex(e => e.item.kind === kind && entryStart(schedule.indexOf(e)) >= hourIdx);
+    if (idx !== -1) { dropped.push(schedule[idx].item); schedule.splice(idx, 1); }
+  } else if (opt.apply === "swapFun") {
+    const idx = schedule.findIndex(e => e.item.kind === "fun" && entryStart(schedule.indexOf(e)) >= hourIdx);
+    if (idx !== -1) { dropped.push(schedule[idx].item); schedule.splice(idx, 1); }
+  } else if (opt.apply === "shorten") {
+    let bestIdx = -1, bestHrs = 1;
+    schedule.forEach((e, i) => {
+      if (entryStart(i) >= hourIdx && e.item.hrs > bestHrs) { bestHrs = e.item.hrs; bestIdx = i; }
+    });
+    if (bestIdx !== -1) {
+      const it = schedule[bestIdx].item;
+      schedule[bestIdx] = { item: { id: it.id, name: it.name, kind: it.kind, hrs: it.hrs - 1, pts: it.pts, icon: it.icon, desc: it.desc } };
+    }
+  } else if (opt.apply === "addGoal") {
+    const extra = { id: "extra-" + shownDisruptions, name: "Extra reading", kind: "goal", hrs: 1, pts: 10, icon: "📖", desc: "Bonus reading you squeezed in" };
+    if (freeHours() >= 1 && !schedule.some(e => e.item.id === extra.id)) schedule.push({ item: extra });
+  }
+  /* "keep" changes nothing */
+}
+function chooseOption(d, opt) {
+  sfx("place");
+  disruptPts += opt.pts;
+  disruptNotes.push(opt.note);
+  applyEffect(opt);
+  shownDisruptions++;
+  $("disruptBox").classList.add("hidden");
+  logLine("⚠️ <b>Surprise!</b> " + d.text + "<br>👉 You chose: “" + opt.label + "” (" + (opt.pts >= 0 ? "+" : "") + opt.pts + " pts) — " + opt.note);
+  renderPlan();
+  stepHour();
+}
+$("skipBtn").addEventListener("click", () => {
+  if (!playing) return;
+  if (playTimer) { clearTimeout(playTimer); playTimer = null; }
+  /* finish remaining hours instantly, no more disruptions */
+  while (hourIdx < day.budget) {
+    const at = entryAtHour(hourIdx);
+    if (at && hourIdx === at.start + at.entry.item.hrs - 1) completed.push(at.entry.item);
+    hourIdx++;
+  }
+  finishDay();
+});
+function stopPlayback() {
+  playing = false; playPaused = false;
+  if (playTimer) { clearTimeout(playTimer); playTimer = null; }
+}
+function finishDay() {
+  stopPlayback();
+  $("skipBtn").classList.add("hidden");
+  $("playBtn").textContent = "▶ Play Day";
+  const goalPts = completed.filter(i => i.kind === "goal").reduce((s, i) => s + i.pts, 0);
+  const funPts = completed.filter(i => i.kind === "fun").reduce((s, i) => s + i.pts, 0);
+  const goalsDone = completed.filter(i => i.kind === "goal").length;
+  const funDone = completed.filter(i => i.kind === "fun").length;
+  const goalsPlanned = schedule.filter(e => e.item.kind === "goal").length + dropped.filter(i => i.kind === "goal").length;
+  const balance = (goalsDone >= 1 && funDone >= 1) ? 10 : 0;
+  const score = goalPts + funPts + balance + disruptPts;
+  sfx("done");
+  /* save best + days completed */
+  if (score > best) best = score;
+  if (daysDone.indexOf(day.id) === -1) daysDone.push(day.id);
+  saveProgress();
+  /* debrief */
+  $("debriefDay").textContent = day.title + " · " + day.budget + "-hour day";
+  $("finalScore").textContent = String(score);
+  $("scoreBreak").innerHTML =
+    "🎯 Goals finished: <b>" + goalPts + " pts</b> (" + goalsDone + " goal" + (goalsDone === 1 ? "" : "s") + ")<br>" +
+    "🎉 Fun enjoyed: <b>" + funPts + " pts</b> (" + funDone + " fun thing" + (funDone === 1 ? "" : "s") + ")<br>" +
+    "⚖️ Balance bonus: <b>" + (balance ? "+10 pts" : "0 pts") + "</b> (goals + fun together)<br>" +
+    "⚠️ Surprise handling: <b>" + (disruptPts >= 0 ? "+" : "") + disruptPts + " pts</b><br>" +
+    "<b>Total: " + score + " pts</b>";
+  const well = [];
+  if (goalsDone > 0) well.push(goalsDone === goalsPlanned
+    ? "You finished every goal you planned! 🎯"
+    : "You finished " + goalsDone + " of " + goalsPlanned + " goals. 🎯");
+  if (balance) well.push("You mixed work and fun — a balanced day feels better and scores more! ⚖️");
+  if (disruptPts > 0) well.push("You handled the surprise" + (day.disruptions.length > 1 ? "s" : "") + " really well. 👏");
+  if (freeHours() === 0 && schedule.length > 0) well.push("You used every hour of your day — nothing wasted! ⏰");
+  if (dropped.length === 0 && shownDisruptions > 0) well.push("Nothing on your plan had to be dropped. 📋");
+  if (well.length === 0) well.push("You played the whole day through — every plan teaches something! 🌟");
+  $("wentWell").innerHTML = well.map(w => "<li>" + w + "</li>").join("");
+  let tip = "";
+  if (goalsDone < goalsPlanned) tip = "💡 Tip: try putting your biggest goal first in the day, so surprises later cannot push it out.";
+  else if (!balance) tip = "💡 Tip: next time, add at least one fun thing alongside your goals — balance earns +10 points!";
+  else if (disruptPts <= 0) tip = "💡 Tip: when a surprise pops up, look for the choice that keeps your goals safe.";
+  else tip = "💡 Tip: you planned a great day! Try a harder day next — 8 hours with two surprises.";
+  $("tipBox").textContent = tip;
+  refreshTitleStats();
+  show("debriefScr");
+}
+$("playBtn").addEventListener("click", startDay);
+$("againBtn").addEventListener("click", () => { sfx("click"); startPlanning(day.id); });
+$("chooseBtn").addEventListener("click", () => { sfx("click"); show("titleScr"); refreshTitleStats(); });
+
+/* ---------- start ---------- */
+function startPlanning(dayId) {
+  day = DAYS.find(d => d.id === dayId) || DAYS[0];
+  schedule = []; playing = false; hourIdx = 0; shownDisruptions = 0;
+  $("dayLog").innerHTML = ""; $("dayLog").classList.add("hidden");
+  $("disruptBox").classList.add("hidden");
+  $("skipBtn").classList.add("hidden");
+  $("playBtn").textContent = "▶ Play Day";
+  renderPlan();
+  show("planScr");
+}
+$("startBtn").addEventListener("click", () => { sfx("start"); startPlanning(selDayId); });
+document.addEventListener("keydown", e => {
+  if ($("planScr").classList.contains("hidden") || playing) {
+    if (e.key === "m" || e.key === "M") setMuted(!muted);
+    return;
+  }
+  if (e.key >= "1" && e.key <= "9") {
+    const it = day.items[Number(e.key) - 1];
+    if (it) toggleItem(it.id);
+  } else if (e.key === "p" || e.key === "P") startDay();
+  else if (e.key === "m" || e.key === "M") setMuted(!muted);
+});
+loadProgress();
+setMuted(muted);
+renderDayList();
+refreshTitleStats();
+show("titleScr");
+</script>

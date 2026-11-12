@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ripple Effect — Systems Thinking</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: #0e2a3a; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #eaf6ff; min-height: 100vh;
+    background: linear-gradient(180deg, #0e2a3a 0%, #14506b 55%, #0e2a3a 100%);
+  }
+  .wrap { max-width: 430px; margin: 0 auto; padding: 12px 14px 28px; width: 100%; }
+  .hidden { display: none !important; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .tag { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: #ffe08a; }
+  .tag span { background: #1d6f8e; border-radius: 20px; padding: 4px 10px; margin-right: 4px; }
+  .iconbtn {
+    font-size: 22px; line-height: 1; background: #1d6f8e; color: #fff;
+    border: 2px solid #7fc4de; border-radius: 12px; min-width: 48px; min-height: 48px;
+    cursor: pointer; padding: 6px 10px;
+  }
+  h1 { font-size: 34px; margin: 8px 0 2px; text-align: center; }
+  h1 .wave { font-size: 30px; }
+  .subtitle { text-align: center; color: #bfe6f5; margin: 0 0 14px; font-size: 15px; }
+  .card {
+    background: rgba(255,255,255,0.10); border: 2px solid rgba(255,255,255,0.22);
+    border-radius: 16px; padding: 14px; margin-bottom: 12px;
+  }
+  .card h2 { margin: 0 0 8px; font-size: 19px; }
+  .card p { margin: 6px 0; font-size: 15px; line-height: 1.45; }
+  .bigbtn {
+    display: block; width: 100%; min-height: 56px; font-size: 20px; font-weight: 800;
+    color: #08222e; background: #ffd23e; border: none; border-radius: 14px;
+    cursor: pointer; margin: 10px 0; padding: 12px;
+  }
+  .bigbtn:disabled { background: #8a97a0; color: #e6e6e6; cursor: default; }
+  .bigbtn.secondary { background: #7fc4de; font-size: 17px; min-height: 50px; }
+  .diffrow { display: flex; gap: 8px; }
+  .diffbtn {
+    flex: 1; min-height: 64px; border-radius: 14px; border: 3px solid #7fc4de;
+    background: #174a61; color: #eaf6ff; font-size: 16px; font-weight: 800;
+    cursor: pointer; padding: 8px 4px; line-height: 1.3;
+  }
+  .diffbtn small { display: block; font-size: 12px; font-weight: 400; color: #bfe6f5; }
+  .diffbtn.sel { border-color: #ffd23e; background: #1d6f8e; box-shadow: 0 0 0 2px #ffd23e inset; }
+  .howto { font-size: 14px; color: #d6eef8; }
+  .howto li { margin-bottom: 6px; line-height: 1.4; }
+  .roundline { display: flex; justify-content: space-between; font-weight: 800; font-size: 15px; margin-bottom: 8px; }
+  .sysbadge {
+    display: inline-block; background: #1d6f8e; border-radius: 20px; padding: 4px 12px;
+    font-size: 13px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .scenTitle { font-size: 22px; margin: 2px 0 8px; }
+  .event {
+    background: #ffd23e; color: #08222e; border-radius: 14px; padding: 12px;
+    font-size: 17px; font-weight: 700; line-height: 1.4; margin-bottom: 12px;
+  }
+  .event small { display: block; font-size: 12px; font-weight: 800; letter-spacing: 1px; }
+  .instr { font-size: 15px; margin: 4px 0 10px; line-height: 1.4; }
+  .instr b { color: #ffd23e; }
+  .parts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .part {
+    min-height: 84px; border-radius: 14px; border: 3px solid #7fc4de;
+    background: #174a61; color: #eaf6ff; cursor: pointer; padding: 10px 8px;
+    font-size: 15px; font-weight: 700; text-align: center; line-height: 1.25;
+    position: relative;
+  }
+  .part .emoji { font-size: 30px; display: block; }
+  .part .pname { display: block; margin-top: 2px; }
+  .part .role { display: block; font-size: 11px; font-weight: 400; color: #bfe6f5; }
+  .part .pred {
+    position: absolute; top: 6px; right: 8px; font-size: 22px; font-weight: 900;
+    width: 32px; height: 32px; line-height: 30px; border-radius: 50%;
+    background: rgba(0,0,0,0.35); color: #fff;
+  }
+  .part.pred-up { border-color: #58d68d; background: #1e6b41; }
+  .part.pred-up .pred { background: #58d68d; color: #08222e; }
+  .part.pred-down { border-color: #ff9a7a; background: #7a2d1d; }
+  .part.pred-down .pred { background: #ff9a7a; color: #08222e; }
+  .part.is-event { border-style: dashed; border-color: #ffd23e; }
+  .part.rippling { animation: pulse 0.45s ease-in-out 2; border-color: #ffd23e; }
+  @keyframes pulse { 50% { transform: scale(1.06); } }
+  .part.done-up { border-color: #58d68d; background: #1e6b41; }
+  .part.done-down { border-color: #ff9a7a; background: #7a2d1d; }
+  .part .result { display: block; font-size: 22px; font-weight: 900; margin-top: 2px; }
+  .links { font-size: 13.5px; line-height: 1.5; }
+  .links h3 { margin: 0 0 6px; font-size: 14px; color: #ffe08a; }
+  .links div { margin-bottom: 4px; }
+  .log { font-size: 14.5px; line-height: 1.5; }
+  .log div { margin-bottom: 5px; }
+  .resultbox { background: rgba(255,255,255,0.10); border: 2px solid #ffd23e; border-radius: 14px; padding: 12px; margin-bottom: 12px; }
+  .resultbox h3 { margin: 0 0 6px; font-size: 18px; }
+  .resultbox p, .resultbox li { font-size: 15px; line-height: 1.45; }
+  .resultbox ul { margin: 6px 0; padding-left: 20px; }
+  .good { color: #7be3a8; font-weight: 700; }
+  .bad { color: #ffb199; font-weight: 700; }
+  .scorebig { font-size: 44px; font-weight: 900; text-align: center; color: #ffd23e; margin: 4px 0; }
+  .center { text-align: center; }
+  .kbd-hint { font-size: 12px; color: #9fc9dc; text-align: center; margin-top: 4px; }
+  .bestline { text-align: center; font-size: 14px; color: #ffe08a; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="tag"><span>SOLVE</span><span>Systems Thinking</span></div>
+    <button class="iconbtn" id="muteBtn" aria-label="Mute or unmute sound">🔊</button>
+  </div>
+
+  <!-- TITLE SCREEN -->
+  <div id="titleScr">
+    <h1><span class="wave">🌊</span> Ripple Effect</h1>
+    <p class="subtitle">One small change ripples through a whole system.<br>Can you predict the ripple?</p>
+    <div class="card">
+      <h2>How to play</h2>
+      <ol class="howto">
+        <li>Look at the pond, garden or school system and read the <b>event</b>.</li>
+        <li>Tap the parts you think will change. Tap again to switch between <b>▲ up</b> and <b>▼ down</b>.</li>
+        <li>Press <b>PLAY ▶</b> and watch the ripple travel step by step.</li>
+        <li>Compare your prediction with what really happens — and find out <b>why</b>.</li>
+      </ol>
+      <p class="howto">🖐️ Solo game · Grades 1–12 · Keys <b>1–7</b> tap a part, <b>P</b> plays.</p>
+    </div>
+    <div class="card">
+      <h2>Pick a difficulty</h2>
+      <div class="diffrow" id="diffRow">
+        <button class="diffbtn sel" id="diff-easy" data-diff="easy">😊 Easy<small>3 parts · predict 1</small><small id="best-easy"></small></button>
+        <button class="diffbtn" id="diff-medium" data-diff="medium">🙂 Medium<small>5 parts · predict 2</small><small id="best-medium"></small></button>
+        <button class="diffbtn" id="diff-hard" data-diff="hard">🤔 Hard<small>6–7 parts · predict 3</small><small id="best-hard"></small></button>
+      </div>
+    </div>
+    <button class="bigbtn" id="startBtn">▶ Start Predicting</button>
+    <p class="bestline" id="titleBest"></p>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScr" class="hidden">
+    <div class="roundline"><span id="roundLabel"></span><span id="scoreLabel">Score: 0</span></div>
+    <div class="sysbadge" id="sysBadge"></div>
+    <h2 class="scenTitle" id="scenTitle"></h2>
+    <div class="event"><small>⚡ EVENT</small><span id="eventText"></span></div>
+    <p class="instr" id="instrText"></p>
+    <div class="parts" id="partsGrid"></div>
+    <div class="card links" id="linksCard"><h3>🔗 How the parts are linked</h3><div id="linksList"></div></div>
+    <div class="card log hidden" id="logCard"><h3 style="margin:0 0 6px;font-size:14px;color:#ffe08a;">🌊 The ripple…</h3><div id="rippleLog"></div></div>
+    <button class="bigbtn" id="playBtn" disabled>▶ PLAY the ripple</button>
+    <div class="resultbox hidden" id="resultBox"></div>
+    <button class="bigbtn secondary hidden" id="nextBtn">Next ripple →</button>
+    <button class="bigbtn secondary hidden" id="againBtn">↺ Play again</button>
+    <p class="kbd-hint">Tap a part to predict ▲ up / ▼ down · Keys 1–7 pick a part · P = Play</p>
+  </div>
+
+  <!-- SUMMARY SCREEN -->
+  <div id="sumScr" class="hidden">
+    <h1 class="center">🎉 Set complete!</h1>
+    <div class="card">
+      <p class="center" id="sumText"></p>
+      <div class="scorebig" id="sumScore"></div>
+      <p class="center" id="sumBest"></p>
+      <p class="center" id="sumNote"></p>
+    </div>
+    <button class="bigbtn" id="sumAgainBtn">↺ Play this level again</button>
+    <button class="bigbtn secondary" id="sumMenuBtn">🏠 Change difficulty</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- storage guards (EVERY localStorage access goes through these) ---------- */
+function safeGet(key) {
+  try { return window.localStorage.getItem(key); } catch (e) { return null; }
+}
+function safeSet(key, value) {
+  try { window.localStorage.setItem(key, value); } catch (e) { /* storage denied: play on without saving */ }
+}
+
+/* ---------- audio: synthesized only, iOS playback route, close on hide ---------- */
+var __ctx = null;
+var muted = safeGet("ripple_muted") === "1";
+function setAudioSession() {
+  try { if (navigator && "audioSession" in navigator) navigator.audioSession.type = "playback"; } catch (e) {}
+}
+function ensureCtx() {
+  setAudioSession();
+  try {
+    if (__ctx && __ctx.state === "closed") __ctx = null;
+    if (!__ctx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      __ctx = new AC();
+      window.__maCtx = __ctx;
+    }
+    if (__ctx.state === "suspended") __ctx.resume();
+  } catch (e) { __ctx = null; }
+  return __ctx;
+}
+function tone(freq, dur, type, vol, when) {
+  if (muted) return;
+  var ctx = ensureCtx();
+  if (!ctx) return;
+  try {
+    var t = ctx.currentTime + (when || 0);
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || "triangle"; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || 0.12, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.18));
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + (dur || 0.18) + 0.05);
+  } catch (e) {}
+}
+function sfx(name) {
+  if (muted) return;
+  if (name === "tap") tone(520, 0.08, "triangle", 0.10);
+  else if (name === "flip") tone(660, 0.08, "triangle", 0.10);
+  else if (name === "ripple") tone(392, 0.16, "triangle", 0.11);
+  else if (name === "good") { tone(523, 0.12, "triangle", 0.12); tone(659, 0.12, "triangle", 0.12, 0.10); tone(784, 0.22, "triangle", 0.12, 0.20); }
+  else if (name === "oops") { tone(330, 0.15, "square", 0.06); tone(262, 0.22, "square", 0.06, 0.12); }
+  else if (name === "win") { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0.18, "triangle", 0.12, i * 0.12); }); }
+}
+document.addEventListener("pointerdown", setAudioSession, true);
+document.addEventListener("touchstart", setAudioSession, true);
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) {
+    try { if (__ctx && __ctx.state !== "closed") __ctx.close(); } catch (e) {}
+    __ctx = null;
+  }
+});
+
+/* ---------- scenarios: causal model behind every one ----------
+   parts: {id, name, emoji, role}
+   event: {part, dir: 'up'|'down', text}
+   links: {from, to, sign: +1|-1, why}  — sign is the direction the "to" part
+           moves when the "from" part moves up (flip it when "from" goes down).
+   truth: {partId: 'up'|'down'} — must equal BFS propagation from the event. */
+var SCENARIOS = [
+  { id: "sunny-pond", title: "A Sunny Week at the Pond", system: "pond", diff: "easy",
+    parts: [
+      { id: "sun", name: "Sun", emoji: "☀️", role: "warms the pond" },
+      { id: "algae", name: "Algae", emoji: "🟢", role: "tiny green plants" },
+      { id: "tadpoles", name: "Tadpoles", emoji: "🐸", role: "baby frogs" }
+    ],
+    event: { part: "sun", dir: "up", text: "A long, sunny week — the sun shines strong every day!" },
+    links: [
+      { from: "sun", to: "algae", sign: 1, why: "More sun helps algae grow faster" },
+      { from: "algae", to: "tadpoles", sign: 1, why: "Tadpoles munch on algae, so more algae means more tadpole food" }
+    ],
+    truth: { algae: "up", tadpoles: "up" },
+    why: "Sunlight is food for algae. With a sunny week the algae bloom, and tadpoles get a feast — so both rise together, one step after the other." },
+  { id: "rainy-garden", title: "Rain for the Garden", system: "garden", diff: "easy",
+    parts: [
+      { id: "rain", name: "Rain", emoji: "🌧️", role: "waters the garden" },
+      { id: "soil", name: "Soil", emoji: "🟤", role: "holds water + food" },
+      { id: "plants", name: "Plants", emoji: "🌱", role: "grow in the soil" }
+    ],
+    event: { part: "rain", dir: "up", text: "A whole week of gentle, steady rain!" },
+    links: [
+      { from: "rain", to: "soil", sign: 1, why: "Rain soaks into the soil" },
+      { from: "soil", to: "plants", sign: 1, why: "Damp, rich soil helps plants drink and grow" }
+    ],
+    truth: { soil: "up", plants: "up" },
+    why: "Rain does not water plants directly — it fills the soil first, and the soil passes the water on. That is why the ripple goes rain → soil → plants." },
+  { id: "heron-leaves", title: "The Heron Flies Away", system: "pond", diff: "easy",
+    parts: [
+      { id: "heron", name: "Heron", emoji: "🦩", role: "hunts frogs" },
+      { id: "frogs", name: "Frogs", emoji: "🐸", role: "eat insects" },
+      { id: "insects", name: "Insects", emoji: "🦟", role: "fly over the pond" }
+    ],
+    event: { part: "heron", dir: "down", text: "The big heron flies away to a far-off lake — and does not come back!" },
+    links: [
+      { from: "heron", to: "frogs", sign: -1, why: "Herons hunt frogs, so fewer herons means safer frogs" },
+      { from: "frogs", to: "insects", sign: -1, why: "Frogs snap up insects, so more frogs means fewer insects" }
+    ],
+    truth: { frogs: "up", insects: "down" },
+    why: "Losing a hunter helps the hunted — frogs boom. But then the frogs hunt more, so insects fall. A ripple can flip direction at every step!" },
+  { id: "compost-garden", title: "Compost in the Garden", system: "garden", diff: "easy",
+    parts: [
+      { id: "compost", name: "Compost", emoji: "🍂", role: "rotted food + leaves" },
+      { id: "worms", name: "Worms", emoji: "🪱", role: "eat compost" },
+      { id: "soil", name: "Soil", emoji: "🟤", role: "feeds the plants" }
+    ],
+    event: { part: "compost", dir: "up", text: "Someone tips a big bucket of compost onto the garden bed!" },
+    links: [
+      { from: "compost", to: "worms", sign: 1, why: "Worms love to eat compost" },
+      { from: "worms", to: "soil", sign: 1, why: "Worms churn the soil and leave rich worm casts behind" }
+    ],
+    truth: { worms: "up", soil: "up" },
+    why: "Compost is worm food first. The worms eat it, wiggle through the bed, and their digging and droppings make the soil richer — the garden improves because the worms did the work." },
+  { id: "hot-dry-week", title: "A Hot, Dry Week", system: "pond", diff: "medium",
+    parts: [
+      { id: "heat", name: "Hot Sun", emoji: "🥵", role: "dries the pond" },
+      { id: "water", name: "Pond Water", emoji: "💧", role: "where tadpoles live" },
+      { id: "algae", name: "Algae", emoji: "🟢", role: "grows in the water" },
+      { id: "tadpoles", name: "Tadpoles", emoji: "🐸", role: "baby frogs" },
+      { id: "frogs", name: "Frogs", emoji: "🐸", role: "grow from tadpoles" }
+    ],
+    event: { part: "heat", dir: "up", text: "A hot, dry week — blazing sun and not a drop of rain!" },
+    links: [
+      { from: "heat", to: "water", sign: -1, why: "Heat evaporates the pond water away" },
+      { from: "water", to: "algae", sign: 1, why: "Algae need water to grow" },
+      { from: "water", to: "tadpoles", sign: 1, why: "Tadpoles need water to swim and breathe" },
+      { from: "tadpoles", to: "frogs", sign: 1, why: "Fewer tadpoles grow up into fewer frogs" }
+    ],
+    truth: { water: "down", algae: "down", tadpoles: "down", frogs: "down" },
+    why: "Heat does not hurt the animals directly — it shrinks their home. Less water means less algae and less room for tadpoles, and fewer tadpoles means fewer frogs later. One drying pond ripples all the way down the chain." },
+  { id: "bees-visit", title: "Bees Visit the Garden", system: "garden", diff: "medium",
+    parts: [
+      { id: "flowers", name: "Flowers", emoji: "🌸", role: "bloom in spring" },
+      { id: "bees", name: "Bees", emoji: "🐝", role: "carry pollen" },
+      { id: "fruit", name: "Fruit", emoji: "🍎", role: "grows after flowers" },
+      { id: "birds", name: "Birds", emoji: "🐦", role: "eat the fruit" },
+      { id: "seeds", name: "Seeds", emoji: "🌰", role: "inside the fruit" }
+    ],
+    event: { part: "flowers", dir: "up", text: "A warm spring — flowers burst open all over the garden!" },
+    links: [
+      { from: "flowers", to: "bees", sign: 1, why: "Flowers offer nectar, so bees come to visit" },
+      { from: "bees", to: "fruit", sign: 1, why: "Bees carry pollen, and pollinated flowers turn into fruit" },
+      { from: "fruit", to: "birds", sign: 1, why: "More fruit means more food for birds" },
+      { from: "fruit", to: "seeds", sign: 1, why: "Every fruit carries seeds for next year's plants" }
+    ],
+    truth: { bees: "up", fruit: "up", birds: "up", seeds: "up" },
+    why: "Flowers are the garden's invitation. Bees answer it, and by visiting they pollinate — so flowers become fruit, fruit feeds birds and hides seeds for next year. The bees are the middle link that makes it all happen." },
+  { id: "school-compost", title: "The School Compost Bin", system: "school", diff: "medium",
+    parts: [
+      { id: "compost", name: "Compost Bin", emoji: "♻️", role: "lunch scraps rot here" },
+      { id: "worms", name: "Worms", emoji: "🪱", role: "eat the scraps" },
+      { id: "soil", name: "Garden Soil", emoji: "🟤", role: "in the school garden" },
+      { id: "plants", name: "Veggies", emoji: "🥬", role: "grow for lunch" },
+      { id: "harvest", name: "Harvest", emoji: "🧺", role: "food for the cafeteria" }
+    ],
+    event: { part: "compost", dir: "up", text: "The school starts a compost bin — lunch scraps go in every day!" },
+    links: [
+      { from: "compost", to: "worms", sign: 1, why: "Worms move in to eat the scraps" },
+      { from: "compost", to: "soil", sign: 1, why: "Finished compost is spread on the garden beds" },
+      { from: "worms", to: "soil", sign: 1, why: "Worms dig and enrich the soil" },
+      { from: "soil", to: "plants", sign: 1, why: "Rich soil grows strong veggies" },
+      { from: "plants", to: "harvest", sign: 1, why: "Strong veggies mean a bigger harvest" }
+    ],
+    truth: { worms: "up", soil: "up", plants: "up", harvest: "up" },
+    why: "Nothing is wasted: scraps feed worms, worms and compost feed the soil, soil feeds the veggies, and the veggies come back as lunch. It is a loop — the cafeteria feeds the garden and the garden feeds the cafeteria." },
+  { id: "fertilizer-runoff", title: "Fertilizer Washes Into the Pond", system: "pond", diff: "medium",
+    parts: [
+      { id: "fertilizer", name: "Fertilizer", emoji: "🧪", role: "plant food, washed in" },
+      { id: "algae", name: "Algae", emoji: "🟢", role: "tiny green plants" },
+      { id: "oxygen", name: "Oxygen", emoji: "🫧", role: "in the water" },
+      { id: "fish", name: "Fish", emoji: "🐟", role: "need oxygen to breathe" },
+      { id: "heron", name: "Heron", emoji: "🦩", role: "hunts fish" }
+    ],
+    event: { part: "fertilizer", dir: "up", text: "Heavy rain washes garden fertilizer into the pond!" },
+    links: [
+      { from: "fertilizer", to: "algae", sign: 1, why: "Fertilizer is algae food — it makes algae explode" },
+      { from: "algae", to: "oxygen", sign: -1, why: "A huge algae bloom blocks light and uses up oxygen as it dies off" },
+      { from: "oxygen", to: "fish", sign: 1, why: "Fish need oxygen in the water to breathe" },
+      { from: "fish", to: "heron", sign: 1, why: "Herons eat fish, so fewer fish means hungrier herons" }
+    ],
+    truth: { algae: "up", oxygen: "down", fish: "down", heron: "down" },
+    why: "This is the sneaky one: fertilizer sounds helpful, and the algae love it — but too much algae steals the oxygen, the fish struggle to breathe, and the heron goes hungry. More of a good thing can still ripple badly." },
+  { id: "herons-gone", title: "All the Herons Leave", system: "pond", diff: "hard",
+    parts: [
+      { id: "heron", name: "Heron", emoji: "🦩", role: "hunts frogs" },
+      { id: "frogs", name: "Frogs", emoji: "🐸", role: "eat insects" },
+      { id: "insects", name: "Insects", emoji: "🦟", role: "graze on algae" },
+      { id: "algae", name: "Algae", emoji: "🟢", role: "tadpole food" },
+      { id: "tadpoles", name: "Tadpoles", emoji: "🐸", role: "baby frogs" },
+      { id: "plants", name: "Pond Plants", emoji: "🌿", role: "need sunlight" }
+    ],
+    event: { part: "heron", dir: "down", text: "Every heron leaves the pond for good — the frogs are safe now!" },
+    links: [
+      { from: "heron", to: "frogs", sign: -1, why: "Herons hunt frogs, so no herons means safer frogs" },
+      { from: "frogs", to: "insects", sign: -1, why: "More frogs snap up more insects" },
+      { from: "insects", to: "algae", sign: -1, why: "Insects graze on algae, so fewer insects means algae grows free" },
+      { from: "algae", to: "tadpoles", sign: 1, why: "More algae means more food for tadpoles" },
+      { from: "tadpoles", to: "frogs", sign: 1, why: "More tadpoles grow into even more frogs — a loop!" },
+      { from: "algae", to: "plants", sign: -1, why: "Thick algae shades the water, stealing sunlight from pond plants" }
+    ],
+    truth: { frogs: "up", insects: "down", algae: "up", tadpoles: "up", plants: "down" },
+    why: "Watch the loop: safe frogs eat the insects, the algae grows wild without grazers, tadpoles feast — and grow into MORE frogs, so the ripple feeds itself. But the wild algae shades out the pond plants, the one loser in the chain. Removing a hunter can help almost everyone… except the plants." },
+  { id: "too-many-tadpoles", title: "Too Many Tadpoles!", system: "pond", diff: "hard",
+    parts: [
+      { id: "tadpoles", name: "Tadpoles", emoji: "🐸", role: "baby frogs" },
+      { id: "algae", name: "Algae", emoji: "🟢", role: "tadpole food" },
+      { id: "oxygen", name: "Oxygen", emoji: "🫧", role: "in the water" },
+      { id: "fish", name: "Fish", emoji: "🐟", role: "need oxygen" },
+      { id: "heron", name: "Heron", emoji: "🦩", role: "hunts fish" },
+      { id: "frogs", name: "Frogs", emoji: "🐸", role: "grown-up tadpoles" }
+    ],
+    event: { part: "tadpoles", dir: "up", text: "A rainy spring doubles the tadpoles — the pond is packed with them!" },
+    links: [
+      { from: "tadpoles", to: "algae", sign: -1, why: "Hungry tadpoles graze the algae down to nothing" },
+      { from: "algae", to: "oxygen", sign: 1, why: "Algae release oxygen into the water" },
+      { from: "oxygen", to: "fish", sign: 1, why: "Fish need oxygen to breathe" },
+      { from: "fish", to: "heron", sign: 1, why: "Herons eat fish, so fewer fish means hungrier herons" },
+      { from: "tadpoles", to: "frogs", sign: 1, why: "More tadpoles grow into more frogs" }
+    ],
+    truth: { algae: "down", oxygen: "down", fish: "down", heron: "down", frogs: "up" },
+    why: "The counterintuitive one: MORE tadpoles ends up hurting the fish! The tadpoles eat all the algae, the algae stop making oxygen, the fish gasp — and the heron goes hungry. Only the frogs win, because tadpoles become frogs. A boom in one part can crash another." },
+  { id: "shady-garden", title: "The Garden Gets Shady", system: "garden", diff: "hard",
+    parts: [
+      { id: "sunlight", name: "Sunlight", emoji: "☀️", role: "feeds the beds" },
+      { id: "tomatoes", name: "Tomatoes", emoji: "🍅", role: "need sun + no pests" },
+      { id: "flowers", name: "Flowers", emoji: "🌸", role: "need sun to bloom" },
+      { id: "bees", name: "Bees", emoji: "🐝", role: "visit the flowers" },
+      { id: "fruit", name: "Fruit", emoji: "🍎", role: "from flowers + tomatoes" },
+      { id: "birds", name: "Birds", emoji: "🐦", role: "eat the fruit" },
+      { id: "insects", name: "Pest Insects", emoji: "🐛", role: "munch tomatoes" }
+    ],
+    event: { part: "sunlight", dir: "down", text: "The big oak tree grows tall and shades the whole garden!" },
+    links: [
+      { from: "sunlight", to: "tomatoes", sign: 1, why: "Tomatoes need full sun to grow" },
+      { from: "sunlight", to: "flowers", sign: 1, why: "Flowers need sun to bloom" },
+      { from: "flowers", to: "bees", sign: 1, why: "Fewer flowers means fewer bees visit" },
+      { from: "bees", to: "fruit", sign: 1, why: "Fewer bees means less pollination, so less fruit" },
+      { from: "tomatoes", to: "fruit", sign: 1, why: "Weak tomato plants make less fruit too" },
+      { from: "fruit", to: "birds", sign: 1, why: "Less fruit means less food for birds" },
+      { from: "birds", to: "insects", sign: -1, why: "Birds eat pest insects, so fewer birds means pests are safe" },
+      { from: "insects", to: "tomatoes", sign: -1, why: "Safe pests munch the tomatoes even more — a loop!" }
+    ],
+    truth: { tomatoes: "down", flowers: "down", bees: "down", fruit: "down", birds: "down", insects: "up" },
+    why: "Shade hits twice: it weakens the tomatoes and the flowers directly, and then the pests get a free pass because the birds left. Fewer birds → more pests → even weaker tomatoes. The only winners are the pest insects — and they win because of a loop, not because the shade helped them." },
+  { id: "walking-bus", title: "The Walking Bus", system: "school", diff: "hard",
+    parts: [
+      { id: "cars", name: "Cars", emoji: "🚗", role: "drop kids at school" },
+      { id: "pollution", name: "Exhaust", emoji: "💨", role: "dirty air from cars" },
+      { id: "air", name: "Clean Air", emoji: "🌤️", role: "to breathe at school" },
+      { id: "health", name: "Healthy Kids", emoji: "💪", role: "lungs + energy" },
+      { id: "walking", name: "Walking", emoji: "🚶", role: "kids walk to school" },
+      { id: "attendance", name: "Attendance", emoji: "📚", role: "kids in class" }
+    ],
+    event: { part: "cars", dir: "down", text: "The school starts a walking bus — far fewer cars at drop-off!" },
+    links: [
+      { from: "cars", to: "pollution", sign: 1, why: "Fewer cars means less exhaust" },
+      { from: "pollution", to: "air", sign: -1, why: "Less exhaust means cleaner air" },
+      { from: "air", to: "health", sign: 1, why: "Cleaner air means healthier lungs" },
+      { from: "health", to: "walking", sign: 1, why: "Healthy, energetic kids walk to school more" },
+      { from: "walking", to: "cars", sign: -1, why: "More walking means even fewer cars — a loop!" },
+      { from: "health", to: "attendance", sign: 1, why: "Healthy kids miss fewer school days" }
+    ],
+    truth: { pollution: "down", air: "up", health: "up", walking: "up", attendance: "up" },
+    why: "This ripple is a good loop: fewer cars → cleaner air → healthier kids → more walking → even fewer cars. Each step makes the next one stronger, so a small change at drop-off ends up lifting attendance too. Systems can spiral up, not just down." }
+];
+
+var PREDICT_COUNT = { easy: 1, medium: 2, hard: 3 };
+var SYS_LABEL = { pond: "🏞️ Pond", garden: "🌻 Garden", school: "🏫 School" };
+
+/* ---------- state ---------- */
+var state = {
+  diff: "easy",
+  list: [],
+  round: 0,
+  score: 0,
+  predictions: {},   // partId -> 'up' | 'down'
+  played: false,
+  timers: []
+};
+function $(id) { return document.getElementById(id); }
+function scenariosFor(diff) { return SCENARIOS.filter(function (s) { return s.diff === diff; }); }
+function currentScenario() { return state.list[state.round]; }
+function bestKey(diff) { return "ripple_best_" + diff; }
+function getBest(diff) {
+  var v = parseInt(safeGet(bestKey(diff)) || "0", 10);
+  return isNaN(v) ? 0 : v;
+}
+function show(id) { $(id).classList.remove("hidden"); }
+function hide(id) { $(id).classList.add("hidden"); }
+
+/* ripple order: BFS from the event part following the links */
+function rippleOrder(scen) {
+  var order = [], seen = {};
+  var queue = [{ id: scen.event.part, dir: scen.event.dir }];
+  seen[scen.event.part] = true;
+  while (queue.length) {
+    var cur = queue.shift();
+    scen.links.forEach(function (l) {
+      if (l.from === cur.id && !seen[l.to]) {
+        seen[l.to] = true;
+        queue.push({ id: l.to, dir: cur.dir === "up" ? (l.sign === 1 ? "up" : "down") : (l.sign === 1 ? "down" : "up") });
+        order.push({ id: l.to, dir: queue[queue.length - 1].dir });
+      }
+    });
+  }
+  return order;
+}
+function partById(scen, id) {
+  for (var i = 0; i < scen.parts.length; i++) if (scen.parts[i].id === id) return scen.parts[i];
+  return null;
+}
+function arrow(dir) { return dir === "up" ? "▲" : "▼"; }
+
+/* ---------- screens ---------- */
+function refreshBestLabels() {
+  ["easy", "medium", "hard"].forEach(function (d) {
+    var b = getBest(d);
+    $("best-" + d).textContent = b > 0 ? ("Best: " + b) : "";
+  });
+  var b = getBest(state.diff);
+  $("titleBest").textContent = b > 0 ? ("Your best on " + state.diff + ": " + b + " points") : "";
+}
+function startSet() {
+  state.list = scenariosFor(state.diff);
+  state.round = 0;
+  state.score = 0;
+  sfx("tap");
+  hide("titleScr"); hide("sumScr"); show("gameScr");
+  renderRound();
+}
+function renderRound() {
+  var scen = currentScenario();
+  state.predictions = {};
+  state.played = false;
+  state.timers.forEach(clearTimeout); state.timers = [];
+  $("roundLabel").textContent = "Ripple " + (state.round + 1) + " of " + state.list.length + " · " + state.diff;
+  $("scoreLabel").textContent = "Score: " + state.score;
+  $("sysBadge").textContent = SYS_LABEL[scen.system] + " system";
+  $("scenTitle").textContent = scen.title;
+  $("eventText").textContent = scen.event.text;
+  var n = PREDICT_COUNT[state.diff];
+  $("instrText").innerHTML = "Predict <b>" + n + " change" + (n > 1 ? "s" : "") + "</b>: tap a part to mark it <b>▲ up</b> or <b>▼ down</b>. Tap again to flip it, a third time to clear it. Then press PLAY!";
+  hide("resultBox"); hide("nextBtn"); hide("againBtn"); hide("logCard");
+  $("rippleLog").innerHTML = "";
+  $("playBtn").disabled = true;
+  $("playBtn").textContent = "▶ PLAY the ripple";
+  /* parts grid */
+  var grid = $("partsGrid");
+  grid.innerHTML = "";
+  scen.parts.forEach(function (p, i) {
+    var b = document.createElement("button");
+    b.className = "part" + (p.id === scen.event.part ? " is-event" : "");
+    b.id = "part-" + p.id;
+    b.dataset.part = p.id;
+    b.setAttribute("aria-label", p.name + ", " + p.role + ". Tap to predict up or down. Key " + (i + 1) + ".");
+    b.innerHTML = '<span class="pred" aria-hidden="true"></span>' +
+      '<span class="emoji">' + p.emoji + "</span>" +
+      '<span class="pname">' + p.name + "</span>" +
+      '<span class="role">' + p.role + "</span>" +
+      '<span class="result" aria-hidden="true"></span>';
+    b.addEventListener("click", function () { cyclePrediction(p.id); });
+    grid.appendChild(b);
+  });
+  /* links list */
+  var ll = $("linksList");
+  ll.innerHTML = "";
+  scen.links.forEach(function (l) {
+    var a = partById(scen, l.from), c = partById(scen, l.to);
+    var d = document.createElement("div");
+    d.textContent = a.emoji + " " + a.name + "  →  " + c.emoji + " " + c.name + " — " + l.why + ".";
+    ll.appendChild(d);
+  });
+  updatePlayButton();
+}
+function cyclePrediction(partId) {
+  if (state.played) return;
+  var scen = currentScenario();
+  if (partId === scen.event.part) {
+    sfx("oops");
+    $("instrText").innerHTML = "That part is the <b>event itself</b> — it already happened! Predict what changes <i>because</i> of it.";
+    return;
+  }
+  var cur = state.predictions[partId];
+  var n = PREDICT_COUNT[state.diff];
+  if (!cur) {
+    if (Object.keys(state.predictions).length >= n) {
+      sfx("oops");
+      $("instrText").innerHTML = "You already picked <b>" + n + "</b> — tap one of your picks to change it.";
+      return;
+    }
+    state.predictions[partId] = "up";
+  } else if (cur === "up") {
+    state.predictions[partId] = "down";
+  } else {
+    delete state.predictions[partId];
+  }
+  sfx("flip");
+  refreshPartBadges();
+  updatePlayButton();
+}
+function refreshPartBadges() {
+  var scen = currentScenario();
+  scen.parts.forEach(function (p) {
+    var el = $("part-" + p.id);
+    if (!el) return;
+    var pred = state.predictions[p.id];
+    el.classList.remove("pred-up", "pred-down");
+    el.querySelector(".pred").textContent = pred ? arrow(pred) : "";
+    if (pred) el.classList.add(pred === "up" ? "pred-up" : "pred-down");
+  });
+}
+function updatePlayButton() {
+  var n = PREDICT_COUNT[state.diff];
+  var have = Object.keys(state.predictions).length;
+  $("playBtn").disabled = have !== n;
+  $("playBtn").textContent = have === n ? "▶ PLAY the ripple" : "▶ PLAY the ripple (" + have + "/" + n + " predicted)";
+}
+function playRipple() {
+  if (state.played) return;
+  var scen = currentScenario();
+  state.played = true;
+  sfx("tap");
+  $("playBtn").disabled = true;
+  $("playBtn").textContent = "🌊 Rippling…";
+  show("logCard");
+  var order = rippleOrder(scen);
+  var delay = 0, stepMs = 650;
+  order.forEach(function (step, i) {
+    state.timers.push(setTimeout(function () {
+      var el = $("part-" + step.id);
+      var p = partById(scen, step.id);
+      if (el) {
+        el.classList.add("rippling");
+        el.classList.add(step.dir === "up" ? "done-up" : "done-down");
+        el.querySelector(".result").textContent = arrow(step.dir);
+        setTimeout(function () { el.classList.remove("rippling"); }, 500);
+      }
+      var line = document.createElement("div");
+      line.textContent = "Step " + (i + 1) + ": " + p.emoji + " " + p.name + " goes " + (step.dir === "up" ? "UP ▲" : "DOWN ▼");
+      $("rippleLog").appendChild(line);
+      sfx("ripple");
+    }, delay));
+    delay += stepMs;
+  });
+  state.timers.push(setTimeout(function () { showResults(scen); }, delay + 300));
+}
+function showResults(scen) {
+  var correct = 0, lines = [], missed = [];
+  Object.keys(state.predictions).forEach(function (pid) {
+    var p = partById(scen, pid);
+    var want = scen.truth[pid];
+    var got = state.predictions[pid];
+    if (want && want === got) {
+      correct++;
+      lines.push('<li><span class="good">✓ ' + p.emoji + " " + p.name + " " + arrow(got) + "</span> — exactly right!</li>");
+    } else {
+      var real = want ? (p.emoji + " " + p.name + " " + arrow(want)) : (p.emoji + " " + p.name + " did not change");
+      lines.push('<li><span class="bad">✗ ' + p.emoji + " " + p.name + " " + arrow(got) + "</span> — actually: <b>" + real + "</b></li>");
+    }
+  });
+  Object.keys(scen.truth).forEach(function (pid) {
+    if (!state.predictions[pid]) {
+      var p = partById(scen, pid);
+      missed.push(p.emoji + " " + p.name + " " + arrow(scen.truth[pid]));
+    }
+  });
+  var roundScore = correct * 10;
+  var bonus = (correct === PREDICT_COUNT[state.diff]) ? 5 : 0;
+  roundScore += bonus;
+  state.score += roundScore;
+  $("scoreLabel").textContent = "Score: " + state.score;
+  var realRipple = Object.keys(scen.truth).map(function (pid) {
+    var p = partById(scen, pid);
+    return p.emoji + " " + p.name + " " + arrow(scen.truth[pid]);
+  }).join(", ");
+  var html = "<h3>" + (correct === PREDICT_COUNT[state.diff] ? "🎉 You read the ripple!" : correct > 0 ? "👍 Partly right — look at the ripple!" : "🌊 The ripple surprised you!") + "</h3>" +
+    "<p><b>You scored " + roundScore + " points</b> this round (" + correct + " of " + PREDICT_COUNT[state.diff] + " predictions right" + (bonus ? " + 5 bonus for a perfect read" : "") + ").</p>" +
+    "<p><b>The real ripple:</b> " + realRipple + ".</p>" +
+    "<ul>" + lines.join("") + "</ul>" +
+    (missed.length ? "<p>You did not predict: <b>" + missed.join(", ") + "</b>.</p>" : "") +
+    "<p><b>Why it rippled that way:</b> " + scen.why + "</p>";
+  $("resultBox").innerHTML = html;
+  show("resultBox");
+  if (correct === PREDICT_COUNT[state.diff]) sfx("good"); else if (correct > 0) sfx("tap"); else sfx("oops");
+  if (state.round < state.list.length - 1) { show("nextBtn"); } else { show("againBtn"); $("againBtn").textContent = "See my score →"; }
+}
+function nextRound() {
+  sfx("tap");
+  if (state.round < state.list.length - 1) {
+    state.round++;
+    renderRound();
+    /* scroll to top without window.scrollTo (unimplemented in some embeds) */
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  } else {
+    showSummary();
+  }
+}
+function showSummary() {
+  var best = getBest(state.diff);
+  var isBest = state.score > best;
+  if (isBest) safeSet(bestKey(state.diff), String(state.score));
+  hide("gameScr"); show("sumScr");
+  $("sumText").textContent = "You finished all " + state.list.length + " " + state.diff + " ripples!";
+  $("sumScore").textContent = state.score + " pts";
+  $("sumBest").textContent = isBest ? "🏆 New best score for " + state.diff + "!" : ("Best on " + state.diff + ": " + Math.max(best, state.score) + " pts");
+  $("sumNote").textContent = "Systems thinking grows every time you trace a ripple. Try another difficulty!";
+  sfx("win");
+  refreshBestLabels();
+}
+function backToMenu() {
+  sfx("tap");
+  hide("gameScr"); hide("sumScr"); show("titleScr");
+  refreshBestLabels();
+}
+
+/* ---------- wiring ---------- */
+document.querySelectorAll(".diffbtn").forEach(function (b) {
+  b.addEventListener("click", function () {
+    document.querySelectorAll(".diffbtn").forEach(function (x) { x.classList.remove("sel"); });
+    b.classList.add("sel");
+    state.diff = b.dataset.diff;
+    sfx("tap");
+    refreshBestLabels();
+  });
+});
+$("startBtn").addEventListener("click", startSet);
+$("playBtn").addEventListener("click", playRipple);
+$("nextBtn").addEventListener("click", nextRound);
+$("againBtn").addEventListener("click", nextRound);
+$("sumAgainBtn").addEventListener("click", startSet);
+$("sumMenuBtn").addEventListener("click", backToMenu);
+$("muteBtn").addEventListener("click", function () {
+  muted = !muted;
+  safeSet("ripple_muted", muted ? "1" : "0");
+  $("muteBtn").textContent = muted ? "🔇" : "🔊";
+  if (!muted) sfx("tap");
+});
+if (muted) $("muteBtn").textContent = "🔇";
+document.addEventListener("keydown", function (e) {
+  if ($("gameScr").classList.contains("hidden") || state.played) return;
+  var scen = currentScenario();
+  if (!scen) return;
+  var n = parseInt(e.key, 10);
+  if (n >= 1 && n <= scen.parts.length) { cyclePrediction(scen.parts[n - 1].id); e.preventDefault(); }
+  else if ((e.key === "p" || e.key === "P") && !$("playBtn").disabled) { playRipple(); e.preventDefault(); }
+});
+refreshBestLabels();
+</script>
+</body>
+</html>

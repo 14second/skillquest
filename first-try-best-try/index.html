@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>First Try / Best Try — ADAPT · Self-Efficacy</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, #fff7e0 0%, #e8f6ff 100%);
+    color: #22303c; min-height: 100vh;
+  }
+  #app { max-width: 480px; margin: 0 auto; padding: 12px 14px 28px; }
+  .hidden { display: none !important; }
+  .screen { width: 100%; }
+  .pill {
+    display: inline-block; background: #2f6fed; color: #fff; font-weight: 700;
+    font-size: 13px; letter-spacing: 1px; padding: 6px 12px; border-radius: 999px;
+  }
+  .pill.green { background: #1e9e5a; }
+  h1 { font-size: 34px; line-height: 1.1; margin: 12px 0 4px; }
+  h2 { font-size: 24px; margin: 10px 0 6px; }
+  h3 { font-size: 19px; margin: 12px 0 6px; }
+  p { font-size: 17px; line-height: 1.45; margin: 8px 0; }
+  .sub { color: #4a5a68; font-size: 16px; }
+  .card {
+    background: #fff; border: 2px solid #dfe8f0; border-radius: 16px;
+    padding: 14px; margin: 12px 0; width: 100%;
+  }
+  button {
+    font-family: inherit; font-size: 18px; font-weight: 700; color: #fff;
+    background: #2f6fed; border: none; border-radius: 14px;
+    min-height: 54px; padding: 12px 18px; cursor: pointer; width: 100%;
+    margin: 6px 0; touch-action: manipulation;
+  }
+  button:active { transform: scale(0.98); }
+  button.secondary { background: #fff; color: #2f6fed; border: 2px solid #2f6fed; }
+  button.green { background: #1e9e5a; }
+  button.orange { background: #e07b00; }
+  button:disabled { opacity: 0.45; }
+  .diffRow { display: flex; gap: 8px; width: 100%; }
+  .diffRow button { flex: 1; min-height: 64px; padding: 8px 4px; }
+  .diffRow button.sel { outline: 4px solid #ffb703; outline-offset: 1px; }
+  .diffRow small { display: block; font-size: 12px; font-weight: 400; margin-top: 2px; }
+  #muteBtn {
+    position: fixed; top: 10px; right: 10px; width: 52px; min-height: 52px;
+    padding: 0; border-radius: 50%; font-size: 24px; z-index: 50;
+    background: #fff; color: #22303c; border: 2px solid #c8d6e0;
+  }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .topbar .crumb { font-size: 15px; font-weight: 700; color: #4a5a68; }
+  .scoreLine { font-size: 18px; font-weight: 700; background: #fff; border-radius: 12px; padding: 8px 12px; margin: 10px 0; border: 2px solid #dfe8f0; }
+  .prompt { font-size: 20px; font-weight: 700; text-align: center; margin: 10px 0; min-height: 28px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+  .cell {
+    aspect-ratio: 1; min-height: 84px; border-radius: 14px; font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+    background: #eef3f7; border: 2px solid #c8d6e0; color: #22303c;
+    padding: 0; margin: 0; width: 100%;
+  }
+  .cell.lit { background: #ffd23f; border-color: #e07b00; }
+  .cell.sel { background: #2f6fed; border-color: #1c4fb0; color: #fff; }
+  .cell.pop-star { background: #ffd23f; border-color: #e07b00; }
+  .cell.pop-rock { background: #9aa7b1; border-color: #6b7a86; }
+  .memRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+  .memTile { aspect-ratio: 1.4; min-height: 96px; border-radius: 16px; font-size: 30px; padding: 0; margin: 0; width: 100%; }
+  .memTile.lit { filter: brightness(1.35); transform: scale(1.05); outline: 4px solid #fff; }
+  .memTile.c0 { background: #e5484d; } .memTile.c1 { background: #2f6fed; }
+  .memTile.c2 { background: #1e9e5a; } .memTile.c3 { background: #f5a623; }
+  .choice { background: #fff; color: #22303c; border: 2px solid #c8d6e0; }
+  .choice.right { background: #1e9e5a; border-color: #1e9e5a; color: #fff; }
+  .choice.wrong { background: #e5484d; border-color: #e5484d; color: #fff; }
+  .qtext { font-size: 30px; font-weight: 800; text-align: center; margin: 14px 0; }
+  .ltrRow { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
+  .ltr {
+    min-width: 52px; min-height: 56px; padding: 6px 10px; font-size: 26px;
+    background: #fff; color: #22303c; border: 2px solid #2f6fed; border-radius: 12px;
+    width: auto; margin: 0;
+  }
+  .ltr.used { opacity: 0.3; }
+  .answerBox {
+    font-size: 30px; font-weight: 800; letter-spacing: 6px; text-align: center;
+    background: #fff; border: 2px dashed #2f6fed; border-radius: 12px;
+    min-height: 56px; padding: 8px; margin: 12px 0;
+  }
+  .feedback { font-size: 19px; font-weight: 700; text-align: center; min-height: 28px; margin: 8px 0; }
+  .big { font-size: 44px; font-weight: 800; text-align: center; margin: 6px 0; }
+  .vs { display: flex; gap: 10px; width: 100%; }
+  .vs .card { flex: 1; text-align: center; }
+  .vs .num { font-size: 40px; font-weight: 800; }
+  .growth { font-size: 20px; font-weight: 700; text-align: center; line-height: 1.4; }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  th, td { padding: 8px 4px; text-align: center; border-bottom: 1px solid #e3eaf0; }
+  th:first-child, td:first-child { text-align: left; }
+  ul { font-size: 16px; line-height: 1.5; padding-left: 22px; }
+  li { margin: 4px 0; }
+  .bestList { font-size: 16px; }
+  .bestList li { margin: 3px 0; }
+  .hint { background: #fffbe6; border: 2px solid #ffd23f; border-radius: 12px; padding: 12px; font-size: 17px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<div id="app">
+  <button id="muteBtn" aria-label="Mute or unmute sound">&#128266;</button>
+
+  <!-- TITLE -->
+  <div id="titleScr" class="screen">
+    <span class="pill">ADAPT &middot; Self-Efficacy</span>
+    <h1>First Try /<br>Best Try</h1>
+    <p class="sub">Every challenge gets <b>two</b> tries. Your <b>first try</b> is your starting
+    line &mdash; never a fail. Then a quick tip and a little practice, and your
+    <b>best try</b> shows how much you can grow in one round.</p>
+    <div class="card">
+      <h3>How it works</h3>
+      <ul>
+        <li><b>1. First Try</b> &mdash; have a go, cold. No pressure.</li>
+        <li><b>2. Practice</b> &mdash; one tip and one quick practice round.</li>
+        <li><b>3. Best Try</b> &mdash; same kind of challenge, fresh and new.</li>
+        <li><b>4. Compare</b> &mdash; see your first score next to your best. Growth is the win!</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Pick your level &mdash; back yourself!</h3>
+      <p class="sub" style="margin-top:0">A harder level earns a <b>bonus</b> when you deliver:
+      Medium +1, Hard +2. Easy is a great place to start.</p>
+      <div class="diffRow">
+        <button class="diffBtn secondary" data-level="easy">Easy<small>Grades 1&ndash;3</small></button>
+        <button class="diffBtn secondary sel" data-level="medium">Medium<small>Grades 4&ndash;7</small></button>
+        <button class="diffBtn secondary" data-level="hard">Hard<small>Grades 8&ndash;12</small></button>
+      </div>
+    </div>
+    <button id="startBtn" class="green">▶ Start my first challenge</button>
+    <button id="progressBtn" class="secondary">See my progress &amp; best scores</button>
+    <div class="card">
+      <h3>My best scores (saved on this device)</h3>
+      <ul class="bestList" id="bestList"><li>No scores yet &mdash; play a round!</li></ul>
+    </div>
+    <p class="sub" style="text-align:center">5 challenges &middot; solo &middot; about 10 minutes.<br>
+    Tip: keyboard keys 1&ndash;4 work for choices and colours.</p>
+  </div>
+
+  <!-- GAME -->
+  <div id="gameScr" class="screen hidden">
+    <div class="topbar"><span class="crumb" id="chProg">Challenge 1 of 5</span><span class="pill green" id="tryPill">FIRST TRY</span></div>
+    <h2 id="chName">Memory Sequence</h2>
+    <p class="sub" id="chDesc"></p>
+    <div class="scoreLine" id="scoreLine">Score: 0</div>
+    <div class="prompt" id="prompt"></div>
+    <div id="stage"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <!-- PRACTICE -->
+  <div id="practiceScr" class="screen hidden">
+    <span class="pill">PRACTICE MOMENT</span>
+    <h2 id="practiceTitle">Quick practice</h2>
+    <p id="practiceScoreLine" class="sub"></p>
+    <div class="card"><div class="hint" id="tipText"></div></div>
+    <button id="practiceBtn" class="orange">Try one quick practice round</button>
+    <button id="bestTryBtn" class="green hidden">Start my Best Try!</button>
+    <p class="sub" id="practiceNote" style="text-align:center">A little practice goes a long way. You&rsquo;ve got this!</p>
+  </div>
+
+  <!-- COMPARISON -->
+  <div id="compareScr" class="screen hidden">
+    <span class="pill green">YOUR GROWTH</span>
+    <h2 id="compTitle">Memory Sequence</h2>
+    <div class="vs">
+      <div class="card"><div>First Try</div><div class="num" id="compFirst">0</div><div class="sub">your starting line</div></div>
+      <div class="card"><div>Best Try</div><div class="num" id="compBest">0</div><div class="sub">after practice</div></div>
+    </div>
+    <p class="growth" id="compGrowth"></p>
+    <p class="sub" style="text-align:center" id="compBonus"></p>
+    <button id="nextBtn" class="green">Next challenge →</button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div id="progressScr" class="screen hidden">
+    <span class="pill">MY PROGRESS</span>
+    <h2>First vs Best &mdash; all challenges</h2>
+    <p class="sub">Your first try is your starting line. Your best try is what practice can do.
+    Saved best scores live on this device.</p>
+    <div class="card"><table>
+      <thead><tr><th>Challenge</th><th>First</th><th>Best</th><th>Growth</th></tr></thead>
+      <tbody id="progBody"></tbody>
+    </table></div>
+    <p class="big" id="progTotal"></p>
+    <p class="growth" id="progMsg"></p>
+    <div class="card"><h3>All-time best scores</h3><ul class="bestList" id="progBestList"></ul></div>
+    <button id="againBtn" class="green">Play again — beat your best!</button>
+    <button id="homeBtn" class="secondary">Back to title</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- storage guards: EVERY localStorage access goes through these ---------- */
+function safeGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* storage denied: play on without saving */ } }
+function safeParse(s, fallback) { try { var v = JSON.parse(s); return (v === null || v === undefined) ? fallback : v; } catch (e) { return fallback; } }
+
+/* ---------- audio: synthesized only; playback route; close on hide ---------- */
+var actx = null, muted = false;
+function ensureAudio() {
+  try { if ("audioSession" in navigator) { navigator.audioSession.type = "playback"; } } catch (e) {}
+  try {
+    if (!actx || actx.state === "closed") {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) { actx = new AC(); window.__maCtx = actx; }
+    }
+    if (actx && actx.state === "suspended") { actx.resume(); }
+  } catch (e) {}
+  return actx;
+}
+function tone(freq, dur, type, vol) {
+  if (muted) return;
+  var c = ensureAudio(); if (!c) return;
+  try {
+    var o = c.createOscillator(), g = c.createGain();
+    o.type = type || "triangle"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol || 0.12, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + dur);
+  } catch (e) {}
+}
+function sndClick() { tone(520, 0.08, "triangle", 0.08); }
+function sndGood() { tone(523, 0.12, "triangle", 0.12); setTimeout(function () { tone(784, 0.18, "triangle", 0.12); }, 110); }
+function sndBad() { tone(220, 0.2, "square", 0.06); }
+function sndWin() { [523, 659, 784, 1047].forEach(function (f, i) { setTimeout(function () { tone(f, 0.2, "triangle", 0.12); }, i * 120); }); }
+document.addEventListener("pointerdown", function () {
+  try { if ("audioSession" in navigator) { navigator.audioSession.type = "playback"; } } catch (e) {}
+  ensureAudio();
+}, true);
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) { try { if (actx && actx.state !== "closed") { actx.close(); } } catch (e) {} }
+});
+
+/* ---------- content: 5 challenge types, original, age-appropriate ---------- */
+var WORDS = {
+  easy: ["CAT","DOG","SUN","PIG","EGG","ANT","BEE","FISH","BIRD","CAKE","MOON","STAR","RAIN","FROG","LION","BEAR","DUCK","KITE"],
+  medium: ["APPLE","BRAVE","CLOUD","DANCE","EAGLE","FROST","GRAPE","HAPPY","JUMBO","LEMON","MAGIC","OCEAN","PIANO","QUEEN","RIVER","TIGER","WINTER","SUNNY"],
+  hard: ["PUZZLE","GARDEN","ROCKET","BANANA","SUNSET","CASTLE","DRAGON","MYSTERY","JOURNEY","RAINBOW","PENGUIN","ELEPHANT","CHAMPION","LANTERN"]
+};
+function shuffle(arr) { var a = arr.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function scramble(word) {
+  var letters = word.split(""), s = word;
+  var guard = 0;
+  while (s === word && guard < 20) { s = shuffle(letters).join(""); guard++; }
+  return s;
+}
+function mathChoices(answer) {
+  var set = {}, out = [answer]; set[answer] = true;
+  var cands = [answer + 1, answer - 1, answer + 2, answer - 2, answer + 10, answer - 10, answer + 5, answer * 2];
+  cands = shuffle(cands);
+  for (var i = 0; i < cands.length && out.length < 4; i++) {
+    var c = cands[i];
+    if (c >= 0 && !set[c]) { set[c] = true; out.push(c); }
+  }
+  while (out.length < 4) { var n = answer + 3 + out.length; if (!set[n]) { set[n] = true; out.push(n); } }
+  return shuffle(out);
+}
+function genMath(level) {
+  var a, b, op, text, ans;
+  if (level === "easy") {
+    op = pick(["+", "-"]); a = 2 + Math.floor(Math.random() * 19); b = 2 + Math.floor(Math.random() * 19);
+    if (op === "-" && b > a) { var t = a; a = b; b = t; }
+  } else if (level === "medium") {
+    op = pick(["+", "-", "x"]); a = 3 + Math.floor(Math.random() * 97); b = 3 + Math.floor(Math.random() * 97);
+    if (op === "x") { a = 2 + Math.floor(Math.random() * 5); b = 2 + Math.floor(Math.random() * 5); }
+    if (op === "-" && b > a) { var t2 = a; a = b; b = t2; }
+  } else {
+    op = pick(["x", "/", "+", "-"]);
+    if (op === "x") { a = 6 + Math.floor(Math.random() * 7); b = 3 + Math.floor(Math.random() * 7); }
+    else if (op === "/") { b = 3 + Math.floor(Math.random() * 7); ans = 2 + Math.floor(Math.random() * 8); a = b * ans; }
+    else { a = 10 + Math.floor(Math.random() * 90); b = 10 + Math.floor(Math.random() * 90); if (op === "-" && b > a) { var t3 = a; a = b; b = t3; } }
+  }
+  if (op === "+") ans = a + b; else if (op === "-") ans = a - b; else if (op === "x") ans = a * b; else ans = a / b;
+  text = a + " " + op + " " + b + " = ?";
+  return { a: a, b: b, op: op, text: text, answer: ans, choices: mathChoices(ans), max: 1 };
+}
+
+var TRY_ITEMS = { memory: 2, math: 6, pattern: 2, targets: 1, word: 3 };
+var CHALLENGES = {
+  memory: {
+    id: "memory", name: "Memory Sequence",
+    desc: "Watch the colours light up, then tap them back in the same order.",
+    tip: "Tip: say each colour out loud as it lights up — hearing it helps you remember it. Chunk them: red-blue, then green-yellow.",
+    levels: { easy: { seqLen: 3 }, medium: { seqLen: 5 }, hard: { seqLen: 7 } },
+    scoring: "Each sequence is worth its length in points — one point per colour you repeat correctly before a mistake.",
+    gen: function (level, n, practice) {
+      var L = this.levels[level], items = [], count = n || TRY_ITEMS.memory;
+      for (var i = 0; i < count; i++) {
+        var seq = []; for (var k = 0; k < L.seqLen; k++) seq.push(Math.floor(Math.random() * 4));
+        items.push({ seq: seq, max: L.seqLen });
+      }
+      return { items: items, max: items.reduce(function (s, it) { return s + it.max; }, 0) };
+    },
+    scoreMax: function (level) { return this.levels[level].seqLen * TRY_ITEMS.memory; }
+  },
+  math: {
+    id: "math", name: "Math Sprint",
+    desc: "Six quick sums. How many can you get right?",
+    tip: "Tip: for adding, round one number to a ten first (47 + 28 = 47 + 30 − 2). For times tables, use a fact you know and build up.",
+    levels: { easy: { range: "add/sub to 20" }, medium: { range: "add/sub to 100, x to 6" }, hard: { range: "x to 12, division, 2-digit" } },
+    scoring: "One point per correct answer, out of 6.",
+    gen: function (level, n, practice) {
+      var items = [], count = n || TRY_ITEMS.math;
+      for (var i = 0; i < count; i++) items.push(genMath(level));
+      return { items: items, max: items.length };
+    },
+    scoreMax: function (level) { return TRY_ITEMS.math; }
+  },
+  pattern: {
+    id: "pattern", name: "Pattern Copy",
+    desc: "Study the lit squares, then tap the same squares from memory.",
+    tip: "Tip: look for a shape, not single squares — a corner, a line, an L. Naming the shape makes it stick.",
+    levels: { easy: { cells: 3 }, medium: { cells: 4 }, hard: { cells: 5 } },
+    scoring: "One point per lit square you find, minus one for each extra square you tap (never below 0).",
+    gen: function (level, n, practice) {
+      var L = this.levels[level], items = [], count = n || TRY_ITEMS.pattern;
+      for (var i = 0; i < count; i++) items.push({ cells: shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]).slice(0, L.cells), max: L.cells });
+      return { items: items, max: items.reduce(function (s, it) { return s + it.max; }, 0) };
+    },
+    scoreMax: function (level) { return this.levels[level].cells * TRY_ITEMS.pattern; }
+  },
+  targets: {
+    id: "targets", name: "Target Tap",
+    desc: "Tap the gold stars as they pop up. Leave the grey rocks alone!",
+    tip: "Tip: rest your eyes in the middle of the board and use your side vision — you will spot the next star faster than chasing each one.",
+    levels: { easy: { speed: 1100 }, medium: { speed: 900 }, hard: { speed: 700 } },
+    scoring: "One point per gold star tapped, out of 8 stars (2 rocks are worth 0).",
+    gen: function (level, n, practice) {
+      var L = this.levels[level];
+      var pops = [], total = practice ? 3 : 10, stars = practice ? 3 : 8;
+      for (var i = 0; i < stars; i++) pops.push({ cell: Math.floor(Math.random() * 9), kind: "star" });
+      for (var j = 0; j < total - stars; j++) pops.push({ cell: Math.floor(Math.random() * 9), kind: "rock" });
+      pops = shuffle(pops);
+      return { items: [{ pops: pops, speed: L.speed, max: stars }], max: stars };
+    },
+    scoreMax: function (level) { return 8; }
+  },
+  word: {
+    id: "word", name: "Word Unscramble",
+    desc: "Tap the letters in order to spell the word. Two goes per word.",
+    tip: "Tip: look for a vowel first, then a common ending like -ING, -ER or -LE. Say the letters out loud as you try them.",
+    levels: { easy: { len: "3-4 letters" }, medium: { len: "5-6 letters" }, hard: { len: "6-8 letters" } },
+    scoring: "One point per word spelled correctly, out of 3.",
+    gen: function (level, n, practice) {
+      var items = [], count = n || TRY_ITEMS.word, used = {};
+      for (var i = 0; i < count; i++) {
+        var word = pick(WORDS[level]), guard = 0;
+        while (used[word] && guard < 30) { word = pick(WORDS[level]); guard++; }
+        used[word] = true;
+        items.push({ word: word, scrambled: scramble(word), max: 1 });
+      }
+      return { items: items, max: items.length };
+    },
+    scoreMax: function (level) { return TRY_ITEMS.word; }
+  }
+};
+var CHALLENGE_ORDER = ["memory", "math", "pattern", "targets", "word"];
+
+/* ---------- state ---------- */
+var state = {
+  level: "medium",
+  chIndex: 0,
+  phase: "first",           /* first | practice | best */
+  tryScore: 0,
+  tryMax: 0,
+  firstScores: {},
+  bestScores: {},
+  bonuses: {},
+  current: null,            /* {def, items, itemIdx, max} */
+  rt: null,                 /* per-item runtime */
+  timers: []
+};
+function clearTimers() { state.timers.forEach(function (t) { clearTimeout(t); }); state.timers = []; }
+function later(fn, ms) { var t = setTimeout(fn, ms); state.timers.push(t); return t; }
+
+/* ---------- helpers ---------- */
+function $(id) { return document.getElementById(id); }
+function show(id) {
+  ["titleScr", "gameScr", "practiceScr", "compareScr", "progressScr"].forEach(function (s) { $(s).classList.add("hidden"); });
+  $(id).classList.remove("hidden");
+  try { document.documentElement.scrollTop = 0; document.body.scrollTop = 0; } catch (e) {}
+}
+function bestKey(id) { return "ftb_best_" + id; }
+function loadBest(id) { var v = safeParse(safeGet(bestKey(id)), null); return (typeof v === "number") ? v : null; }
+function saveBest(id, score) {
+  var prev = loadBest(id);
+  if (prev === null || score > prev) { safeSet(bestKey(id), JSON.stringify(score)); return score; }
+  return prev;
+}
+function refreshBestList() {
+  var html = CHALLENGE_ORDER.map(function (id) {
+    var b = loadBest(id);
+    return "<li><b>" + CHALLENGES[id].name + ":</b> " + (b === null ? "not played yet" : "best " + b + " / " + CHALLENGES[id].scoreMax(state.level)) + "</li>";
+  }).join("");
+  $("bestList").innerHTML = html;
+  $("progBestList").innerHTML = html;
+}
+function bonusFor(level, first, best) {
+  if (level === "hard" && best >= first) return 2;
+  if (level === "medium" && best > first) return 1;
+  return 0;
+}
+function growthMessage(first, best) {
+  var d = best - first;
+  if (d > 0) return "You got " + d + " more right after one practice round — that's how learning works! 🎉";
+  if (d === 0) return "Same score — steady and solid. Your best is already strong, and you held it under pressure. 💪";
+  return "Your first try was your best this time — that's normal too! Every champion has rounds like that. Your starting line is already high. 🌟";
+}
+
+/* ---------- title / difficulty ---------- */
+document.querySelectorAll(".diffBtn").forEach(function (b) {
+  b.addEventListener("click", function () {
+    sndClick();
+    document.querySelectorAll(".diffBtn").forEach(function (x) { x.classList.remove("sel"); });
+    b.classList.add("sel");
+    state.level = b.getAttribute("data-level");
+    refreshBestList();
+  });
+});
+$("muteBtn").addEventListener("click", function () {
+  muted = !muted;
+  $("muteBtn").innerHTML = muted ? "&#128263;" : "&#128266;";
+  if (!muted) sndClick();
+});
+$("startBtn").addEventListener("click", function () {
+  sndClick(); ensureAudio();
+  state.chIndex = 0; state.firstScores = {}; state.bestScores = {}; state.bonuses = {};
+  startChallenge(0);
+});
+$("progressBtn").addEventListener("click", function () { sndClick(); renderProgress(); show("progressScr"); });
+$("homeBtn").addEventListener("click", function () { sndClick(); refreshBestList(); show("titleScr"); });
+$("againBtn").addEventListener("click", function () {
+  sndClick();
+  state.chIndex = 0; state.firstScores = {}; state.bestScores = {}; state.bonuses = {};
+  startChallenge(0);
+});
+
+/* ---------- challenge flow ---------- */
+function startChallenge(idx) {
+  state.chIndex = idx;
+  runTry("first");
+}
+function runTry(phase) {
+  clearTimers();
+  state.phase = phase;
+  var def = CHALLENGES[CHALLENGE_ORDER[state.chIndex]];
+  var gen = def.gen(state.level, phase === "practice" ? 1 : undefined, phase === "practice");
+  state.current = { def: def, items: gen.items, max: gen.max, itemIdx: 0 };
+  state.tryScore = 0; state.tryMax = gen.max;
+  $("chName").textContent = def.name;
+  $("chDesc").textContent = def.desc + " (" + def.scoring + ")";
+  $("chProg").textContent = "Challenge " + (state.chIndex + 1) + " of " + CHALLENGE_ORDER.length;
+  $("tryPill").textContent = phase === "first" ? "FIRST TRY" : (phase === "practice" ? "PRACTICE" : "BEST TRY");
+  $("tryPill").className = "pill" + (phase === "best" ? " green" : "");
+  $("feedback").textContent = "";
+  updateScoreLine();
+  show("gameScr");
+  nextItem();
+}
+function updateScoreLine() {
+  $("scoreLine").textContent = "Score: " + state.tryScore + " / " + state.tryMax +
+    (state.phase === "first" ? "  ·  First Try" : state.phase === "practice" ? "  ·  Practice" : "  ·  Best Try");
+}
+function nextItem() {
+  var cur = state.current;
+  if (cur.itemIdx >= cur.items.length) { endTry(); return; }
+  var item = cur.items[cur.itemIdx];
+  state.rt = { item: item, done: false };
+  $("feedback").textContent = "";
+  var fn = { memory: renderMemory, math: renderMath, pattern: renderPattern, targets: renderTargets, word: renderWord }[cur.def.id];
+  fn(item);
+}
+function itemDone(score) {
+  if (!state.rt || state.rt.done) return;
+  state.rt.done = true;
+  state.tryScore += score;
+  state.current.itemIdx++;
+  updateScoreLine();
+  later(nextItem, 750);
+}
+function endTry() {
+  clearTimers();
+  var def = state.current.def;
+  if (state.phase === "first") {
+    state.firstScores[def.id] = state.tryScore;
+    $("practiceTitle").textContent = def.name + " — practice moment";
+    $("practiceScoreLine").textContent = "First Try score: " + state.tryScore + " / " + state.tryMax + ". That is your starting line — well done for having a go!";
+    $("tipText").textContent = def.tip;
+    $("practiceBtn").classList.remove("hidden");
+    $("bestTryBtn").classList.add("hidden");
+    $("practiceNote").textContent = "A little practice goes a long way. You\u2019ve got this!";
+    show("practiceScr");
+  } else if (state.phase === "practice") {
+    $("practiceNote").textContent = "Nice practice! Ready to show what you can do?";
+    $("practiceBtn").classList.add("hidden");
+    $("bestTryBtn").classList.remove("hidden");
+    show("practiceScr");
+  } else {
+    state.bestScores[def.id] = state.tryScore;
+    var first = state.firstScores[def.id] || 0;
+    var bonus = bonusFor(state.level, first, state.tryScore);
+    state.bonuses[def.id] = bonus;
+    saveBest(def.id, state.tryScore);
+    $("compTitle").textContent = def.name;
+    $("compFirst").textContent = first + " / " + state.tryMax;
+    $("compBest").textContent = state.tryScore + " / " + state.tryMax;
+    $("compGrowth").textContent = growthMessage(first, state.tryScore);
+    $("compBonus").textContent = bonus > 0
+      ? "Back-yourself bonus: +" + bonus + " points for picking " + state.level + " and delivering! 🏅"
+      : (state.level === "easy" ? "Tip: try Medium next time to earn a back-yourself bonus!" : "No bonus this round — the bonus comes when your best beats (or, on Hard, matches) your first.");
+    $("nextBtn").textContent = state.chIndex + 1 < CHALLENGE_ORDER.length ? "Next challenge →" : "See my progress →";
+    sndWin();
+    show("compareScr");
+  }
+}
+$("practiceBtn").addEventListener("click", function () { sndClick(); runTry("practice"); });
+$("bestTryBtn").addEventListener("click", function () { sndClick(); runTry("best"); });
+$("nextBtn").addEventListener("click", function () {
+  sndClick();
+  if (state.chIndex + 1 < CHALLENGE_ORDER.length) startChallenge(state.chIndex + 1);
+  else { renderProgress(); show("progressScr"); }
+});
+
+/* ---------- progress ---------- */
+function renderProgress() {
+  var rows = "", totalGrowth = 0, totalBonus = 0;
+  CHALLENGE_ORDER.forEach(function (id) {
+    var f = state.firstScores[id], b = state.bestScores[id];
+    if (f === undefined) { rows += "<tr><td>" + CHALLENGES[id].name + "</td><td>—</td><td>—</td><td>—</td></tr>"; return; }
+    var d = b - f; totalGrowth += d; totalBonus += (state.bonuses[id] || 0);
+    rows += "<tr><td>" + CHALLENGES[id].name + "</td><td>" + f + "</td><td>" + b + "</td><td>" + (d > 0 ? "+" + d : d) + "</td></tr>";
+  });
+  $("progBody").innerHTML = rows;
+  $("progTotal").textContent = "Total growth: " + (totalGrowth >= 0 ? "+" : "") + totalGrowth + (totalBonus ? "  ·  Bonuses: +" + totalBonus : "");
+  var played = Object.keys(state.firstScores).length;
+  $("progMsg").textContent = played === 0 ? "Play a round to fill this in — your first try is always a great starting line."
+    : totalGrowth > 0 ? "Look at that growth! Practice works — and you proved it to yourself. 🌟"
+    : "You showed up and finished all five — that persistence IS self-belief. Try again and watch the numbers climb!";
+  refreshBestList();
+}
+
+/* ---------- challenge renderers ---------- */
+var MEM_COLORS = ["🔴", "🔵", "🟢", "🟡"];
+function renderMemory(item) {
+  var stage = $("stage");
+  stage.innerHTML = '<div class="memRow">' +
+    [0, 1, 2, 3].map(function (i) {
+      return '<button class="memTile c' + i + '" data-i="' + i + '" aria-label="Colour ' + (i + 1) + '">' + MEM_COLORS[i] + "</button>";
+    }).join("") + "</div>";
+  var tiles = Array.prototype.slice.call(stage.querySelectorAll(".memTile"));
+  tiles.forEach(function (t) { t.disabled = true; });
+  $("prompt").textContent = "Watch carefully…";
+  var seq = item.seq;
+  seq.forEach(function (v, i) {
+    later(function () {
+      tiles[v].classList.add("lit"); tone(392 + v * 110, 0.35, "triangle", 0.1);
+      later(function () { tiles[v].classList.remove("lit"); }, 420);
+    }, 600 + i * 560);
+  });
+  later(function () {
+    if (!state.rt || state.rt.done) return;
+    $("prompt").textContent = "Your turn — tap the colours in order!";
+    tiles.forEach(function (t) { t.disabled = false; });
+    var got = 0;
+    tiles.forEach(function (t) {
+      t.addEventListener("click", function () {
+        if (!state.rt || state.rt.done) return;
+        var v = parseInt(t.getAttribute("data-i"), 10);
+        t.classList.add("lit"); tone(392 + v * 110, 0.2, "triangle", 0.1);
+        setTimeout(function () { t.classList.remove("lit"); }, 250);
+        if (v === seq[got]) {
+          got++;
+          if (got === seq.length) { $("feedback").textContent = "Perfect memory! 🎉"; sndGood(); itemDone(seq.length); }
+        } else {
+          $("feedback").textContent = "So close — you remembered " + got + " of " + seq.length + ". Good starting line!";
+          sndBad(); itemDone(got);
+        }
+      });
+    });
+  }, 600 + seq.length * 560 + 300);
+}
+
+function renderMath(item) {
+  var stage = $("stage");
+  $("prompt").textContent = "Question " + (state.current.itemIdx + 1) + " of " + state.current.items.length;
+  stage.innerHTML = '<div class="qtext">' + item.text + "</div>" +
+    item.choices.map(function (c, i) {
+      return '<button class="choice" data-v="' + c + '">' + (i + 1) + ". " + c + "</button>";
+    }).join("");
+  stage.querySelectorAll(".choice").forEach(function (b) {
+    b.addEventListener("click", function () {
+      if (!state.rt || state.rt.done) return;
+      var v = parseInt(b.getAttribute("data-v"), 10);
+      stage.querySelectorAll(".choice").forEach(function (x) { x.disabled = true; });
+      if (v === item.answer) {
+        b.classList.add("right"); $("feedback").textContent = "Correct! ✅"; sndGood(); itemDone(1);
+      } else {
+        b.classList.add("wrong");
+        stage.querySelectorAll(".choice").forEach(function (x) {
+          if (parseInt(x.getAttribute("data-v"), 10) === item.answer) x.classList.add("right");
+        });
+        $("feedback").textContent = "Not this time — the answer was " + item.answer + ". You\u2019ll get the next one!";
+        sndBad(); itemDone(0);
+      }
+    });
+  });
+}
+
+function renderPattern(item) {
+  var stage = $("stage");
+  $("prompt").textContent = "Memorise the lit squares…";
+  stage.innerHTML = '<div class="grid3">' +
+    [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) {
+      return '<button class="cell pat" data-i="' + i + '" aria-label="Square ' + (i + 1) + '"></button>';
+    }).join("") + "</div>" +
+    '<button id="checkBtn" class="green" disabled>Check my pattern</button>';
+  var cells = Array.prototype.slice.call(stage.querySelectorAll(".pat"));
+  item.cells.forEach(function (i) { cells[i].classList.add("lit"); });
+  later(function () {
+    if (!state.rt || state.rt.done) return;
+    cells.forEach(function (c) { c.classList.remove("lit"); });
+    $("prompt").textContent = "Now tap the squares that were lit, then press Check.";
+    $("checkBtn").disabled = false;
+    cells.forEach(function (c) {
+      c.addEventListener("click", function () { c.classList.toggle("sel"); sndClick(); });
+    });
+    $("checkBtn").addEventListener("click", function () {
+      if (!state.rt || state.rt.done) return;
+      var chosen = cells.filter(function (c) { return c.classList.contains("sel"); })
+        .map(function (c) { return parseInt(c.getAttribute("data-i"), 10); });
+      var correct = chosen.filter(function (i) { return item.cells.indexOf(i) !== -1; }).length;
+      var wrong = chosen.length - correct;
+      var score = Math.max(0, correct - wrong);
+      item.cells.forEach(function (i) { cells[i].classList.add("lit"); });
+      $("feedback").textContent = score === item.max ? "Perfect copy! 🎉" : "You found " + correct + " of " + item.max + " — nice remembering!";
+      if (score === item.max) sndGood(); else sndBad();
+      itemDone(score);
+    });
+  }, 1800);
+}
+
+function renderTargets(item) {
+  var stage = $("stage");
+  $("prompt").textContent = "Tap the ⭐ stars — not the rocks!";
+  stage.innerHTML = '<div class="grid3">' +
+    [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) {
+      return '<button class="cell tgt" data-i="' + i + '" aria-label="Spot ' + (i + 1) + '"></button>';
+    }).join("") + "</div>";
+  var cells = Array.prototype.slice.call(stage.querySelectorAll(".tgt"));
+  var rt = state.rt; rt.hits = 0; rt.popIdx = 0;
+  function showPop() {
+    if (!state.rt || state.rt.done) return;
+    if (rt.popIdx >= item.pops.length) { $("feedback").textContent = "Round over — you tapped " + rt.hits + " star" + (rt.hits === 1 ? "" : "s") + "!"; itemDone(rt.hits); return; }
+    var pop = item.pops[rt.popIdx]; rt.popIdx++;
+    var cell = cells[pop.cell];
+    cell.textContent = pop.kind === "star" ? "⭐" : "🪨";
+    cell.classList.add(pop.kind === "star" ? "pop-star" : "pop-rock");
+    var cleared = false;
+    function clearPop() { if (cleared) return; cleared = true; cell.textContent = ""; cell.classList.remove("pop-star", "pop-rock"); cell.onclick = null; }
+    cell.onclick = function () {
+      if (pop.kind === "star") { rt.hits++; tone(880, 0.12, "triangle", 0.1); updateScoreLineTmp(); }
+      else { tone(180, 0.12, "square", 0.05); }
+      clearPop();
+    };
+    later(function () { clearPop(); showPop(); }, item.speed);
+  }
+  function updateScoreLineTmp() { $("scoreLine").textContent = "Score: " + (state.tryScore + rt.hits) + " / " + state.tryMax + "  ·  " + (state.phase === "first" ? "First Try" : state.phase === "practice" ? "Practice" : "Best Try"); }
+  later(showPop, 500);
+}
+
+function renderWord(item) {
+  var stage = $("stage");
+  $("prompt").textContent = "Word " + (state.current.itemIdx + 1) + " of " + state.current.items.length + " — unscramble it!";
+  var letters = item.scrambled.split("");
+  state.rt.picked = []; state.rt.attempts = 0; state.rt.word = item.word;
+  stage.innerHTML = '<div class="answerBox" id="answerBox"></div>' +
+    '<div class="ltrRow">' + letters.map(function (ch, i) {
+      return '<button class="ltr" data-ch="' + ch + '" data-idx="' + i + '">' + ch + "</button>";
+    }).join("") + "</div>" +
+    '<button id="clearBtn" class="secondary">Clear letters</button>';
+  var box = $("answerBox");
+  function refreshBox() { box.textContent = state.rt.picked.join("") || " "; }
+  refreshBox();
+  stage.querySelectorAll(".ltr").forEach(function (b) {
+    b.addEventListener("click", function () {
+      if (!state.rt || state.rt.done || b.classList.contains("used")) return;
+      b.classList.add("used");
+      state.rt.picked.push(b.getAttribute("data-ch"));
+      sndClick(); refreshBox();
+      if (state.rt.picked.length === item.word.length) {
+        var guess = state.rt.picked.join("");
+        if (guess === item.word) {
+          $("feedback").textContent = "Yes! " + item.word + " 🎉"; sndGood(); itemDone(1);
+        } else {
+          state.rt.attempts++;
+          if (state.rt.attempts >= 2) {
+            $("feedback").textContent = "Good try — the word was " + item.word + ". You\u2019ll crack the next one!";
+            sndBad(); itemDone(0);
+          } else {
+            $("feedback").textContent = "Not quite — try a different order!";
+            sndBad();
+            later(function () {
+              if (!state.rt || state.rt.done) return;
+              state.rt.picked = [];
+              stage.querySelectorAll(".ltr").forEach(function (x) { x.classList.remove("used"); });
+              refreshBox();
+            }, 700);
+          }
+        }
+      }
+    });
+  });
+  $("clearBtn").addEventListener("click", function () {
+    if (!state.rt || state.rt.done) return;
+    state.rt.picked = [];
+    stage.querySelectorAll(".ltr").forEach(function (x) { x.classList.remove("used"); });
+    refreshBox(); sndClick();
+  });
+}
+
+/* ---------- keyboard support ---------- */
+document.addEventListener("keydown", function (e) {
+  if ($("gameScr").classList.contains("hidden")) return;
+  var stage = $("stage");
+  var n = parseInt(e.key, 10);
+  if (n >= 1 && n <= 4) {
+    var choices = stage.querySelectorAll(".choice");
+    if (choices[n - 1]) { choices[n - 1].click(); return; }
+    var tiles = stage.querySelectorAll(".memTile");
+    if (tiles[n - 1] && !tiles[n - 1].disabled) { tiles[n - 1].click(); return; }
+  }
+  if (/^[a-zA-Z]$/.test(e.key)) {
+    var ltr = Array.prototype.slice.call(stage.querySelectorAll(".ltr:not(.used)"))
+      .find(function (b) { return b.getAttribute("data-ch") === e.key.toUpperCase(); });
+    if (ltr) ltr.click();
+  }
+});
+
+/* ---------- boot ---------- */
+refreshBestList();
+</script>
+</body>
+</html>

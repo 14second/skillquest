@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Say It Clearly — Kind Words, Clear Words</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(160deg,#1d3a6e,#2a7fbf);color:#123;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:520px;padding:14px 14px 30px}
+h1{color:#fff;text-align:center;margin:8px 0 2px;font-size:29px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.sub{color:#cfe8ff;text-align:center;margin:0 0 14px;font-size:15px}
+.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.25);margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:19px;color:#1d3a6e}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:14px}
+.bigbtn{width:100%;min-height:60px;font-size:20px;font-weight:800;background:#ff9f1a;color:#fff;box-shadow:0 4px 0 #c77400;margin-top:12px}
+.bigbtn:active{transform:translateY(2px);box-shadow:none}
+.green{background:#2e7d32;box-shadow:0 4px 0 #1b4d1e}
+.ghost{width:100%;min-height:52px;font-size:16px;font-weight:700;background:#eef1f5;color:#334;margin-top:9px}
+.modebtn{display:block;width:100%;min-height:76px;font-size:19px;font-weight:800;background:#eaf3ff;color:#1d3a6e;border:2px solid #bcd8ff;margin:9px 0;padding:10px;text-align:left}
+.modebtn small{display:block;font-size:13px;font-weight:400;color:#5a6b80;margin-top:2px}
+#topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#muteBtn{background:rgba(255,255,255,.2);color:#fff;font-size:19px;width:48px;height:48px;border-radius:50%}
+#quitBtn{background:rgba(255,255,255,.2);color:#fff;font-size:15px;font-weight:700;padding:12px 16px;min-height:48px}
+#hud{display:flex;gap:8px;margin-bottom:10px}
+.hudbox{flex:1;background:rgba(255,255,255,.16);color:#fff;border-radius:12px;text-align:center;padding:7px 2px;font-size:13px}
+.hudbox b{display:block;font-size:21px}
+.qtype{color:#5a6b80;font-size:14px;font-weight:700;margin:2px 0 4px;text-transform:uppercase;letter-spacing:.6px}
+.qtext{font-size:21px;line-height:1.4;color:#14273f;margin:6px 0;font-weight:600}
+.blunt{background:#fdeeee;border:2px solid #e53935;border-radius:12px;padding:10px 12px;font-size:19px;font-weight:700;color:#7a1f1f;margin:8px 0;line-height:1.4}
+.choice{display:block;width:100%;min-height:58px;font-size:19px;font-weight:700;background:#f4f9ff;border:2px solid #bcd8ff;color:#14273f;margin:9px 0;padding:10px;text-align:left}
+.choice:active{transform:scale(.98)}
+.choice.right{background:#c8f2c0;border-color:#43a047}
+.choice.wrong{background:#ffd2d2;border-color:#e53935}
+.choice:disabled{cursor:default}
+#feedback{display:none;margin-top:10px;border-radius:12px;padding:12px}
+#feedback.ok{background:#eefbe9}
+#feedback.bad{background:#fdeeee}
+#fbTitle{font-size:20px;font-weight:800;color:#14273f}
+#fbEx{font-size:16px;line-height:1.45;margin:8px 0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:10px auto}
+.cell{aspect-ratio:1;border-radius:12px;border:2px solid #bcd8ff;min-height:64px}
+.cell.c0{background:#fff}
+.cell.c1{background:#e53935}
+.cell.c2{background:#1e88e5}
+.cell.c3{background:#fdd835}
+.pal{display:flex;gap:8px;justify-content:center;margin:10px 0}
+.pal button{width:52px;height:52px;border-radius:12px}
+.study{font-size:16px;line-height:1.45}
+.study li{margin:8px 0}
+.small{font-size:14px;color:#5a6b80}
+.big{font-size:26px;font-weight:800;color:#1d3a6e;text-align:center}
+.center{text-align:center}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar"><button id="muteBtn" aria-label="Mute or unmute">🔊</button><button id="quitBtn" class="hidden">✕ Quit</button></div>
+  <h1>💬 Say It Clearly</h1>
+  <p class="sub">Kind words, clear words — in two games.</p>
+
+  <div id="titleScr">
+    <div class="card"><h2>Pick a mode</h2>
+      <button class="modebtn" id="modeA">🗣️ Say It Better — Solo<small>Someone said it bluntly. Pick the clearest, kindest way to say it. 12 rounds.</small></button>
+      <button class="modebtn" id="modeB">👥 Describe &amp; Rebuild — 2 Players<small>One player describes a secret pattern with words only. The other rebuilds it. 3 patterns.</small></button>
+      <p class="small center" id="bestLine"></p>
+    </div>
+  </div>
+
+  <div id="gameScr" class="hidden">
+    <div id="hud">
+      <div class="hudbox">💬 Round<b id="hRound">1/12</b></div>
+      <div class="hudbox">⭐ Score<b id="hScore">0</b></div>
+      <div class="hudbox">🏆 Best<b id="hBest">—</b></div>
+    </div>
+    <div id="qScr" class="card">
+      <p class="qtype" id="qType"></p>
+      <p class="qtext" id="qtext"></p>
+      <div class="blunt hidden" id="bluntBox"></div>
+      <div id="choiceList"></div>
+      <div id="palRow" class="pal hidden"></div>
+      <div id="gridRow"></div>
+      <div id="feedback"><div id="fbTitle"></div><div id="fbEx"></div><button class="bigbtn green" id="nextBtn">Next ▶</button></div>
+    </div>
+  </div>
+
+  <div id="endScr" class="hidden">
+    <div class="card"><div class="big" id="endTitle">Well Said!</div>
+      <p class="center" id="endSummary"></p>
+    </div>
+    <div class="card"><h2>📝 Review</h2><ul class="study" id="missList"></ul></div>
+    <button class="bigbtn" id="againBtn">↻ Play Again</button>
+    <button class="ghost" id="menuBtn">Back to menu</button>
+  </div>
+</div>
+<script>
+"use strict";
+/* ---------- audio: synthesized only, iOS playback route, close on hide ---------- */
+let actx = null, muted = safeGet("sic_muted") === "1";
+function safeGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+function setAudioSession(){ try{ if("audioSession" in navigator) navigator.audioSession.type = "playback"; }catch(e){} }
+function ensureAudio(){
+  setAudioSession();
+  if (muted) return null;
+  if (!actx || actx.state === "closed") {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); window.__maCtx = actx; }
+    catch(e){ return null; }
+  }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, dur, type, vol, when){
+  const ctx = ensureAudio(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type || "triangle"; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.15, ctx.currentTime + (when || 0));
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (when || 0) + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime + (when || 0)); o.stop(ctx.currentTime + (when || 0) + dur + 0.02);
+}
+const sClick = () => tone(520, 0.08, "triangle", 0.10);
+const sGood = () => { tone(523, 0.12, "triangle", 0.15); tone(659, 0.12, "triangle", 0.15, 0.10); tone(784, 0.22, "triangle", 0.15, 0.20); };
+const sBad = () => { tone(196, 0.25, "square", 0.10); tone(147, 0.35, "square", 0.10, 0.18); };
+const sWin = () => { [523,659,784,1047].forEach((f,i)=>tone(f, 0.25, "triangle", 0.15, i*0.13)); };
+document.addEventListener("pointerdown", setAudioSession, true);
+document.addEventListener("touchstart", setAudioSession, true);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && actx && actx.state === "running") { try { actx.close(); } catch(e){} }
+});
+function updateMuteBtn(){ document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊"; }
+document.getElementById("muteBtn").addEventListener("click", () => {
+  muted = !muted; safeSet("sic_muted", muted ? "1" : "0");
+  if (muted && actx) { try { actx.close(); } catch(e){} actx = null; }
+  updateMuteBtn(); sClick();
+});
+updateMuteBtn();
+
+/* ---------- data: [band, situation, blunt message, options[4], correct, explanation] ---------- */
+const SCEN = [
+["young","Your friend shows you a drawing they worked hard on. You don't think it's very good.",
+ "“Your drawing is bad.”",
+ ["“That's ugly.”","“I like the colors you used! Can you tell me about it?”","“Whatever.”","“You should draw better.”"],1,
+ "“I like the colors” is honest AND kind — it notices something real and invites your friend to share."],
+["young","You want to play with a toy your friend is using right now.",
+ "“Give me that toy now!”",
+ ["“Can I play with the toy when you're done, please?”","“Give it to me or else.”","“You're hogging it!”","Snatch it out of their hands"],0,
+ "Asking politely — with “please” and “when you're done” — respects your friend's turn."],
+["young","You feel like nobody is listening to you at home.",
+ "“You never listen!”",
+ ["“You're all terrible.”","“I feel unheard when I talk — can we try again?”","Stop talking to everyone forever","Shout louder until someone listens"],1,
+ "“I feel…” says what is wrong without blaming everyone. It gives your family a way to fix it."],
+["young","A classmate shares an idea you think won't work.",
+ "“That's a dumb idea.”",
+ ["“That's the worst idea ever.”","“I see it differently — can I share another idea?”","Laugh at them in front of the class","Ignore them completely"],1,
+ "“I see it differently” disagrees without insulting anyone — and it keeps the conversation open."],
+["middle","Your group found a mistake in a classmate's part of the project.",
+ "“Your project is wrong.”",
+ ["“You always mess everything up.”","“I think there's a mistake on page 2 — can we check it together?”","“Just fix it yourself.”","Don't tell them; let them fail"],1,
+ "Pointing to the exact spot and offering to check together is clear, specific, and kind."],
+["middle","A teammate keeps missing practice, and the team is falling behind.",
+ "“You always mess everything up.”",
+ ["“That didn't work out — what can we do differently next time?”","“You're the worst teammate ever.”","Kick them off the team without talking","Complain about them behind their back"],0,
+ "Talking about what happened — not who they are — keeps the focus on fixing it together."],
+["middle","You don't want to work with the group you've been put in.",
+ "“I don't want to work with you.”",
+ ["“I work better in a small group — could we split the tasks?”","“You're all useless.”","Refuse to do any work","Work alone and hide your work"],0,
+ "Saying how you work best — and offering a plan — is honest without being hurtful."],
+["middle","Your little brother keeps talking while you're trying to concentrate on homework.",
+ "“Stop being so annoying.”",
+ ["“I need a little quiet to concentrate right now, please.”","“Go away forever.”","Slam the door in his face","Yell until he cries"],0,
+ "Naming what you need (“a little quiet”) and saying “please” gets you what you want without a fight."],
+["older","A friend asks what you think of their essay, and the argument is hard to follow.",
+ "“Your essay makes no sense.”",
+ ["“Your main point is interesting — could you make the argument clearer in the second paragraph?”","“This is terrible writing.”","“I can't even read this.”","Lie and say it's perfect"],0,
+ "Leading with what's good, then naming exactly where to improve, is feedback a friend can actually use."],
+["older","A new player keeps losing, and your teammates are getting frustrated.",
+ "“You're terrible at this game.”",
+ ["“You're still learning — want to practice together?”","“Don't bother coming next time.”","“You're dragging the whole team down.”","Ignore the new player completely"],0,
+ "“Still learning” is true and hopeful — and offering to practice turns a critic into a teammate."],
+["older","You have to give honest feedback on a classmate's presentation.",
+ "“Nobody likes your presentation.”",
+ ["“The presentation could be stronger if the slides were simpler — want help?”","“That was a waste of everyone's time.”","“You should be embarrassed.”","Say nothing and let them fail next time"],0,
+ "One specific, fixable suggestion plus an offer to help is the clearest and kindest feedback there is."],
+["older","Your friend forgot an important deadline again.",
+ "“You forgot again. You're useless.”",
+ ["“You forgot the deadline — let's set a reminder together for next time.”","“I knew you'd mess this up.”","“Don't ever ask me for help again.”","Tell everyone they can't be trusted"],0,
+ "Naming the fact, not the person, and solving it together keeps the friendship and fixes the problem."],
+];
+/* 3 preset 3x3 patterns for Describe & Rebuild (0=white, 1=red, 2=blue, 3=yellow) */
+const PATTERNS = [
+  [1,0,2, 0,3,0, 2,0,1],
+  [3,3,0, 0,1,0, 0,2,2],
+  [0,2,0, 1,1,1, 0,2,0]
+];
+
+/* ---------- game state ---------- */
+const $ = id => document.getElementById(id);
+const state = { mode: "A", order: [], idx: 0, score: 0, missed: [], matches: 0, patternIdx: 0, patMatches: [] };
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function bestSaved(key){ try { return JSON.parse(safeGet(key) || "null"); } catch(e){ return null; } }
+function showBest(){
+  const a = bestSaved("sic_best_A"), b = bestSaved("sic_best_B");
+  $("bestLine").textContent = (a ? "🗣️ Say It Better best: " + a.score + "/12" : "🗣️ Say It Better: not played yet") +
+    " · " + (b ? "👥 Describe & Rebuild best: " + b.score + "/27" : "👥 Describe & Rebuild: not played yet");
+}
+showBest();
+function show(id){
+  ["titleScr","gameScr","endScr"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+  $("quitBtn").classList.toggle("hidden", id !== "gameScr");
+}
+function renderHud(){
+  const total = state.mode === "A" ? state.order.length : PATTERNS.length;
+  $("hRound").textContent = (state.idx + 1) + "/" + total;
+  $("hScore").textContent = state.score;
+  const b = bestSaved(state.mode === "A" ? "sic_best_A" : "sic_best_B");
+  $("hBest").textContent = b ? b.score : "—";
+}
+/* ---- Mode A: Say It Better ---- */
+function startA(){
+  state.mode = "A";
+  state.order = shuffle(SCEN.slice());
+  state.idx = 0; state.score = 0; state.missed = [];
+  show("gameScr"); renderHud(); renderA(); sClick();
+}
+function renderA(){
+  const c = state.order[state.idx];
+  $("qType").textContent = "Say It Better · " + c[0] + " (Ages " + (c[0] === "young" ? "6–10" : c[0] === "middle" ? "11–13" : "14–18") + ")";
+  $("qtext").textContent = c[1];
+  const bb = $("bluntBox"); bb.classList.remove("hidden"); bb.textContent = "They said: " + c[2];
+  $("palRow").classList.add("hidden"); $("gridRow").innerHTML = "";
+  $("feedback").style.display = "none";
+  const order = shuffle([0, 1, 2, 3]);
+  const list = $("choiceList"); list.innerHTML = "";
+  order.forEach(oi => {
+    const b = document.createElement("button");
+    b.className = "choice"; b.dataset.opt = oi;
+    b.innerHTML = "<b>" + "ABCD"[order.indexOf(oi)] + ".</b> " + c[3][oi];
+    b.addEventListener("click", () => {
+      if (b.disabled) return;
+      list.querySelectorAll(".choice").forEach(x => x.disabled = true);
+      if (oi === c[4]){
+        b.classList.add("right"); sGood(); state.score++;
+        showFeedback(true, "✅ Well said! +1", c[5]);
+      } else {
+        b.classList.add("wrong"); sBad();
+        const rb = list.querySelector('[data-opt="' + c[4] + '"]');
+        if (rb) rb.classList.add("right");
+        state.missed.push(c);
+        showFeedback(false, "❌ The clearest, kindest version was: " + c[3][c[4]], c[5]);
+      }
+      renderHud();
+    });
+    list.appendChild(b);
+  });
+}
+/* ---- Mode B: Describe & Rebuild ---- */
+function startB(){
+  state.mode = "B";
+  state.idx = 0; state.score = 0; state.patMatches = []; state.missed = [];
+  show("gameScr"); renderHud(); renderBShow(); sClick();
+}
+function gridHTML(vals, clickable, onCell){
+  const g = document.createElement("div"); g.className = "grid3";
+  vals.forEach((v, i) => {
+    const c = document.createElement("button"); c.className = "cell c" + v; c.setAttribute("aria-label", "Square " + (i + 1));
+    if (clickable) c.addEventListener("click", () => onCell(i));
+    g.appendChild(c);
+  });
+  return g;
+}
+function renderBShow(){
+  const pat = PATTERNS[state.idx];
+  $("qType").textContent = "Describe & Rebuild · Pattern " + (state.idx + 1) + " of " + PATTERNS.length;
+  $("qtext").textContent = "👀 Describer only — study this pattern! Builder: look away.";
+  $("bluntBox").classList.add("hidden");
+  $("choiceList").innerHTML = "";
+  $("palRow").classList.add("hidden");
+  $("feedback").style.display = "none";
+  const gr = $("gridRow"); gr.innerHTML = "";
+  gr.appendChild(gridHTML(pat, false));
+  const b = document.createElement("button"); b.className = "bigbtn"; b.id = "hidePatBtn"; b.textContent = "Got It — Hide the Pattern";
+  b.addEventListener("click", () => { sClick(); renderBBuild(); });
+  gr.appendChild(b);
+  renderHud();
+}
+function renderBBuild(){
+  const pat = PATTERNS[state.idx];
+  let sel = 1;
+  const built = Array(9).fill(0);
+  $("qtext").textContent = "🧱 Builder: rebuild the pattern from the description. Describer: words only — no pointing!";
+  const gr = $("gridRow"); gr.innerHTML = "";
+  const pal = $("palRow"); pal.classList.remove("hidden"); pal.innerHTML = "";
+  const draw = () => {
+    pal.innerHTML = "";
+    [0,1,2,3].forEach(ci => {
+      const pb = document.createElement("button");
+      pb.className = "cell c" + ci;
+      pb.style.border = sel === ci ? "3px solid #1d3a6e" : "3px solid transparent";
+      pb.textContent = ci === 0 ? "⬜" : "";
+      pb.addEventListener("click", () => { sel = ci; draw(); });
+      pal.appendChild(pb);
+    });
+    gr.innerHTML = "";
+    gr.appendChild(gridHTML(built, true, i => { built[i] = sel; draw(); }));
+    const chk = document.createElement("button"); chk.className = "bigbtn green"; chk.id = "checkPatBtn"; chk.textContent = "Check the Pattern ✅";
+    chk.addEventListener("click", () => {
+      let match = 0; pat.forEach((v, i) => { if (built[i] === v) match++; });
+      state.patMatches.push(match); state.score += match;
+      if (match >= 7) sGood(); else sBad();
+      pal.classList.add("hidden");
+      gr.innerHTML = "<p class='qtext center'>" + match + " of 9 squares match — " + (match === 9 ? "perfect!" : match >= 7 ? "nearly there!" : "tricky one!") + "</p>";
+      gr.appendChild(gridHTML(pat, false));
+      const nb = document.createElement("button"); nb.className = "bigbtn green"; nb.id = "patNextBtn";
+      nb.textContent = state.idx === PATTERNS.length - 1 ? "See Results 🏆" : "Next Pattern ▶";
+      nb.addEventListener("click", () => {
+        sClick(); state.idx++;
+        if (state.idx >= PATTERNS.length) endRun(); else renderBShow();
+      });
+      gr.appendChild(nb);
+      renderHud();
+    });
+    gr.appendChild(chk);
+  };
+  draw();
+}
+/* ---- shared feedback + end ---- */
+function showFeedback(ok, title, expl){
+  const fb = $("feedback"); fb.style.display = "block"; fb.className = ok ? "ok" : "bad";
+  $("fbTitle").textContent = title;
+  $("fbEx").textContent = expl;
+  const nb = $("nextBtn");
+  nb.textContent = state.idx === state.order.length - 1 ? "See Results 🏆" : "Next ▶";
+  nb.onclick = () => {
+    sClick();
+    state.idx++;
+    if (state.idx >= state.order.length) endRun(); else renderA();
+  };
+}
+function endRun(){
+  const isA = state.mode === "A";
+  const max = isA ? state.order.length : 27;
+  const key = isA ? "sic_best_A" : "sic_best_B";
+  const b = bestSaved(key);
+  const better = !b || state.score > b.score;
+  if (better) safeSet(key, JSON.stringify({ score: state.score }));
+  $("endTitle").textContent = isA ? (state.score === max ? "🗣️ Word Wizard!" : "💬 Well Said!") : (state.score >= 25 ? "👥 Perfect Partners!" : "👥 Well Described!");
+  $("endSummary").innerHTML = (isA ? "You picked the clearest, kindest words <b>" + state.score + " of " + max + "</b> times." : "Your team rebuilt <b>" + state.score + " of 27</b> squares correctly (" + state.patMatches.join(", ") + " per pattern).") + (better ? "<br>🎉 New best result!" : "");
+  const ml = $("missList");
+  if (isA) {
+    ml.innerHTML = state.missed.length ? state.missed.map(c =>
+      "<li><b>" + c[1] + "</b><br>They said: " + c[2] + "<br>✅ Best: <b>" + c[3][c[4]] + "</b> — " + c[5] + "</li>").join("")
+      : "<li>🎉 Nothing missed — every rephrasing was spot on!</li>";
+  } else {
+    ml.innerHTML = state.patMatches.map((m, i) => "<li>Pattern " + (i + 1) + ": <b>" + m + " / 9</b> squares matched." + (m < 9 ? " Try describing one row at a time next round." : " Perfect rebuild!") + "</li>").join("");
+  }
+  if (state.score >= max * 0.75) sWin();
+  show("endScr"); showBest();
+}
+$("modeA").addEventListener("click", startA);
+$("modeB").addEventListener("click", startB);
+$("againBtn").addEventListener("click", () => { if (state.mode === "A") startA(); else startB(); });
+$("menuBtn").addEventListener("click", () => { show("titleScr"); showBest(); });
+$("quitBtn").addEventListener("click", () => { if (confirm("Quit this game? Your progress will be lost.")) { show("titleScr"); showBest(); } });
+document.addEventListener("keydown", e => {
+  if ($("gameScr").classList.contains("hidden")) return;
+  const n = ["1","2","3","4"].indexOf(e.key);
+  if (n >= 0){ const btns = document.querySelectorAll(".choice:not(:disabled)"); if (btns[n]) btns[n].click(); }
+  if (e.key === "Enter" && $("feedback").style.display === "block") $("nextBtn").click();
+});
+window.__sic = { state, SCEN, PATTERNS };
+</script>
+</body>
+</html>

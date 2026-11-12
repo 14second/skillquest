@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Try Again Tower — LEARN · Resilience</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, #fff3d6 0%, #dcefff 100%);
+    color: #22303c; min-height: 100vh;
+  }
+  #app { max-width: 480px; margin: 0 auto; padding: 12px 14px 28px; }
+  .hidden { display: none !important; }
+  .screen { width: 100%; }
+  .pill {
+    display: inline-block; background: #7b4fd0; color: #fff; font-weight: 700;
+    font-size: 13px; letter-spacing: 1px; padding: 6px 12px; border-radius: 999px;
+  }
+  h1 { font-size: 34px; line-height: 1.1; margin: 12px 0 4px; }
+  h2 { font-size: 24px; margin: 10px 0 6px; }
+  h3 { font-size: 19px; margin: 12px 0 6px; }
+  p { font-size: 17px; line-height: 1.45; margin: 8px 0; }
+  .sub { color: #4a5a68; font-size: 16px; }
+  .card {
+    background: #fff; border: 2px solid #dfe8f0; border-radius: 16px;
+    padding: 14px; margin: 12px 0; width: 100%;
+  }
+  button {
+    font-family: inherit; font-size: 18px; font-weight: 700; color: #fff;
+    background: #7b4fd0; border: none; border-radius: 14px;
+    min-height: 54px; padding: 12px 18px; cursor: pointer; width: 100%;
+    margin: 6px 0; touch-action: manipulation;
+  }
+  button:active { transform: scale(0.98); }
+  button.secondary { background: #fff; color: #7b4fd0; border: 2px solid #7b4fd0; }
+  button.green { background: #1e9e5a; }
+  button.orange { background: #e07b00; }
+  button:disabled { opacity: 0.45; }
+  .diffRow { display: flex; gap: 8px; width: 100%; }
+  .diffRow button { flex: 1; min-height: 64px; padding: 8px 4px; }
+  .diffRow button.sel { outline: 4px solid #ffb703; outline-offset: 1px; }
+  .diffRow small { display: block; font-size: 12px; font-weight: 400; margin-top: 2px; }
+  #muteBtn {
+    position: fixed; top: 10px; right: 10px; width: 52px; min-height: 52px;
+    padding: 0; border-radius: 50%; font-size: 24px; z-index: 50;
+    background: #fff; color: #22303c; border: 2px solid #c8d6e0;
+  }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .topbar .crumb { font-size: 15px; font-weight: 700; color: #4a5a68; }
+  .scoreLine { font-size: 18px; font-weight: 700; background: #fff; border-radius: 12px; padding: 8px 12px; margin: 10px 0; border: 2px solid #dfe8f0; }
+  .goalLine { font-size: 20px; font-weight: 800; text-align: center; margin: 8px 0; }
+  #towerVis {
+    display: flex; flex-direction: column-reverse; align-items: center; justify-content: flex-start;
+    min-height: 320px; width: 100%; background: linear-gradient(180deg, #bfe3ff 0%, #e8f6ff 78%, #c9e8c9 78%, #c9e8c9 100%);
+    border: 2px solid #b8d4e8; border-radius: 16px; padding: 10px 8px; overflow: hidden;
+  }
+  #towerVis.shake { animation: shake 0.45s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px) rotate(-1deg); }
+    40% { transform: translateX(8px) rotate(1deg); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+  .twBlock {
+    height: 34px; margin: 2px 0; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.35); flex: none;
+  }
+  .twBlock.b-square { width: 72%; background: #e07b00; }
+  .twBlock.b-long { width: 96%; background: #8b5a2b; }
+  .twBlock.b-triangle { width: 58%; background: #2f6fed; clip-path: polygon(50% 0, 100% 100%, 0 100%); border-radius: 0; padding-top: 12px; }
+  .twBlock.b-stone { width: 78%; background: #6b7a86; }
+  .twBlock.b-round { width: 56%; background: #1e9e5a; border-radius: 17px; }
+  .twBlock.braced { outline: 3px dashed #ffd23f; outline-offset: 1px; }
+  .blockGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+  .blockBtn {
+    background: #fff; color: #22303c; border: 2px solid #c8d6e0; min-height: 64px;
+    font-size: 16px; padding: 8px 6px; margin: 0;
+  }
+  .blockBtn small { display: block; font-size: 12px; font-weight: 400; color: #4a5a68; margin-top: 2px; }
+  .blockBtn.wide { grid-column: span 2; }
+  .row2 { display: flex; gap: 8px; width: 100%; }
+  .row2 button { flex: 1; }
+  #braceBtn.on { background: #ffb703; color: #22303c; }
+  .hint { background: #fffbe6; border: 2px solid #ffd23f; border-radius: 12px; padding: 12px; font-size: 17px; line-height: 1.45; }
+  .failBox { background: #fff3e0; border: 2px solid #e07b00; border-radius: 16px; padding: 14px; margin: 12px 0; width: 100%; }
+  .winBox { background: #e6f7ec; border: 2px solid #1e9e5a; border-radius: 16px; padding: 14px; margin: 12px 0; width: 100%; }
+  ul { font-size: 16px; line-height: 1.5; padding-left: 22px; }
+  li { margin: 4px 0; }
+  .noteItem { background: #f2eaff; border-left: 5px solid #7b4fd0; border-radius: 8px; padding: 10px 12px; margin: 8px 0; font-size: 16px; line-height: 1.45; }
+  .noteItem b { color: #5b34a8; }
+  .big { font-size: 44px; font-weight: 800; text-align: center; margin: 6px 0; }
+  .center { text-align: center; }
+  .bestList { font-size: 16px; }
+  .bestList li { margin: 3px 0; }
+  kbd { background: #eef3f7; border: 1px solid #c8d6e0; border-radius: 6px; padding: 1px 7px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <button id="muteBtn" aria-label="Mute or unmute sound">&#128266;</button>
+
+  <!-- TITLE -->
+  <div id="titleScr" class="screen">
+    <span class="pill">LEARN &middot; Resilience</span>
+    <h1>Try Again<br>Tower</h1>
+    <p class="sub">Build a tower to reach the top. Your <b>first try will probably fall down</b> —
+    and that is exactly how you learn! Every fall reveals a clue about the tower&rsquo;s
+    secret rules. Change your plan, try again, and build it smarter.</p>
+    <div class="card">
+      <h3>How it works</h3>
+      <ul>
+        <li><b>1. Build</b> &mdash; tap blocks to stack them up to the goal height.</li>
+        <li><b>2. Fall &amp; learn</b> &mdash; when the tower falls, you get a clue in your notebook. Falling is never a punishment &mdash; it&rsquo;s information!</li>
+        <li><b>3. Build smarter</b> &mdash; use what you learned to change your plan and try again.</li>
+        <li><b>Scoring</b> &mdash; fewer tries and more smart changes = more points. Each clue you actually use in your winning tower earns a +10 Smart Change bonus.</li>
+      </ul>
+      <p><b>Blocks:</b> &#129521; Square (weight 2, wide &amp; heavy) &middot; &#129717; Long plank (weight 1, wide, spans gaps) &middot; &#128993; Triangle (weight 1, light) &middot; &#129704; Heavy stone (weight 3, very heavy) &middot; &#129703; Round log (weight 1, light). <b>Brace</b> a block to hold it steady against wind and wobbles &mdash; but braces are limited!</p>
+      <p>Keys: <kbd>1</kbd>&ndash;<kbd>5</kbd> place a block &middot; <kbd>B</kbd> brace &middot; <kbd>U</kbd> undo &middot; <kbd>Enter</kbd> try again / continue.</p>
+    </div>
+    <h3>Pick a difficulty</h3>
+    <div class="diffRow">
+      <button class="diffBtn sel" data-diff="easy">Easy<small>1 secret rule per tower</small></button>
+      <button class="diffBtn" data-diff="medium">Medium<small>2 secret rules</small></button>
+      <button class="diffBtn" data-diff="hard">Hard<small>3 secret rules</small></button>
+    </div>
+    <button id="startBtn" class="green">Start building &#127959;</button>
+    <div class="card">
+      <h3>My best scores</h3>
+      <ul class="bestList" id="bestList"></ul>
+    </div>
+  </div>
+
+  <!-- BUILD -->
+  <div id="buildScr" class="screen hidden">
+    <div class="topbar"><span class="crumb" id="crumb">Tower 1 of 4</span><span class="crumb" id="diffCrumb">Easy</span></div>
+    <h2 id="towerName">Wobbly Logs</h2>
+    <p class="goalLine" id="goalLine">Reach height 6!</p>
+    <div id="towerVis" aria-label="Your tower"></div>
+    <div class="scoreLine" id="statLine">Attempt 1 &middot; Height 0/6 &middot; Braces left: 2</div>
+
+    <div id="failPanel" class="failBox hidden">
+      <h3>&#128161; The tower fell &mdash; and that&rsquo;s a clue!</h3>
+      <p id="failText"></p>
+      <div class="hint" id="failHint"></div>
+      <p id="failTip" class="sub"></p>
+      <p><b>That clue is now in your notebook below.</b> Change your plan and try again &mdash; you&rsquo;re one smart change closer!</p>
+      <button id="retryBtn" class="orange">Try again with what I learned</button>
+    </div>
+
+    <div id="winPanel" class="winBox hidden">
+      <h3>&#127942; You built it!</h3>
+      <p id="winText"></p>
+      <div class="scoreLine" id="winScore"></div>
+      <p id="winBonus" class="sub"></p>
+      <button id="nextBtn" class="green">Next tower</button>
+    </div>
+
+    <div id="buildControls">
+      <h3>Choose a block</h3>
+      <div class="blockGrid">
+        <button class="blockBtn" data-type="square">&#129521; Square<small>weight 2 &middot; wide &amp; heavy</small></button>
+        <button class="blockBtn" data-type="long">&#129717; Long plank<small>weight 1 &middot; wide, spans gaps</small></button>
+        <button class="blockBtn" data-type="triangle">&#128993; Triangle<small>weight 1 &middot; light</small></button>
+        <button class="blockBtn" data-type="stone">&#129704; Heavy stone<small>weight 3 &middot; very heavy</small></button>
+        <button class="blockBtn wide" data-type="round">&#129703; Round log<small>weight 1 &middot; light</small></button>
+      </div>
+      <div class="row2">
+        <button id="braceBtn" class="secondary">🛠 Brace: OFF</button>
+        <button id="undoBtn" class="secondary">↩ Undo last block</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>&#128214; What I learned</h3>
+      <p class="sub" id="notesEmpty">Nothing yet &mdash; every fall teaches you something. Your clues will appear here.</p>
+      <div id="notesList"></div>
+    </div>
+    <button id="homeBtn" class="secondary">Back to title</button>
+  </div>
+
+  <!-- DONE -->
+  <div id="doneScr" class="screen hidden">
+    <span class="pill">LEARN &middot; Resilience</span>
+    <h1>Tower master!</h1>
+    <p class="sub" id="doneText"></p>
+    <div class="big" id="doneScore">0</div>
+    <p class="center"><b id="doneAttempts"></b></p>
+    <p class="center" id="doneBest"></p>
+    <div class="card">
+      <h3>Remember</h3>
+      <p>Every tower fell at least once &mdash; and every fall taught you something.
+      That&rsquo;s resilience: <b>fall down, learn, change your plan, try again.</b> It works
+      for towers, and it works for hard homework, tricky games, and big goals too.</p>
+    </div>
+    <button id="againBtn" class="green">Play this difficulty again</button>
+    <button id="doneHomeBtn" class="secondary">Choose another difficulty</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- guarded storage: EVERY storage access goes through these ---------- */
+function safeGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* storage denied: play on without saving */ } }
+function safeParse(s, d) { try { var v = JSON.parse(s); return (v === null || v === undefined) ? d : v; } catch (e) { return d; } }
+
+/* ---------- audio (synthesized only; iOS playback route; close on hide) ---------- */
+var muted = safeGet("tat_muted") === "1";
+var actx = null;
+function setPlaybackRoute() { try { if ("audioSession" in navigator) { navigator.audioSession.type = "playback"; } } catch (e) {} }
+document.addEventListener("pointerdown", setPlaybackRoute, true);
+document.addEventListener("touchstart", setPlaybackRoute, true);
+function initAudio() {
+  setPlaybackRoute();
+  try {
+    if (!actx || actx.state === "closed") {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) { actx = new AC(); window.__maCtx = actx; }
+    }
+    if (actx && actx.state === "suspended") { actx.resume(); }
+  } catch (e) { actx = null; }
+}
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) { try { if (actx && actx.state !== "closed") { actx.close(); } } catch (e) {} }
+});
+function tone(freq, dur, type, vol, when) {
+  if (muted || !actx || actx.state !== "running") return;
+  try {
+    var t = actx.currentTime + (when || 0);
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "triangle"; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol || 0.15, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  } catch (e) {}
+}
+function sndClick() { initAudio(); tone(520, 0.08, "triangle", 0.12); }
+function sndPlace() { initAudio(); tone(220, 0.12, "triangle", 0.18); tone(330, 0.1, "triangle", 0.1, 0.05); }
+function sndFall() { initAudio(); tone(392, 0.18, "square", 0.14); tone(262, 0.22, "square", 0.14, 0.12); tone(175, 0.3, "square", 0.14, 0.26); }
+function sndWin() { initAudio(); [262, 330, 392, 523].forEach(function (f, i) { tone(f, 0.22, "triangle", 0.16, i * 0.12); }); }
+function sndHint() { initAudio(); tone(440, 0.12, "triangle", 0.12); tone(587, 0.16, "triangle", 0.12, 0.1); }
+
+/* ---------- blocks ---------- */
+var BLOCKS = {
+  square:   { label: "Square",  emoji: "\u{1F7E7}", weight: 2, heavy: true,  wide: true  },
+  long:     { label: "Long plank", emoji: "\u{1F9B0}", weight: 1, heavy: false, wide: true  },
+  triangle: { label: "Triangle", emoji: "\u{1F7E5}", weight: 1, heavy: false, wide: false },
+  stone:    { label: "Heavy stone", emoji: "\u{1F9B1}", weight: 3, heavy: true,  wide: true  },
+  round:    { label: "Round log", emoji: "\u{1F9B3}", weight: 1, heavy: false, wide: false }
+};
+
+/* ---------- tower challenges ----------
+   Hidden constraints are checked per placed block, in the tower's listed order.
+   Kinds: roll, slide, weight, wind, gust, topHeavy, gap, base, sink, repeat.
+   brace saves: roll, slide, wind, gust, topHeavy, repeat. Never: weight, gap, base, sink. */
+var TOWERS = [
+  { id: "wobbly-logs", title: "Wobbly Logs", diff: "easy", goal: 6, braces: 2,
+    blurb: "A friendly first tower. Something about these logs feels… round.",
+    constraints: [
+      { kind: "roll", hint: "The tower fell at block 1 — the round logs roll right off! Flat blocks stay put.",
+        tip: "Try square blocks or long planks instead of round logs." }
+    ],
+    solution: [{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"}] },
+  { id: "windy-heights", title: "Windy Heights", diff: "easy", goal: 7, braces: 2,
+    blurb: "It gets breezy up there. The higher you build, the harder the wind pushes.",
+    constraints: [
+      { kind: "wind", height: 4, hint: "The wind pushed the tower over above height 4! Heavy blocks hold steady up high — or brace a light one.",
+        tip: "Above height 4, use heavy squares or stones, or brace a light block." }
+    ],
+    solution: [{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"}] },
+  { id: "the-gap", title: "The Gap", diff: "easy", goal: 6, braces: 2,
+    blurb: "There is a hole in this tower somewhere. Only one kind of block can cross it.",
+    constraints: [
+      { kind: "gap", height: 4, hint: "There is a gap at height 4 — only a long plank can span it! Every other block drops straight through.",
+        tip: "Put a long plank at height 4." }
+    ],
+    solution: [{type:"square"},{type:"square"},{type:"square"},{type:"long"},{type:"square"},{type:"square"}] },
+  { id: "heavy-load", title: "Heavy Load", diff: "easy", goal: 6, braces: 2,
+    blurb: "This tower is not as strong as it looks. Watch the total weight!",
+    constraints: [
+      { kind: "weight", limit: 8, hint: "The tower crumpled when its total weight passed 8. Light blocks weigh 1, squares weigh 2, stones weigh 3.",
+        tip: "Build this one from light blocks — planks, triangles and logs weigh only 1 each." }
+    ],
+    solution: [{type:"long"},{type:"long"},{type:"long"},{type:"long"},{type:"long"},{type:"long"}] },
+  { id: "slippery-start", title: "Slippery Start", diff: "medium", goal: 7, braces: 3,
+    blurb: "Two secrets hide in this tower: one at the bottom, one in the triangles.",
+    constraints: [
+      { kind: "base", hint: "The first block has to be wide and flat — a round log or a triangle wedge cannot hold a tower up.",
+        tip: "Start with a square, a long plank, or a stone." },
+      { kind: "slide", hint: "Triangle wedges slide off unless you brace them! A braced triangle stays put.",
+        tip: "Skip triangles, or brace any triangle you place." }
+    ],
+    solution: [{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"}] },
+  { id: "top-heavy-tower", title: "Top-Heavy Tower", diff: "medium", goal: 8, braces: 3,
+    blurb: "Wind below, wobble above — heavy helps low down but hurts up high.",
+    constraints: [
+      { kind: "wind", height: 3, hint: "Above height 3 the wind pushes light blocks sideways. Heavy blocks stand firm — or brace a light one.",
+        tip: "Above height 3, use heavy blocks or brace the light ones." },
+      { kind: "topHeavy", height: 5, hint: "Above height 5, heavy blocks make the tower top-heavy and it tips over! Brace a light block up there instead.",
+        tip: "Above height 5, use braced light blocks — never heavy ones." }
+    ],
+    solution: [{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"long",brace:true},{type:"long",brace:true},{type:"long",brace:true}] },
+  { id: "rolling-repeat", title: "Rolling Repeat", diff: "medium", goal: 7, braces: 3,
+    blurb: "Rolling blocks and a tower that hates doing the same thing twice.",
+    constraints: [
+      { kind: "roll", hint: "Round logs roll off — they cannot be part of this tower unless you brace them.",
+        tip: "Leave the round logs out, or brace one if you really want it." },
+      { kind: "repeat", hint: "Two of the same block in a row make the tower wobble and fall! Alternate the kinds.",
+        tip: "Never place the same block type twice in a row — mix squares and planks." }
+    ],
+    solution: [{type:"square"},{type:"long"},{type:"square"},{type:"long"},{type:"square"},{type:"long"},{type:"square"}] },
+  { id: "soft-ground-wind", title: "Soft Ground, Strong Wind", diff: "medium", goal: 7, braces: 3,
+    blurb: "Soft mud at the bottom, a surprise gust halfway up.",
+    constraints: [
+      { kind: "sink", hint: "The ground here is soft — a heavy stone sinks right in at the bottom. Start with something lighter.",
+        tip: "Never start with a heavy stone. A square works fine." },
+      { kind: "gust", height: 5, hint: "A gust hits at height 5! That block has to be heavy or braced, or the wind takes it.",
+        tip: "Make height 5 a heavy block, or brace it." }
+    ],
+    solution: [{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"}] },
+  { id: "storm-spire", title: "The Storm Spire", diff: "hard", goal: 8, braces: 4,
+    blurb: "Wind, a gap, AND a weight limit — three secrets that all talk to each other.",
+    constraints: [
+      { kind: "wind", height: 4, hint: "Above height 4 the wind shoves light blocks sideways. Brace them or use heavy ones.",
+        tip: "Above height 4, brace every light block." },
+      { kind: "gap", height: 6, hint: "There is a gap at height 6 — only a long plank can span it.",
+        tip: "Put a long plank at height 6 (and brace it — the wind is blowing up there)." },
+      { kind: "weight", limit: 12, hint: "This tower can only hold a total weight of 12. Light blocks weigh 1, squares 2, stones 3.",
+        tip: "Keep the bottom light too — use squares low down, braced planks up high." }
+    ],
+    solution: [{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"long",brace:true},{type:"long",brace:true},{type:"long",brace:true},{type:"long",brace:true}] },
+  { id: "shaky-foundations", title: "Shaky Foundations", diff: "hard", goal: 8, braces: 4,
+    blurb: "A wobbly base, rolling logs, and a tower that hates repeats.",
+    constraints: [
+      { kind: "base", hint: "The first block has to be wide and flat — a round log or a triangle wedge cannot hold this tower up.",
+        tip: "Start with a square, a long plank, or a stone." },
+      { kind: "roll", hint: "Round logs roll off this tower — they cannot be used unless you brace them.",
+        tip: "Leave the round logs out, or brace one." },
+      { kind: "repeat", hint: "Same block twice in a row? This tower wobbles and falls! Mix up the kinds as you build.",
+        tip: "Never place the same block type twice in a row." }
+    ],
+    solution: [{type:"square"},{type:"long"},{type:"square"},{type:"long"},{type:"square"},{type:"long"},{type:"square"},{type:"long"}] },
+  { id: "sinking-spire", title: "The Sinking Spire", diff: "hard", goal: 8, braces: 4,
+    blurb: "Soft ground, sliding triangles, and wind at the top.",
+    constraints: [
+      { kind: "sink", hint: "The ground here is soft — a heavy stone sinks right in at the bottom.",
+        tip: "Never start with a heavy stone." },
+      { kind: "slide", hint: "Triangle wedges slide off unless you brace them!",
+        tip: "Skip triangles, or brace any triangle you place." },
+      { kind: "wind", height: 5, hint: "Above height 5 the wind pushes light blocks sideways. Heavy blocks stand firm — or brace a light one.",
+        tip: "Above height 5, brace every light block." }
+    ],
+    solution: [{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"square"},{type:"long",brace:true},{type:"long",brace:true},{type:"long",brace:true}] },
+  { id: "master-test", title: "The Master Builder's Test", diff: "hard", goal: 9, braces: 4,
+    blurb: "The final test: a gap, wind, and a tower that hates repeats. Use everything you learned!",
+    constraints: [
+      { kind: "gap", height: 3, hint: "There is a gap at height 3 — only a long plank can span it!",
+        tip: "Put a long plank at height 3." },
+      { kind: "wind", height: 5, hint: "Above height 5 the wind shoves light blocks sideways. Brace them, or use a heavy block that can stand its ground.",
+        tip: "Above height 5, brace every light block." },
+      { kind: "repeat", hint: "This tower hates repeats — two identical blocks stacked together make it wobble and fall!",
+        tip: "Never place the same block type twice in a row — and remember the plank at height 3." }
+    ],
+    solution: [{type:"square"},{type:"long"},{type:"long",brace:true},{type:"square"},{type:"long"},{type:"square"},{type:"long",brace:true},{type:"square"},{type:"long",brace:true}] }
+];
+
+/* ---------- simulation: the single source of truth for rules ----------
+   simAttempt(tower, placements) -> {ok:true} or {ok:false, failAt, constraint} */
+function constraintTriggers(c, tw, placements, i) {
+  var p = placements[i], h = i + 1, b = BLOCKS[p.type], braced = !!p.brace;
+  switch (c.kind) {
+    case "roll":     return p.type === "round" && !braced;
+    case "slide":    return p.type === "triangle" && !braced;
+    case "weight": { var w = 0; for (var k = 0; k <= i; k++) w += BLOCKS[placements[k].type].weight; return w > c.limit; }
+    case "wind":     return h > c.height && !b.heavy && !braced;
+    case "gust":     return h === c.height && !b.heavy && !braced;
+    case "topHeavy": return h > c.height && b.heavy && !braced;
+    case "gap":      return h === c.height && p.type !== "long";
+    case "base":     return h === 1 && !b.wide;
+    case "sink":     return h === 1 && p.type === "stone";
+    case "repeat":   return i > 0 && p.type === placements[i - 1].type && !braced;
+    default: return false;
+  }
+}
+function simAttempt(tw, placements) {
+  for (var i = 0; i < placements.length; i++) {
+    for (var j = 0; j < tw.constraints.length; j++) {
+      if (constraintTriggers(tw.constraints[j], tw, placements, i)) {
+        return { ok: false, failAt: i + 1, constraint: tw.constraints[j], constraintIndex: j };
+      }
+    }
+  }
+  return { ok: true };
+}
+/* DFS solver with memo: finds a winning placement list, or null. */
+function solveTower(tw) {
+  var memo = {};
+  var order = ["square", "long", "triangle", "stone", "round"];
+  function dfs(h, cumW, prev, bracesUsed, acc) {
+    if (h === tw.goal) return acc.slice();
+    var key = h + "|" + cumW + "|" + prev + "|" + bracesUsed;
+    if (memo[key]) return null;
+    for (var t = 0; t < order.length; t++) {
+      for (var br = 0; br < 2; br++) {
+        if (br === 1 && bracesUsed >= tw.braces) continue;
+        var pl = { type: order[t], brace: br === 1 };
+        var test = acc.concat([pl]);
+        if (!simAttempt(tw, test).ok) continue;
+        var res = dfs(h + 1, cumW + BLOCKS[order[t]].weight, order[t], bracesUsed + (br === 1 ? 1 : 0), test);
+        if (res) return res;
+      }
+    }
+    memo[key] = true;
+    return null;
+  }
+  return dfs(0, 0, "", 0, []);
+}
+
+/* ---------- state ---------- */
+var state = {
+  diff: "easy", towerIdx: 0, tower: null,
+  placements: [], attempts: 1, bracesLeft: 2, braceNext: false,
+  revealed: [], totalScore: 0, totalAttempts: 0, towersDone: 0
+};
+function $(id) { return document.getElementById(id); }
+function show(id) {
+  ["titleScr", "buildScr", "doneScr"].forEach(function (s) { $(s).classList.add("hidden"); });
+  $(id).classList.remove("hidden");
+}
+function towersFor(diff) { return TOWERS.filter(function (t) { return t.diff === diff; }); }
+function diffName(d) { return d === "easy" ? "Easy" : d === "medium" ? "Medium" : "Hard"; }
+
+/* ---------- best scores ---------- */
+function bestKey(diff) { return "tat_best_" + diff; }
+function loadBest(diff) { return safeParse(safeGet(bestKey(diff)), null); }
+function saveBest(diff, score, attempts) {
+  var prev = loadBest(diff);
+  var rec = { bestScore: prev && prev.bestScore ? prev.bestScore : 0, fewestAttempts: prev && prev.fewestAttempts ? prev.fewestAttempts : 0 };
+  if (score > rec.bestScore) rec.bestScore = score;
+  if (!rec.fewestAttempts || attempts < rec.fewestAttempts) rec.fewestAttempts = attempts;
+  safeSet(bestKey(diff), JSON.stringify(rec));
+  return rec;
+}
+function refreshBestList() {
+  var html = "";
+  ["easy", "medium", "hard"].forEach(function (d) {
+    var b = loadBest(d);
+    html += "<li><b>" + diffName(d) + ":</b> " + (b ? ("best score " + b.bestScore + " points &middot; fewest tries " + b.fewestAttempts) : "not finished yet — go build!") + "</li>";
+  });
+  $("bestList").innerHTML = html;
+}
+
+/* ---------- game flow ---------- */
+function startGame() {
+  sndClick();
+  var list = towersFor(state.diff);
+  state.towerIdx = 0; state.totalScore = 0; state.totalAttempts = 0; state.towersDone = 0;
+  loadTower(list[0]);
+  show("buildScr");
+}
+function loadTower(tw) {
+  state.tower = tw;
+  state.placements = []; state.attempts = 1;
+  state.bracesLeft = tw.braces; state.braceNext = false; state.revealed = [];
+  $("towerName").textContent = tw.title;
+  $("crumb").textContent = "Tower " + (state.towerIdx + 1) + " of " + towersFor(state.diff).length;
+  $("diffCrumb").textContent = diffName(state.diff);
+  $("goalLine").textContent = "Reach height " + tw.goal + "!  " + tw.blurb;
+  $("failPanel").classList.add("hidden");
+  $("winPanel").classList.add("hidden");
+  renderTower(); renderStats(); renderNotebook(); renderBrace();
+}
+function renderTower() {
+  var vis = $("towerVis");
+  vis.innerHTML = "";
+  state.placements.forEach(function (p) {
+    var b = BLOCKS[p.type];
+    var div = document.createElement("div");
+    div.className = "twBlock b-" + p.type + (p.brace ? " braced" : "");
+    div.textContent = b.emoji + " " + b.label + (p.brace ? " 🛠" : "");
+    vis.appendChild(div);
+  });
+  if (state.placements.length === 0) {
+    var hint = document.createElement("div");
+    hint.style.cssText = "margin:auto;color:#5a7a96;font-weight:700;text-align:center;padding:20px;";
+    hint.textContent = "Your tower will grow here — tap a block below to place it.";
+    vis.appendChild(hint);
+  }
+}
+function renderStats() {
+  var w = 0; state.placements.forEach(function (p) { w += BLOCKS[p.type].weight; });
+  $("statLine").textContent = "Attempt " + state.attempts + " · Height " + state.placements.length + "/" + state.tower.goal +
+    " · Weight " + w + " · Braces left: " + state.bracesLeft;
+}
+function renderBrace() {
+  var btn = $("braceBtn");
+  btn.textContent = state.braceNext ? "🛠 Brace: ON — next block braced" : "🛠 Brace: OFF (" + state.bracesLeft + " left)";
+  btn.classList.toggle("on", state.braceNext);
+  btn.disabled = state.bracesLeft <= 0 && !state.braceNext;
+}
+function renderNotebook() {
+  var list = $("notesList");
+  list.innerHTML = "";
+  $("notesEmpty").style.display = state.revealed.length ? "none" : "block";
+  state.revealed.forEach(function (ci) {
+    var c = state.tower.constraints[ci];
+    var div = document.createElement("div");
+    div.className = "noteItem";
+    div.innerHTML = "<b>💡 Learned:</b> " + c.hint + "<br><b>Try this:</b> " + c.tip;
+    list.appendChild(div);
+  });
+}
+function panelsOpen() {
+  return !$("failPanel").classList.contains("hidden") || !$("winPanel").classList.contains("hidden");
+}
+function placeBlock(type) {
+  if (panelsOpen()) return;
+  var brace = false;
+  if (state.braceNext) {
+    if (state.bracesLeft <= 0) { state.braceNext = false; renderBrace(); return; }
+    brace = true; state.bracesLeft--; state.braceNext = false;
+  }
+  var trial = state.placements.concat([{ type: type, brace: brace }]);
+  var res = simAttempt(state.tower, trial);
+  if (!res.ok) {
+    /* failure: refund the brace if one was spent on the falling block */
+    if (brace) state.bracesLeft++;
+    state.placements = [];
+    var ci = res.constraintIndex;
+    var isNew = state.revealed.indexOf(ci) === -1;
+    if (isNew) state.revealed.push(ci);
+    state.attempts++;
+    sndFall();
+    $("failText").textContent = "Your tower fell at block " + res.failAt + " of " + state.tower.goal +
+      ". That is not a mistake — it is a clue! " + (isNew ? "Here is something new about this tower:" : "You already knew this one — check your notebook and change the plan:");
+    $("failHint").textContent = "💡 " + res.constraint.hint;
+    $("failTip").textContent = "Try this: " + res.constraint.tip;
+    $("failPanel").classList.remove("hidden");
+    var vis = $("towerVis");
+    vis.classList.remove("shake"); void vis.offsetWidth; vis.classList.add("shake");
+    renderTower(); renderStats(); renderNotebook(); renderBrace();
+    return;
+  }
+  state.placements = trial;
+  sndPlace();
+  renderTower(); renderStats(); renderBrace();
+  if (state.placements.length >= state.tower.goal) winTower();
+}
+function smartBonusFor(placements) {
+  var bonus = 0, used = [];
+  state.revealed.forEach(function (ci) {
+    var c = state.tower.constraints[ci];
+    var single = { constraints: [c] };
+    if (simAttempt(single, placements).ok) { bonus += 10; used.push(c.kind); }
+  });
+  return { points: bonus, kinds: used };
+}
+function winTower() {
+  var base = Math.max(20, 100 - 15 * (state.attempts - 1));
+  var smart = smartBonusFor(state.placements);
+  var total = base + smart.points;
+  state.totalScore += total;
+  state.totalAttempts += state.attempts;
+  state.towersDone++;
+  sndWin();
+  var bestKeyTower = "tat_tower_best_" + state.tower.id;
+  var prevBest = safeParse(safeGet(bestKeyTower), null);
+  if (prevBest === null || state.attempts < prevBest) safeSet(bestKeyTower, JSON.stringify(state.attempts));
+  $("winText").textContent = "You reached height " + state.tower.goal + " on attempt " + state.attempts +
+    (state.attempts === 1 ? " — first try! Amazing!" : " — you fell, you learned, and you changed your plan. That is exactly how great builders do it!");
+  $("winScore").textContent = "Tower score: " + total + " points  (base " + base + " + smart changes " + smart.points + ")";
+  $("winBonus").textContent = smart.points > 0
+    ? "Smart changes: you used " + smart.kinds.length + " of the " + state.revealed.length + " clue(s) in your notebook (+" + smart.points + ")."
+    : (state.revealed.length === 0
+      ? "No clues needed this time — you built it clean on the first go!"
+      : "You won without using your notebook clues — even more points are waiting if you use them next time!");
+  $("nextBtn").textContent = state.towerIdx + 1 >= towersFor(state.diff).length ? "See my results" : "Next tower";
+  $("winPanel").classList.remove("hidden");
+}
+function nextTower() {
+  sndClick();
+  var list = towersFor(state.diff);
+  if (state.towerIdx + 1 >= list.length) { finishDifficulty(); return; }
+  state.towerIdx++;
+  loadTower(list[state.towerIdx]);
+}
+function finishDifficulty() {
+  var rec = saveBest(state.diff, state.totalScore, state.totalAttempts);
+  $("doneText").textContent = "You finished all " + towersFor(state.diff).length + " " + diffName(state.diff) +
+    " towers! Every fall taught you something — and look what you built with it.";
+  $("doneScore").textContent = state.totalScore + " pts";
+  $("doneAttempts").textContent = "Total tries: " + state.totalAttempts;
+  $("doneBest").textContent = "Best for " + diffName(state.diff) + ": " + rec.bestScore + " points · fewest tries " + rec.fewestAttempts;
+  refreshBestList();
+  show("doneScr");
+}
+
+/* ---------- wiring ---------- */
+document.querySelectorAll(".diffBtn").forEach(function (b) {
+  b.addEventListener("click", function () {
+    sndClick();
+    document.querySelectorAll(".diffBtn").forEach(function (x) { x.classList.remove("sel"); });
+    b.classList.add("sel");
+    state.diff = b.getAttribute("data-diff");
+  });
+});
+$("startBtn").addEventListener("click", startGame);
+document.querySelectorAll(".blockBtn").forEach(function (b) {
+  b.addEventListener("click", function () { placeBlock(b.getAttribute("data-type")); });
+});
+$("braceBtn").addEventListener("click", function () {
+  sndClick();
+  if (state.bracesLeft <= 0 && !state.braceNext) return;
+  state.braceNext = !state.braceNext;
+  renderBrace();
+});
+$("undoBtn").addEventListener("click", function () {
+  if (panelsOpen()) return;
+  var last = state.placements.pop();
+  if (last) { if (last.brace) state.bracesLeft++; sndClick(); renderTower(); renderStats(); renderBrace(); }
+});
+$("retryBtn").addEventListener("click", function () {
+  sndClick();
+  $("failPanel").classList.add("hidden");
+  state.bracesLeft = state.tower.braces; state.braceNext = false;
+  renderTower(); renderStats(); renderBrace();
+});
+$("nextBtn").addEventListener("click", nextTower);
+$("homeBtn").addEventListener("click", function () { sndClick(); refreshBestList(); show("titleScr"); });
+$("againBtn").addEventListener("click", startGame);
+$("doneHomeBtn").addEventListener("click", function () { sndClick(); refreshBestList(); show("titleScr"); });
+$("muteBtn").addEventListener("click", function () {
+  muted = !muted;
+  safeSet("tat_muted", muted ? "1" : "0");
+  $("muteBtn").innerHTML = muted ? "&#128263;" : "&#128266;";
+  if (!muted) sndClick();
+});
+document.addEventListener("keydown", function (e) {
+  if ($("buildScr").classList.contains("hidden")) {
+    if (e.key === "Enter" && !$("titleScr").classList.contains("hidden")) startGame();
+    if (e.key === "Enter" && !$("doneScr").classList.contains("hidden")) startGame();
+    return;
+  }
+  var keys = { "1": "square", "2": "long", "3": "triangle", "4": "stone", "5": "round" };
+  if (keys[e.key]) { placeBlock(keys[e.key]); return; }
+  if (e.key === "b" || e.key === "B") { $("braceBtn").click(); return; }
+  if (e.key === "u" || e.key === "U") { $("undoBtn").click(); return; }
+  if (e.key === "Enter") {
+    if (!$("failPanel").classList.contains("hidden")) $("retryBtn").click();
+    else if (!$("winPanel").classList.contains("hidden")) $("nextBtn").click();
+  }
+});
+if (muted) $("muteBtn").innerHTML = "&#128263;";
+refreshBestList();
+</script>
+</body>
+</html>

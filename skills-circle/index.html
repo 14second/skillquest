@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Skills Circle — 12-Round Team Game</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(160deg,#123a2a,#1f7a4d);color:#123;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:520px;padding:14px 14px 30px}
+h1{color:#fff;text-align:center;margin:8px 0 2px;font-size:30px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.sub{color:#d6ffe9;text-align:center;margin:0 0 14px;font-size:15px}
+.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.25);margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:19px;color:#123a2a}
+.card h3{margin:10px 0 6px;font-size:16px;color:#123a2a}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:14px}
+.bigbtn{width:100%;min-height:60px;font-size:20px;font-weight:800;background:#ff9f1a;color:#fff;box-shadow:0 4px 0 #c77400;margin-top:12px}
+.bigbtn:active{transform:translateY(2px);box-shadow:none}
+.green{background:#2e7d32;box-shadow:0 4px 0 #1b4d1e}
+.ghost{width:100%;min-height:52px;font-size:16px;font-weight:700;background:#eef1f5;color:#334;margin-top:9px}
+#topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#muteBtn{background:rgba(255,255,255,.2);color:#fff;font-size:19px;width:48px;height:48px;border-radius:50%}
+#quitBtn{background:rgba(255,255,255,.2);color:#fff;font-size:15px;font-weight:700;padding:12px 16px;min-height:48px}
+#hud{display:flex;gap:8px;margin-bottom:10px}
+.hudbox{flex:1;background:rgba(255,255,255,.16);color:#fff;border-radius:12px;text-align:center;padding:7px 2px;font-size:13px}
+.hudbox b{display:block;font-size:21px}
+#roundDots{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:12px}
+.dot{width:30px;height:30px;line-height:30px;text-align:center;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;font-size:13px;font-weight:800}
+.dot.done{background:#2e7d32}
+.dot.now{background:#ffd94d;color:#3a2a00;transform:scale(1.15)}
+.qtext{font-size:21px;line-height:1.4;color:#14273f;margin:6px 0;font-weight:600}
+.choice{display:block;width:100%;min-height:58px;font-size:19px;font-weight:700;background:#f4f9ff;border:2px solid #bcd8ff;color:#14273f;margin:9px 0;padding:10px;text-align:left}
+.choice:active{transform:scale(.98)}
+.choice.right{background:#c8f2c0;border-color:#43a047}
+.choice.wrong{background:#ffd2d2;border-color:#e53935}
+.choice:disabled{cursor:default}
+#feedback{display:none;margin-top:10px;border-radius:12px;padding:12px}
+#feedback.ok{background:#eefbe9}
+#feedback.bad{background:#fdeeee}
+#fbTitle{font-size:20px;font-weight:800;color:#14273f}
+#fbEx{font-size:16px;line-height:1.45;margin:8px 0}
+.hintbox{display:none;background:#fff8d6;border:2px dashed #e0a800;border-radius:12px;padding:10px 12px;font-size:16px;margin:10px 0;color:#5b4a00;line-height:1.45}
+input[type=text]{width:100%;min-height:56px;font-size:19px;border:2px solid #bcd8ff;border-radius:14px;padding:10px;font-family:inherit}
+.band{display:block;width:100%;min-height:56px;font-size:17px;font-weight:700;background:#eaf3ff;color:#123a2a;border:2px solid #bcd8ff;border-radius:14px;margin:8px 0;padding:8px}
+.band.sel{background:#ffd94d;border-color:#e0a800;color:#3a2a00}
+.pcount{display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0}
+.pcount button{width:56px;height:56px;font-size:26px;font-weight:800;background:#eaf3ff;color:#123a2a}
+.pcount b{font-size:26px;min-width:44px;text-align:center}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:10px auto}
+.cell{aspect-ratio:1;border-radius:12px;border:2px solid #bcd8ff;min-height:64px}
+.cell.c0{background:#fff}
+.cell.c1{background:#e53935}
+.cell.c2{background:#1e88e5}
+.cell.c3{background:#fdd835}
+.pal{display:flex;gap:8px;justify-content:center;margin:10px 0}
+.pal button{width:52px;height:52px;border-radius:12px;border:3px solid transparent}
+.pal button.sel{border-color:#123a2a}
+.study{font-size:16px;line-height:1.45}
+.study li{margin:8px 0}
+.small{font-size:14px;color:#5a6b80}
+.big{font-size:26px;font-weight:800;color:#123a2a;text-align:center}
+.center{text-align:center}
+table{width:100%;border-collapse:collapse;font-size:16px}
+td,th{padding:6px 4px;border-bottom:1px solid #e5e5e5;text-align:left}
+td:last-child,th:last-child{text-align:right}
+.chip{display:inline-block;background:#eaf3ff;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;color:#123a2a;margin:2px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar"><button id="muteBtn" aria-label="Mute or unmute">🔊</button><button id="quitBtn" class="hidden">✕ Quit game</button></div>
+  <h1>⭕ Skills Circle</h1>
+  <p class="sub">12 rounds, one per human skill. One phone, 2–8 players, pass and play.</p>
+
+  <div id="titleScr">
+    <div class="card"><h2>How it works</h2>
+      <p class="study">Your team plays <b>12 rounds</b> — one for each skill in the Human Skills Framework: Critical Thinking, Creative Thinking, Systems Thinking, Communication, Social Awareness, Collaboration, Self-Awareness, Self-Management, Self-Efficacy, Curiosity, Resilience, Perseverance.</p>
+      <p class="study">Each round scores <b>0–3 stars</b>. At the end you get a <b>Skills Wheel</b> showing your team's strengths and growth areas — saved on this device so next time you can see how you've grown.</p>
+      <p class="small">An informal, formative measure for families and classrooms — not a validated assessment.</p>
+      <button class="bigbtn" id="setupBtn">▶ Set Up Your Team</button>
+      <p class="small center" id="bestLine"></p>
+    </div>
+  </div>
+
+  <div id="setupScr" class="hidden">
+    <div class="card"><h2>1. Team name</h2><input type="text" id="teamName" placeholder="e.g. The Brainstormers" maxlength="30"></div>
+    <div class="card"><h2>2. How many players?</h2>
+      <div class="pcount"><button id="pMinus" aria-label="Fewer players">−</button><b id="pCount">4</b><button id="pPlus" aria-label="More players">+</button></div>
+      <p class="small center">2–8 players, one phone, pass and play.</p></div>
+    <div class="card"><h2>3. Age band</h2><div id="bandList"></div></div>
+    <button class="bigbtn" id="beginBtn">▶ Begin Round 1</button>
+    <button class="ghost" id="setupBack">Back</button>
+  </div>
+
+  <div id="gameScr" class="hidden">
+    <div id="roundDots"></div>
+    <div id="hud">
+      <div class="hudbox">⭕ Round<b id="hRound">1/12</b></div>
+      <div class="hudbox">⭐ Stars<b id="hStars">0</b></div>
+      <div class="hudbox">👥 Team<b id="hTeam">—</b></div>
+    </div>
+    <div id="roundIntro" class="card hidden"></div>
+    <div id="roundBody" class="card hidden"></div>
+    <div id="debriefScr" class="card hidden"></div>
+  </div>
+
+  <div id="endScr" class="hidden">
+    <div class="card"><div class="big" id="endTitle">Your Skills Wheel</div>
+      <p class="center" id="endSummary"></p>
+      <div id="wheelWrap" class="center"></div>
+      <table id="scoreTable"></table>
+    </div>
+    <div class="card"><h2>🌱 Growth areas — practice a round</h2><div id="practiceList"></div></div>
+    <div class="card"><h2>🪞 Self-Awareness reflection</h2><div id="reflectBox"></div></div>
+    <button class="bigbtn" id="againBtn">↻ Play Again</button>
+    <button class="ghost" id="menuBtn">Back to menu</button>
+  </div>
+</div>
+<script>
+"use strict";
+/* ---------- audio: synthesized only, iOS playback route, close on hide ---------- */
+let actx = null, muted = safeGet("sc_muted") === "1";
+function safeGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+function setAudioSession(){ try{ if("audioSession" in navigator) navigator.audioSession.type = "playback"; }catch(e){} }
+function ensureAudio(){
+  setAudioSession();
+  if (muted) return null;
+  if (!actx || actx.state === "closed") {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); window.__maCtx = actx; }
+    catch(e){ return null; }
+  }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, dur, type, vol, when){
+  const ctx = ensureAudio(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type || "triangle"; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.15, ctx.currentTime + (when || 0));
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (when || 0) + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime + (when || 0)); o.stop(ctx.currentTime + (when || 0) + dur + 0.02);
+}
+const sClick = () => tone(520, 0.08, "triangle", 0.10);
+const sGood = () => { tone(523, 0.12, "triangle", 0.15); tone(659, 0.12, "triangle", 0.15, 0.10); tone(784, 0.22, "triangle", 0.15, 0.20); };
+const sBad = () => { tone(196, 0.25, "square", 0.10); tone(147, 0.35, "square", 0.10, 0.18); };
+const sWin = () => { [523,659,784,1047].forEach((f,i)=>tone(f, 0.25, "triangle", 0.15, i*0.13)); };
+document.addEventListener("pointerdown", setAudioSession, true);
+document.addEventListener("touchstart", setAudioSession, true);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && actx && actx.state === "running") { try { actx.close(); } catch(e){} }
+});
+function updateMuteBtn(){ document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊"; }
+document.getElementById("muteBtn").addEventListener("click", () => {
+  muted = !muted; safeSet("sc_muted", muted ? "1" : "0");
+  if (muted && actx) { try { actx.close(); } catch(e){} actx = null; }
+  updateMuteBtn(); sClick();
+});
+updateMuteBtn();
+
+/* ---------- framework ---------- */
+const $ = id => document.getElementById(id);
+const SKILLS = ["Critical Thinking","Creative Thinking","Systems Thinking","Communication","Social Awareness","Collaboration","Self-Awareness","Self-Management","Self-Efficacy","Curiosity","Resilience","Perseverance"];
+const GROUPS = ["Solve","Solve","Solve","Connect","Connect","Connect","Adapt","Adapt","Adapt","Learn","Learn","Learn"];
+const GROUP_OF = s => GROUPS[SKILLS.indexOf(s)];
+const DEBRIEFS = [
+  "What strategy helped your team crack the puzzle?",
+  "Which idea surprised you most — and why did it work?",
+  "What ripple did you almost miss?",
+  "What made the description clear — or confusing?",
+  "What clue told you how they were feeling?",
+  "How did sharing clues change the answer?",
+  "Did anyone's pick surprise the team?",
+  "What would you plan differently next time?",
+  "Did the team back itself — or play it safe?",
+  "Which question gave you the best clue?",
+  "What did the failed tries teach you?",
+  "Who carried the chain — and how did the team keep going?"
+];
+const state = {
+  team: "", players: 4, band: "b35",
+  round: 0, scores: [], stars: 0, selfPicks: [],
+  practiceMode: false, practiceSkill: -1, history: []
+};
+try { state.history = JSON.parse(safeGet("sc_history") || "[]"); } catch(e){ state.history = []; }
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function young(){ return state.band === "b12" || state.band === "b35"; }
+function stars(n){ return "⭐".repeat(n) + "☆".repeat(3 - n); }
+function show(id){
+  ["titleScr","setupScr","gameScr","endScr"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+  $("quitBtn").classList.toggle("hidden", id !== "gameScr");
+}
+function showBest(){
+  const h = state.history;
+  $("bestLine").textContent = h.length ? ("🏆 Last game: " + h[h.length-1].stars + "/36 stars · " + h.length + " game(s) played") : "No games yet — your Skills Wheel history will be saved here.";
+}
+showBest();
+function renderDots(){
+  const el = $("roundDots"); el.innerHTML = "";
+  for (let i = 0; i < 12; i++){
+    const d = document.createElement("div");
+    d.className = "dot" + (i < state.round ? " done" : "") + (i === state.round ? " now" : "");
+    d.textContent = i + 1;
+    el.appendChild(d);
+  }
+  $("hRound").textContent = (state.round + 1) + "/12";
+  $("hStars").textContent = state.stars;
+  $("hTeam").textContent = state.team || "—";
+}
+/* Generic multiple-choice round: attempts score 3/2/1, hints unlock per miss */
+function mcqRound(body, cfg, done){
+  let tries = 0;
+  body.innerHTML = '<p class="qtext">' + cfg.prompt + '</p><div id="mcqChoices"></div>' +
+    '<div class="hintbox" id="mcqHint"></div>' +
+    '<div id="feedback"><div id="fbTitle"></div><div id="fbEx"></div></div>';
+  const order = shuffle([0,1,2,3]);
+  const list = $("mcqChoices");
+  order.forEach(oi => {
+    const b = document.createElement("button");
+    b.className = "choice"; b.dataset.opt = oi;
+    b.innerHTML = "<b>" + "ABCD"[order.indexOf(oi)] + ".</b> " + cfg.options[oi];
+    b.addEventListener("click", () => {
+      if (b.disabled) return;
+      if (oi === cfg.correct){
+        b.classList.add("right");
+        list.querySelectorAll(".choice").forEach(x => x.disabled = true);
+        const score = Math.max(0, 3 - tries);
+        sGood();
+        const fb = $("feedback"); fb.style.display = "block"; fb.className = "ok";
+        $("fbTitle").textContent = "✅ " + stars(score);
+        $("fbEx").textContent = cfg.explain;
+        const nb = document.createElement("button"); nb.className = "bigbtn green"; nb.textContent = "Continue ▶";
+        nb.addEventListener("click", () => done(score));
+        fb.appendChild(nb);
+      } else {
+        b.classList.add("wrong"); b.disabled = true; tries++; sBad();
+        const hint = $("mcqHint");
+        if (cfg.hints && cfg.hints[tries - 1]){ hint.style.display = "block"; hint.textContent = "💡 Hint: " + cfg.hints[tries - 1]; }
+        if (tries >= 3){
+          list.querySelectorAll(".choice").forEach(x => x.disabled = true);
+          const rightBtn = list.querySelector('[data-opt="' + cfg.correct + '"]');
+          if (rightBtn) rightBtn.classList.add("right");
+          const fb = $("feedback"); fb.style.display = "block"; fb.className = "bad";
+          $("fbTitle").textContent = "❌ " + stars(0);
+          $("fbEx").textContent = cfg.explain;
+          const nb = document.createElement("button"); nb.className = "bigbtn green"; nb.textContent = "Continue ▶";
+          nb.addEventListener("click", () => done(0));
+          fb.appendChild(nb);
+        }
+      }
+    });
+    list.appendChild(b);
+  });
+}
+/* Round intro -> body -> debrief -> next round */
+function runRound(){
+  renderDots();
+  const r = ROUNDS[state.round];
+  const intro = $("roundIntro"), body = $("roundBody"), deb = $("debriefScr");
+  body.classList.add("hidden"); deb.classList.add("hidden"); intro.classList.remove("hidden");
+  intro.innerHTML = '<p class="small">' + GROUP_OF(r.skill) + ' · Round ' + (state.round + 1) + ' of 12</p>' +
+    '<h2>' + r.skill + '</h2><p class="qtext">' + r.title + '</p><p class="study">' + r.desc + '</p>' +
+    '<p class="small">Pass the phone to the reader for this round.</p>';
+  const b = document.createElement("button"); b.className = "bigbtn"; b.id = "roundStartBtn"; b.textContent = "▶ Start Round " + (state.round + 1);
+  b.addEventListener("click", () => {
+    sClick(); intro.classList.add("hidden"); body.classList.remove("hidden");
+    r.run(body, score => {
+      state.scores[state.round] = score; state.stars += score;
+      if (state.practiceMode){ endPractice(score); return; }
+      body.classList.add("hidden"); deb.classList.remove("hidden");
+      deb.innerHTML = '<h2>💬 Debrief — ' + stars(score) + '</h2><p class="qtext">' + DEBRIEFS[state.round] + '</p>' +
+        '<p class="small">Take about 30 seconds to talk it over — then move on.</p>';
+      const nb = document.createElement("button"); nb.className = "bigbtn green"; nb.id = "debriefNextBtn";
+      nb.textContent = state.round === 11 ? "See Your Skills Wheel 🏆" : "Next Round ▶";
+      nb.addEventListener("click", () => { sClick(); state.round++; if (state.round >= 12) endGame(); else runRound(); });
+      deb.appendChild(nb);
+      renderDots();
+    });
+  });
+  intro.appendChild(b);
+}
+function endPractice(score){
+  const body = $("roundBody");
+  body.innerHTML = '<h2>Practice: ' + SKILLS[state.practiceSkill] + '</h2><p class="qtext">You scored ' + stars(score) + ' on this practice round.</p>' +
+    '<p class="study">Keep practicing — the next full game is your chance to beat it!</p>';
+  const b = document.createElement("button"); b.className = "bigbtn green"; b.textContent = "Back to Results";
+  b.addEventListener("click", () => { sClick(); showEnd(); });
+  body.appendChild(b);
+}
+
+/* ---------- the 12 rounds ---------- */
+const ROUNDS = [
+/* 1 — Critical Thinking: team logic puzzle with a clue-reader */
+{ skill: "Critical Thinking", title: "The Pet Puzzle",
+  desc: "One player reads the clues aloud. The team talks it through and picks one answer. Three tries, with a hint after each miss.",
+  run(body, done){
+    const cfg = young() ? {
+      prompt: "Three friends — Ana, Ben, and Cleo — each have a different pet: a dog, a cat, and a fish.<br><br>Clues:<br>1️⃣ Ana's pet barks.<br>2️⃣ Cleo's pet swims in a bowl.<br>3️⃣ Ben's pet purrs.<br><br>Who owns the cat?",
+      options: ["Ana", "Ben", "Cleo", "We can't tell"],
+      correct: 1,
+      hints: ["Ana's pet barks — so Ana's pet is the dog.", "Cleo's pet lives in a bowl — so Cleo's pet is the fish."],
+      explain: "Ana's pet barks (dog), Cleo's pet swims in a bowl (fish) — so Ben's purring pet must be the cat."
+    } : {
+      prompt: "Four students — Maya, Leo, Priya, and Sam — each play a different instrument: piano, violin, drums, and flute.<br><br>Clues:<br>1️⃣ Maya's instrument has 88 keys.<br>2️⃣ Leo's instrument needs a bow.<br>3️⃣ Sam's instrument is played with sticks.<br>4️⃣ Priya's instrument is a woodwind.<br><br>Who plays the flute?",
+      options: ["Maya", "Leo", "Priya", "Sam"],
+      correct: 2,
+      hints: ["88 keys means the piano — that's Maya.", "A bow means the violin — that's Leo. Sticks mean drums — that's Sam."],
+      explain: "Maya = piano (88 keys), Leo = violin (bow), Sam = drums (sticks) — so Priya, the woodwind player, has the flute."
+    };
+    mcqRound(body, cfg, done);
+  } },
+/* 2 — Creative Thinking: brainstorm relay */
+{ skill: "Creative Thinking", title: "Brainstorm Relay",
+  desc: "60 seconds on the clock. Take turns shouting out uses for the object — type each one in. Different ideas score; repeats don't.",
+  run(body, done){
+    const obj = young() ? "a cardboard box" : "a paperclip";
+    const ideas = new Set();
+    let left = 60, timer = null, finished = false;
+    body.innerHTML = '<p class="qtext">How many uses can your team think of for <b>' + obj + '</b>?</p>' +
+      '<p class="center big" id="scTimer">⏱ 60s</p>' +
+      '<input type="text" id="ideaInput" placeholder="Type an idea, e.g. a boat" autocomplete="off">' +
+      '<button class="bigbtn" id="ideaAdd">+ Add Idea</button>' +
+      '<p class="study center" id="ideaCount">0 ideas so far</p><div id="ideaList"></div>' +
+      '<button class="bigbtn green hidden" id="ideaDone">Time is Up — See Score ▶</button>';
+    const tick = () => {
+      left--;
+      const t = $("scTimer"); if (t) t.textContent = "⏱ " + left + "s";
+      if (left <= 0){ clearInterval(timer); finish(); }
+    };
+    const addIdea = () => {
+      const inp = $("ideaInput"); if (!inp) return;
+      const v = inp.value.trim().toLowerCase();
+      if (!v) return;
+      if (ideas.has(v)){ inp.value = ""; inp.placeholder = "Already said — try a different one!"; return; }
+      ideas.add(v); inp.value = ""; inp.placeholder = "Type an idea";
+      $("ideaCount").textContent = ideas.size + (ideas.size === 1 ? " idea" : " ideas") + " so far";
+      const chip = document.createElement("span"); chip.className = "chip"; chip.textContent = v;
+      $("ideaList").appendChild(chip);
+    };
+    const finish = () => {
+      if (finished) return; finished = true;
+      const n = ideas.size;
+      const score = n >= 8 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0;
+      if (score >= 2) sGood(); else sBad();
+      body.innerHTML = '<h2>💡 ' + n + ' ideas!</h2><p class="qtext">' + stars(score) + '</p>' +
+        '<p class="study">' + (n >= 8 ? "A flood of ideas — great variety!" : n >= 5 ? "Solid brainstorming — keep pushing for wilder ideas next time." : n >= 3 ? "A start — next time, build on each other's ideas to get more." : "Tough round — try saying the first thing that comes to mind, even silly ones.") + '</p>';
+      const b = document.createElement("button"); b.className = "bigbtn green"; b.textContent = "Continue ▶";
+      b.addEventListener("click", () => done(score));
+      body.appendChild(b);
+    };
+    $("ideaAdd").addEventListener("click", addIdea);
+    $("ideaInput").addEventListener("keydown", e => { if (e.key === "Enter") addIdea(); });
+    $("ideaInput").focus();
+    timer = setInterval(tick, 1000);
+    window.__scTimer = timer;
+    window.__scFinishR2 = finish;
+  } },
+/* 3 — Systems Thinking: predict the ripple */
+{ skill: "Systems Thinking", title: "Predict the Ripple",
+  desc: "Read the scenario together. Talk about what happens next — then pick the most likely chain of effects.",
+  run(body, done){
+    const cfg = young() ? {
+      prompt: "A school plants a garden full of flowers. Bees start visiting the flowers every day.<br><br>What is the most likely thing to happen next?",
+      options: ["The flowers make seeds, and more plants grow next year", "The bees eat all the flowers and the garden dies", "Nothing changes at all", "The flowers turn into trees overnight"],
+      correct: 0,
+      hints: ["Bees carry pollen between flowers — what does pollen do?", "Pollen helps flowers make seeds."],
+      explain: "Bees pollinate the flowers, the flowers make seeds, and seeds grow into new plants — one small change ripples into more garden."
+    } : {
+      prompt: "A town builds a new highway straight through a forest.<br><br>What is the most likely ripple effect over the next 10 years?",
+      options: ["More animals move into the forest", "The forest is split in two, some animals can't cross, and nearby streams get dirtier", "The highway makes the forest grow faster", "Nothing changes for the forest"],
+      correct: 1,
+      hints: ["Think about what a road does to animals trying to cross it.", "Roads also wash dirt and oil into streams when it rains."],
+      explain: "A highway fragments the habitat, blocks animal movement, and adds runoff to streams — one road ripples through the whole system."
+    };
+    mcqRound(body, cfg, done);
+  } },
+/* 4 — Communication: Describe & Build */
+{ skill: "Communication", title: "Describe & Build",
+  desc: "One player (the Describer) looks at a secret pattern. The Builder can't see it — the Describer uses words only. Then the Builder rebuilds it from the description.",
+  run(body, done){
+    const colors = ["", "red", "blue", "yellow"];
+    const pattern = [];
+    for (let i = 0; i < 9; i++) pattern.push(Math.floor(Math.random() * 4));
+    let phase = "show", sel = 1, built = Array(9).fill(0), timer = null, left = 20;
+    const renderGrid = (vals, clickable) => {
+      const g = document.createElement("div"); g.className = "grid3";
+      vals.forEach((v, i) => {
+        const c = document.createElement("button"); c.className = "cell c" + v; c.setAttribute("aria-label", "Square " + (i + 1));
+        if (clickable) c.addEventListener("click", () => { built[i] = sel; render(); });
+        g.appendChild(c);
+      });
+      return g;
+    };
+    const render = () => {
+      body.innerHTML = "";
+      if (phase === "show"){
+        body.innerHTML = '<p class="qtext">👀 Describer only — look at this pattern! You have <b id="showTimer">20s</b>.</p>' +
+          '<p class="study">Describer: study the pattern, then describe it in words. Builder: look away!</p>';
+        body.appendChild(renderGrid(pattern, false));
+        const b = document.createElement("button"); b.className = "bigbtn"; b.textContent = "Got it — Hide the Pattern";
+        b.addEventListener("click", () => { clearInterval(timer); phase = "build"; render(); });
+        body.appendChild(b);
+      } else {
+        body.innerHTML = '<p class="qtext">🧱 Builder: rebuild the pattern from the description.</p>' +
+          '<p class="study">Tap a color, then tap squares to paint them. Describer: guide with words only — no pointing!</p>';
+        const pal = document.createElement("div"); pal.className = "pal";
+        [0,1,2,3].forEach(ci => {
+          const pb = document.createElement("button");
+          pb.className = "cell c" + ci + (sel === ci ? " sel" : "");
+          pb.style.border = sel === ci ? "3px solid #123a2a" : "3px solid transparent";
+          pb.textContent = ci === 0 ? "⬜" : "";
+          pb.addEventListener("click", () => { sel = ci; render(); });
+          pal.appendChild(pb);
+        });
+        body.appendChild(pal);
+        body.appendChild(renderGrid(built, true));
+        const b = document.createElement("button"); b.className = "bigbtn green"; b.textContent = "Check the Pattern ✅";
+        b.addEventListener("click", () => {
+          let match = 0; pattern.forEach((v, i) => { if (built[i] === v) match++; });
+          const score = match === 9 ? 3 : match >= 7 ? 2 : match >= 5 ? 1 : 0;
+          if (score >= 2) sGood(); else sBad();
+          body.innerHTML = '<h2>🧱 ' + match + ' of 9 squares match</h2><p class="qtext">' + stars(score) + '</p>' +
+            '<p class="study">The secret pattern was:</p>';
+          body.appendChild(renderGrid(pattern, false));
+          body.insertAdjacentHTML("beforeend", '<p class="study">' + (score === 3 ? "Perfect rebuild — crystal-clear describing!" : score === 2 ? "Nearly there — a few squares slipped." : "Tricky! Try describing one row at a time next round.") + '</p>');
+          const nb = document.createElement("button"); nb.className = "bigbtn green"; nb.textContent = "Continue ▶";
+          nb.addEventListener("click", () => done(score));
+          body.appendChild(nb);
+        });
+        body.appendChild(b);
+      }
+    };
+    timer = setInterval(() => {
+      left--;
+      const t = $("showTimer"); if (t) t.textContent = left + "s";
+      if (left <= 0){ clearInterval(timer); if (phase === "show"){ phase = "build"; render(); } }
+    }, 1000);
+    render();
+  } },
+/* 5 — Social Awareness: scenario + secret emotion */
+{ skill: "Social Awareness", title: "How Are They Feeling?",
+  desc: "Read the scenario together. Work out how the person most likely feels — and what evidence tells you that.",
+  run(body, done){
+    const cfg = young() ? {
+      prompt: "Sam trips and falls in front of the whole class. One classmate laughs. Sam's face goes red and Sam looks down at the floor.<br><br>How does Sam most likely feel?",
+      options: ["Happy and proud", "Embarrassed and hurt", "Sleepy", "Hungry"],
+      correct: 1,
+      hints: ["Look at the clues: red face, looking down.", "Nobody feels proud after falling in front of everyone."],
+      explain: "A red face and looking down are signs of embarrassment — Sam is most likely embarrassed and hurt, not happy."
+    } : {
+      prompt: "Your teammate has gone quiet in the group chat ever since you joked about their idea yesterday. They haven't replied to anything since.<br><br>What is the kindest next step?",
+      options: ["Ignore it — they'll get over it", "Apologize and ask how they felt about the joke", "Joke about it again to lighten the mood", "Tell the teacher immediately"],
+      correct: 1,
+      hints: ["Going quiet after a joke is a clue about how it landed.", "The kindest move repairs the moment, not the joke."],
+      explain: "Going quiet is a sign the joke hurt. Apologizing and asking how they felt shows you noticed and care."
+    };
+    mcqRound(body, cfg, done);
+  } },
+/* 6 — Collaboration: split clues */
+{ skill: "Collaboration", title: "Split Clues",
+  desc: "Each player privately sees ONE clue — pass the phone around, one player at a time. Then put the clues together out loud and answer as a team.",
+  run(body, done){
+    const set = young() ? {
+      clues: ["The treasure is NOT under the tree.", "The treasure is near water.", "The treasure is where the ducks swim."],
+      prompt: "Your team has combined all three clues. Where is the treasure?",
+      options: ["Under the tree", "In the pond", "On the roof", "In the kitchen"],
+      correct: 1,
+      hints: ["Near water + where ducks swim…", "Ducks swim in a pond."],
+      explain: "Not under the tree, near water, where ducks swim — the treasure is in the pond."
+    } : {
+      clues: ["The code is a 3-digit number.", "The first digit is twice the second digit.", "The digits add up to 12, and the last digit is 3."],
+      prompt: "Your team has combined all three clues. What is the code?",
+      options: ["633", "363", "624", "933"],
+      correct: 0,
+      hints: ["Last digit is 3, and the digits add to 12 — so the first two add to 9.", "First digit is twice the second: 6 is twice 3."],
+      explain: "Digits add to 12 with last digit 3, so the first two add to 9; 6 is twice 3 — the code is 633."
+    };
+    let i = 0;
+    const showClue = () => {
+      body.innerHTML = '<p class="qtext">🤫 Clue ' + (i + 1) + ' of ' + set.clues.length + ' — for Player ' + (i + 1) + ' only!</p>' +
+        '<p class="study">Everyone else: look away. Player ' + (i + 1) + ', read your clue, remember it, then pass the phone on.</p>' +
+        '<div class="card" style="background:#fff8d6"><p class="qtext center">' + set.clues[i] + '</p></div>';
+      const b = document.createElement("button"); b.className = "bigbtn";
+      b.textContent = i < set.clues.length - 1 ? "I've Got It — Pass the Phone ▶" : "All Clues Seen — Answer Together ▶";
+      b.addEventListener("click", () => { sClick(); i++; if (i < set.clues.length) showClue(); else mcqRound(body, { prompt: set.prompt, options: set.options, correct: set.correct, hints: set.hints, explain: set.explain }, done); });
+      body.appendChild(b);
+    };
+    showClue();
+  } },
+/* 7 — Self-Awareness: private pass-the-phone picks */
+{ skill: "Self-Awareness", title: "Most Like Me",
+  desc: "Pass the phone around. Each player privately picks the statement that is MOST like them. No peeking — the team sees the pattern at the end.",
+  run(body, done){
+    const statements = [
+      "I keep trying when something is hard.",
+      "I like to plan before I start.",
+      "I notice how others are feeling.",
+      "I ask questions when I'm curious."
+    ];
+    let p = 0;
+    const picks = [];
+    const ask = () => {
+      body.innerHTML = '<p class="qtext">🪞 Player ' + (p + 1) + ' of ' + state.players + ' — just for you!</p>' +
+        '<p class="study">Everyone else look away. Which statement is MOST like you?</p><div id="saChoices"></div>';
+      const list = $("saChoices");
+      statements.forEach((s, idx) => {
+        const b = document.createElement("button"); b.className = "choice"; b.textContent = s;
+        b.addEventListener("click", () => {
+          picks.push(idx); state.selfPicks.push(idx); sClick();
+          p++;
+          if (p < state.players) ask();
+          else {
+            body.innerHTML = '<h2>🪞 The team sees itself</h2><p class="qtext">' + stars(3) + '</p>' +
+              '<p class="study">Everyone picked honestly — that takes courage. Here is your team\'s pattern:</p>' +
+              '<ul class="study">' + statements.map((s, idx) => '<li>' + s + ' — <b>' + picks.filter(x => x === idx).length + ' player(s)</b></li>').join("") + '</ul>' +
+              '<p class="study">Talk about it: did anyone\'s pick surprise the team?</p>';
+            const b2 = document.createElement("button"); b2.className = "bigbtn green"; b2.textContent = "Continue ▶";
+            b2.addEventListener("click", () => done(3));
+            body.appendChild(b2);
+          }
+        });
+        list.appendChild(b);
+      });
+    };
+    ask();
+  } },
+/* 8 — Self-Management: plan a day, then replan after a disruption */
+{ skill: "Self-Management", title: "Plan the Day… Then Replan!",
+  desc: "Plan together, then a disruption card hits and you must replan fast. A good plan fits the time and keeps the must-dos.",
+  run(body, done){
+    let score = 0;
+    const step1 = young() ? {
+      prompt: "You have 3 hours after school. Homework takes 1 hour. You also want practice.<br><br>Which plan fits the time AND gets homework done?",
+      options: ["Practice 2h + TV 1h", "Homework 1h + Practice 2h", "Homework 1h + Practice 2h + Games 1h", "Practice 3h"],
+      correct: 1,
+      hints: ["Count the hours: the plan must add up to 3 or less.", "Homework is a must-do — it has to be in the plan."],
+      explain: "Homework (1h) + Practice (2h) = 3 hours exactly, with homework done. The other plans skip homework or run over time."
+    } : {
+      prompt: "Saturday: you have 6 hours. Chores take 1 hour, study takes 2 hours, and you want 2 hours of free time.<br><br>Which plan fits?",
+      options: ["Chores 1h + Study 2h + Free time 3h", "Chores 1h + Study 2h + Free time 2h + Errands 1h", "Study 2h + Free time 4h", "Chores 1h + Study 2h + Free time 2h"],
+      correct: 3,
+      hints: ["Add up each plan — it must be 6 hours or less.", "Don't forget the chores and the study time."],
+      explain: "Chores (1h) + Study (2h) + Free time (2h) = 5 hours — it fits with an hour to spare."
+    };
+    const step2 = young() ? {
+      prompt: "⚡ DISRUPTION! Practice is cancelled — the field is flooded. Replan the 3 hours.<br><br>Which new plan is best?",
+      options: ["Homework 1h + Reading 1h + Help cook 1h", "TV for 3 hours", "Homework 3h", "Do nothing"],
+      correct: 0,
+      hints: ["Homework still has to happen.", "A good replan keeps the must-do and uses the freed time well."],
+      explain: "Homework (1h) + Reading (1h) + Help cook (1h) uses all 3 hours well — the must-do is done and the freed time is useful."
+    } : {
+      prompt: "⚡ DISRUPTION! An unexpected family visit takes 2 hours of your Saturday. Replan.<br><br>Which new plan is best?",
+      options: ["Skip chores, keep study 2h + free time 2h", "Chores 1h + Study 2h + Visit 2h + Free time 1h", "Cancel study, keep everything else", "Do nothing until the visit ends"],
+      correct: 1,
+      hints: ["The visit is fixed — 2 hours. What must still fit?", "Chores and study are must-dos; free time can shrink."],
+      explain: "Chores (1h) + Study (2h) + Visit (2h) + Free time (1h) = 6 hours — everything important still fits."
+    };
+    const askStep = (cfg, next) => {
+      let tries = 0;
+      body.innerHTML = '<p class="qtext">' + cfg.prompt + '</p><div id="mcqChoices"></div><div class="hintbox" id="mcqHint"></div><div id="feedback"><div id="fbTitle"></div><div id="fbEx"></div></div>';
+      const order = shuffle([0,1,2,3]);
+      const list = $("mcqChoices");
+      order.forEach(oi => {
+        const b = document.createElement("button"); b.className = "choice"; b.dataset.opt = oi;
+        b.innerHTML = "<b>" + "ABCD"[order.indexOf(oi)] + ".</b> " + cfg.options[oi];
+        b.addEventListener("click", () => {
+          if (b.disabled) return;
+          if (oi === cfg.correct){
+            b.classList.add("right"); list.querySelectorAll(".choice").forEach(x => x.disabled = true);
+            score += (tries === 0 ? 2 : 1); sGood();
+            const fb = $("feedback"); fb.style.display = "block"; fb.className = "ok";
+            $("fbTitle").textContent = "✅ Good planning!";
+            $("fbEx").textContent = cfg.explain;
+            const nb = document.createElement("button"); nb.className = "bigbtn green"; nb.textContent = next ? "Disruption Card ⚡" : "Continue ▶";
+            nb.addEventListener("click", () => { if (next) askStep(step2, false); else done(Math.min(3, score)); });
+            fb.appendChild(nb);
+          } else {
+            b.classList.add("wrong"); b.disabled = true; tries++; sBad();
+            const hint = $("mcqHint");
+            if (cfg.hints && cfg.hints[tries - 1]){ hint.style.display = "block"; hint.textContent = "💡 Hint: " + cfg.hints[tries - 1]; }
+            if (tries >= 3){
+              list.querySelectorAll(".choice").forEach(x => x.disabled = true);
+              const fb = $("feedback"); fb.style.display = "block"; fb.className = "bad";
+              $("fbTitle").textContent = "❌ That plan doesn't fit.";
+              $("fbEx").textContent = cfg.explain;
+              const nb = document.createElement("button"); nb.className = "bigbtn green"; nb.textContent = next ? "Disruption Card ⚡" : "Continue ▶";
+              nb.addEventListener("click", () => { if (next) askStep(step2, false); else done(Math.min(3, score)); });
+              fb.appendChild(nb);
+            }
+          }
+        });
+        list.appendChild(b);
+      });
+    };
+    askStep(step1, true);
+  } },
+/* 9 — Self-Efficacy: pick your difficulty, then deliver */
+{ skill: "Self-Efficacy", title: "Back Yourself",
+  desc: "The team picks a challenge level together. Easy is worth 1 star, Medium 2, Hard 3 — but only if you get it right. Back yourselves!",
+  run(body, done){
+    const sets = young() ? {
+      easy: { q: "What has a face and two hands, but no arms or legs?", opts: ["A clock", "A robot", "A doll", "A book"], correct: 0, explain: "A clock has a face and two hands!" },
+      med: { q: "What gets wetter the more it dries?", opts: ["A sponge", "A towel", "A raincoat", "A mop"], correct: 1, explain: "A towel gets wetter as it dries you off." },
+      hard: { q: "Forward I'm heavy, but backward I'm not. What am I?", opts: ["A rock", "A ton", "A feather", "A truck"], correct: 1, explain: "'Ton' forward is heavy; backward it's 'not'!" }
+    } : {
+      easy: { q: "What has keys but can't open a single door?", opts: ["A piano", "A lock", "A map", "A safe"], correct: 0, explain: "A piano has keys but opens no doors." },
+      med: { q: "I speak without a mouth and hear without ears. What am I?", opts: ["A phone", "An echo", "A dream", "A radio"], correct: 1, explain: "An echo speaks and hears without a mouth or ears." },
+      hard: { q: "The person who makes it doesn't need it. The person who buys it doesn't use it. The person who uses it doesn't know it. What is it?", opts: ["A coffin", "A gift", "A ticket", "A secret"], correct: 0, explain: "A coffin: made by someone else, bought by family, used without knowing." }
+    };
+    body.innerHTML = '<p class="qtext">🎯 Pick your challenge level — as a team.</p><p class="study">Easy = 1 star · Medium = 2 stars · Hard = 3 stars. Wrong answer = 0. How much do you back yourselves?</p><div id="diffChoices"></div>';
+    const list = $("diffChoices");
+    [["easy", "😊 Easy", 1], ["med", "😤 Medium", 2], ["hard", "🔥 Hard", 3]].forEach(([key, label, pts]) => {
+      const b = document.createElement("button"); b.className = "choice"; b.textContent = label + " — " + pts + " star" + (pts > 1 ? "s" : "");
+      b.addEventListener("click", () => {
+        sClick();
+        const c = sets[key];
+        mcqRound(body, { prompt: c.q, options: c.opts, correct: c.correct, hints: [], explain: c.explain }, raw => {
+          done(raw > 0 ? pts : 0);
+        });
+      });
+      list.appendChild(b);
+    });
+  } },
+/* 10 — Curiosity: mystery object, limited question tokens */
+{ skill: "Curiosity", title: "Mystery Object",
+  desc: "A mystery object is hidden. Your team has 3 question tokens — spend them on good questions, then guess what it is.",
+  run(body, done){
+    const obj = young() ? {
+      name: "a flashlight",
+      qs: ["Does it need batteries?", "Does it make light?", "Is it bigger than your hand?", "Can you use it in the dark?"],
+      as: ["Yes, most flashlights need batteries.", "Yes — it makes a beam of light.", "No, it fits in your hand.", "Yes! That's exactly when it's useful."],
+      opts: ["A flashlight", "A candle", "A lamp", "A mirror"],
+      correct: 0
+    } : {
+      name: "a compass",
+      qs: ["Does it point north?", "Does it need power or batteries?", "Is it magnetic?", "Was it used by sailors long ago?"],
+      as: ["Yes — its needle points north.", "No, it needs no power at all.", "Yes, it works with a magnetized needle.", "Yes — sailors used compasses to navigate for centuries."],
+      opts: ["A compass", "A map", "A telescope", "A barometer"],
+      correct: 0
+    };
+    let tokens = 3, asked = 0;
+    const askedSet = new Set();
+    const revealed = [];
+    const render = () => {
+      body.innerHTML = '<p class="qtext">🔍 Mystery object! You have <b>' + tokens + ' question token(s)</b> left.</p>' +
+        '<p class="study">Tap a question to spend a token and hear the answer. When you\'re ready, guess the object.</p>' +
+        '<div id="qList"></div><div id="aList"></div>';
+      const al = $("aList");
+      revealed.forEach(r => {
+        const a = document.createElement("div"); a.className = "hintbox"; a.style.display = "block";
+        a.textContent = "💡 " + r.q + " — " + r.a;
+        al.appendChild(a);
+      });
+      const ql = $("qList");
+      obj.qs.forEach((q, i) => {
+        const b = document.createElement("button"); b.className = "choice";
+        b.textContent = "❓ " + q; b.disabled = tokens <= 0 || askedSet.has(i);
+        b.addEventListener("click", () => {
+          if (tokens <= 0 || askedSet.has(i)) return;
+          askedSet.add(i);
+          tokens--; asked++; sClick();
+          revealed.push({ q: obj.qs[i], a: obj.as[i] });
+          render();
+        });
+        ql.appendChild(b);
+      });
+      const g = document.createElement("button"); g.className = "bigbtn green"; g.textContent = "Guess the Object 🔍";
+      g.addEventListener("click", () => {
+        mcqRound(body, { prompt: "What is the mystery object?", options: obj.opts, correct: obj.correct, hints: [], explain: "It was " + obj.name + "! " + (asked <= 1 ? "One great question was all you needed." : "Your questions led you to it.") }, raw => {
+          done(raw > 0 ? (asked === 1 ? 3 : asked === 2 ? 2 : 1) : 0);
+        });
+      });
+      body.appendChild(g);
+    };
+    render();
+  } },
+/* 11 — Resilience: hard puzzle, failed attempts unlock information */
+{ skill: "Resilience", title: "The Locked Box",
+  desc: "A box has a 3-digit code. Every wrong guess unlocks a clue. Smart revisers use each clue — how few tries do you need?",
+  run(body, done){
+    const cfg = {
+      prompt: "🔒 The code is a 3-digit number. Pick a code to try — each wrong try reveals a clue.",
+      options: ["603", "306", "630", "360"],
+      correct: 0,
+      hints: ["The digits add up to 9.", "The middle digit is 0.", "The first digit is double the last digit."],
+      explain: "6 + 0 + 3 = 9, the middle digit is 0, and 6 is double 3 — the code is 603. Failed tries weren't wasted: each one taught you something."
+    };
+    mcqRound(body, cfg, done);
+  } },
+/* 12 — Perseverance: relay chain */
+{ skill: "Perseverance", title: "Relay Chain",
+  desc: "Every player takes one turn. Each correct answer adds a link to the team's chain. Keep going until the chain is complete!",
+  run(body, done){
+    const pool = young() ? [
+      { q: "How many days are in a week?", opts: ["5", "6", "7", "8"], correct: 2 },
+      { q: "What is 5 + 5?", opts: ["9", "10", "11", "12"], correct: 1 },
+      { q: "Which animal is known as man's best friend?", opts: ["Cat", "Dog", "Horse", "Parrot"], correct: 1 },
+      { q: "What color do you get by mixing blue and yellow?", opts: ["Purple", "Orange", "Green", "Pink"], correct: 2 },
+      { q: "How many legs does a spider have?", opts: ["6", "8", "10", "4"], correct: 1 },
+      { q: "What is the opposite of 'hot'?", opts: ["Warm", "Cold", "Boiling", "Wet"], correct: 1 },
+      { q: "Which shape has 4 equal sides?", opts: ["Triangle", "Circle", "Square", "Rectangle"], correct: 2 },
+      { q: "What do bees make?", opts: ["Milk", "Honey", "Silk", "Wax only"], correct: 1 }
+    ] : [
+      { q: "What is the largest planet in our solar system?", opts: ["Saturn", "Neptune", "Jupiter", "Mars"], correct: 2 },
+      { q: "What is 15 × 4?", opts: ["45", "50", "60", "75"], correct: 2 },
+      { q: "Which gas do plants absorb?", opts: ["Oxygen", "Nitrogen", "Carbon dioxide", "Helium"], correct: 2 },
+      { q: "Who wrote 'Romeo and Juliet'?", opts: ["Dickens", "Shakespeare", "Austen", "Twain"], correct: 1 },
+      { q: "What is the chemical symbol for water?", opts: ["CO2", "O2", "H2O", "NaCl"], correct: 2 },
+      { q: "How many sides does a hexagon have?", opts: ["5", "6", "7", "8"], correct: 1 },
+      { q: "What is the capital of France?", opts: ["London", "Berlin", "Paris", "Madrid"], correct: 2 },
+      { q: "What is 100 ÷ 4?", opts: ["20", "25", "30", "40"], correct: 1 }
+    ];
+    const qs = shuffle(pool.slice()).slice(0, state.players);
+    let p = 0, links = 0;
+    const ask = () => {
+      if (p >= qs.length){
+        const frac = links / qs.length;
+        const score = frac === 1 ? 3 : frac >= 0.66 ? 2 : frac >= 0.5 ? 1 : 0;
+        body.innerHTML = '<h2>⛓️ Chain complete: ' + links + ' of ' + qs.length + ' links!</h2><p class="qtext">' + stars(score) + '</p>' +
+          '<p class="study">' + (score === 3 ? "Every player delivered — a perfect relay!" : score === 2 ? "A strong chain — nearly everyone delivered." : "The chain wobbled, but the team kept going — that's perseverance.") + '</p>';
+        const b = document.createElement("button"); b.className = "bigbtn green"; b.textContent = "Continue ▶";
+        b.addEventListener("click", () => done(score));
+        body.appendChild(b);
+        return;
+      }
+      const c = qs[p];
+      body.innerHTML = '<p class="qtext">⛓️ Player ' + (p + 1) + ' of ' + qs.length + ' — your link in the chain!</p>' +
+        '<p class="center">Chain so far: ' + "⛓️".repeat(links) + " · " + links + "/" + qs.length + ' links</p>' +
+        '<p class="qtext">' + c.q + '</p><div id="mcqChoices"></div>';
+      const order = shuffle([0,1,2,3]);
+      const list = $("mcqChoices");
+      order.forEach(oi => {
+        const b = document.createElement("button"); b.className = "choice"; b.dataset.opt = oi;
+        b.innerHTML = "<b>" + "ABCD"[order.indexOf(oi)] + ".</b> " + c.opts[oi];
+        b.addEventListener("click", () => {
+          if (oi === c.correct){ b.classList.add("right"); links++; sGood(); }
+          else { b.classList.add("wrong"); sBad(); const rb = list.querySelector('[data-opt="' + c.correct + '"]'); if (rb) rb.classList.add("right"); }
+          list.querySelectorAll(".choice").forEach(x => x.disabled = true);
+          p++;
+          setTimeout(ask, 900);
+        });
+        list.appendChild(b);
+      });
+    };
+    ask();
+  } }
+];
+
+/* ---------- end screen: Skills Wheel ---------- */
+function quadrantAvg(group){
+  const idx = GROUPS.map((g, i) => g === group ? i : -1).filter(i => i >= 0);
+  const sum = idx.reduce((a, i) => a + (state.scores[i] || 0), 0);
+  return (sum / idx.length).toFixed(1);
+}
+function wheelSVG(){
+  const cx = 130, cy = 130, R = 105;
+  const pts = SKILLS.map((s, i) => {
+    const ang = (Math.PI * 2 * i) / 12 - Math.PI / 2;
+    const r = R * (state.scores[i] || 0) / 3;
+    return (cx + r * Math.cos(ang)).toFixed(1) + "," + (cy + r * Math.sin(ang)).toFixed(1);
+  }).join(" ");
+  const spokes = SKILLS.map((s, i) => {
+    const ang = (Math.PI * 2 * i) / 12 - Math.PI / 2;
+    return '<line x1="' + cx + '" y1="' + cy + '" x2="' + (cx + R * Math.cos(ang)).toFixed(1) + '" y2="' + (cy + R * Math.sin(ang)).toFixed(1) + '" stroke="#ddd"/>';
+  }).join("");
+  const labels = SKILLS.map((s, i) => {
+    const ang = (Math.PI * 2 * i) / 12 - Math.PI / 2;
+    const x = cx + (R + 16) * Math.cos(ang), y = cy + (R + 16) * Math.sin(ang);
+    const anchor = Math.cos(ang) > 0.4 ? "start" : Math.cos(ang) < -0.4 ? "end" : "middle";
+    return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" font-size="9" text-anchor="' + anchor + '" fill="#123a2a">' + s.split(" ")[0] + '</text>';
+  }).join("");
+  return '<svg viewBox="0 0 260 260" width="260" height="260">' +
+    '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="#ddd"/>' +
+    '<circle cx="' + cx + '" cy="' + cy + '" r="' + (R * 2 / 3) + '" fill="none" stroke="#eee"/>' +
+    '<circle cx="' + cx + '" cy="' + cy + '" r="' + (R / 3) + '" fill="none" stroke="#eee"/>' +
+    spokes + '<polygon points="' + pts + '" fill="rgba(31,122,77,.35)" stroke="#1f7a4d" stroke-width="2"/>' + labels + '</svg>';
+}
+function showEnd(){
+  const total = state.stars;
+  const best = state.history.length ? state.history[state.history.length - 1] : null;
+  $("endTitle").textContent = "⭕ " + (state.team || "Team") + "'s Skills Wheel";
+  $("endSummary").innerHTML = "Total: <b>" + total + " / 36 stars</b>" +
+    " · Solve " + quadrantAvg("Solve") + " · Connect " + quadrantAvg("Connect") + " · Adapt " + quadrantAvg("Adapt") + " · Learn " + quadrantAvg("Learn") +
+    (best && best.stars < total ? "<br>🎉 New team best! (was " + best.stars + ")" : "");
+  $("wheelWrap").innerHTML = wheelSVG();
+  $("scoreTable").innerHTML = "<tr><th>Skill</th><th>Group</th><th>Stars</th></tr>" +
+    SKILLS.map((s, i) => "<tr><td>" + s + "</td><td>" + GROUPS[i] + "</td><td>" + stars(state.scores[i] || 0) + "</td></tr>").join("");
+  const weak = SKILLS.map((s, i) => i).filter(i => (state.scores[i] || 0) <= 1);
+  const pl = $("practiceList");
+  pl.innerHTML = weak.length ? "" : "<p class='study'>No weak spots — every skill scored 2 or 3 stars! 🎉</p>";
+  weak.forEach(i => {
+    const b = document.createElement("button"); b.className = "ghost"; b.id = "practice-" + i;
+    b.textContent = "Practice " + SKILLS[i] + " (" + stars(state.scores[i] || 0) + ")";
+    b.addEventListener("click", () => startPractice(i));
+    pl.appendChild(b);
+  });
+  const picks = state.selfPicks;
+  const labels = ["keeps trying when it's hard", "likes to plan first", "notices others' feelings", "asks questions when curious"];
+  $("reflectBox").innerHTML = picks.length
+    ? "<p class='study'>In the Self-Awareness round, your team picked most often:</p><ul class='study'>" +
+      labels.map((l, i) => "<li>“I " + l + "” — <b>" + picks.filter(x => x === i).length + " player(s)</b></li>").join("") + "</ul>"
+    : "<p class='study'>No Self-Awareness picks recorded.</p>";
+  show("endScr");
+}
+function endGame(){
+  state.history.push({ team: state.team, stars: state.stars, scores: state.scores.slice(), date: new Date().toISOString().slice(0, 10) });
+  try { safeSet("sc_history", JSON.stringify(state.history.slice(-10))); } catch(e){}
+  sWin();
+  showEnd();
+}
+function startPractice(i){
+  state.practiceMode = true; state.practiceSkill = i; state.round = i;
+  show("gameScr"); renderDots();
+  const body = $("roundBody");
+  $("roundIntro").classList.add("hidden"); $("debriefScr").classList.add("hidden"); body.classList.remove("hidden");
+  ROUNDS[i].run(body, score => endPractice(score));
+}
+function startGame(){
+  state.team = ($("teamName").value || "").trim() || "Team";
+  state.round = 0; state.scores = []; state.stars = 0; state.selfPicks = [];
+  state.practiceMode = false;
+  show("gameScr"); runRound(); sClick();
+}
+/* ---------- setup wiring ---------- */
+const BANDS = [["b12", "Grades 1–2"], ["b35", "Grades 3–5"], ["b68", "Grades 6–8"], ["b912", "Grades 9–12"]];
+let selBand = "b35";
+const bl = $("bandList");
+BANDS.forEach(([id, label]) => {
+  const b = document.createElement("button"); b.className = "band" + (id === selBand ? " sel" : ""); b.textContent = label;
+  b.addEventListener("click", () => {
+    selBand = id; state.band = id; sClick();
+    bl.querySelectorAll(".band").forEach(x => x.classList.remove("sel")); b.classList.add("sel");
+  });
+  bl.appendChild(b);
+});
+state.band = selBand;
+let pCount = 4;
+$("pMinus").addEventListener("click", () => { pCount = Math.max(2, pCount - 1); $("pCount").textContent = pCount; state.players = pCount; sClick(); });
+$("pPlus").addEventListener("click", () => { pCount = Math.min(8, pCount + 1); $("pCount").textContent = pCount; state.players = pCount; sClick(); });
+state.players = pCount;
+$("setupBtn").addEventListener("click", () => { sClick(); show("setupScr"); });
+$("setupBack").addEventListener("click", () => { show("titleScr"); showBest(); });
+$("beginBtn").addEventListener("click", startGame);
+$("againBtn").addEventListener("click", () => { show("setupScr"); });
+$("menuBtn").addEventListener("click", () => { show("titleScr"); showBest(); });
+$("quitBtn").addEventListener("click", () => { if (confirm("Quit this game? Your progress in this game will be lost.")) { show("titleScr"); showBest(); } });
+window.__sc = { state, ROUNDS, SKILLS, GROUPS };
+</script>
+</body>
+</html>

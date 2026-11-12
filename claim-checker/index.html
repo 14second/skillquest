@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Claim Checker — SOLVE · Critical Thinking</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #0f1f2e; color: #f2f7fa; min-height: 100vh;
+    display: flex; justify-content: center;
+  }
+  .wrap { width: 100%; max-width: 480px; min-height: 100vh; padding: 14px 16px 28px;
+    display: flex; flex-direction: column; }
+  .hidden { display: none !important; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-size: 12px; font-weight: 800; letter-spacing: .08em; padding: 5px 10px;
+    border-radius: 999px; background: #1b6ca8; color: #fff; }
+  .tag.skill { background: #0e7a5f; }
+  .iconbtn { min-width: 48px; min-height: 48px; font-size: 22px; border: none; border-radius: 12px;
+    background: #1d3a52; color: #fff; cursor: pointer; }
+  h1 { font-size: 34px; margin: 18px 0 4px; line-height: 1.1; }
+  .sub { color: #b9d2e0; font-size: 16px; line-height: 1.45; margin: 0 0 16px; }
+  .card { background: #16324a; border: 1px solid #2a4d68; border-radius: 16px;
+    padding: 16px; margin: 10px 0; }
+  .bigbtn { display: block; width: 100%; min-height: 56px; font-size: 19px; font-weight: 800;
+    border: none; border-radius: 14px; cursor: pointer; margin: 8px 0;
+    background: #ffb703; color: #1a1a1a; }
+  .bigbtn:active { transform: scale(.98); }
+  .bigbtn.secondary { background: #1d3a52; color: #fff; }
+  .bigbtn.ghost { background: transparent; border: 2px solid #3a6b8c; color: #cfe3ef; }
+  .bandrow { display: flex; gap: 10px; }
+  .bandbtn { flex: 1; min-height: 60px; font-size: 16px; font-weight: 800; border-radius: 14px;
+    border: 2px solid #3a6b8c; background: #16324a; color: #cfe3ef; cursor: pointer; padding: 8px; }
+  .bandbtn.sel { background: #1b6ca8; border-color: #ffb703; color: #fff; }
+  .bandbtn small { display: block; font-weight: 400; font-size: 13px; color: #b9d2e0; margin-top: 2px; }
+  .bandbtn.sel small { color: #eaf4fb; }
+  .bestline { text-align: center; color: #9fc3d8; font-size: 14px; margin: 6px 0; }
+  .kbd-hint { text-align: center; color: #7fa3b8; font-size: 13px; margin-top: 10px; }
+  /* game screen */
+  .hud { display: flex; justify-content: space-between; gap: 8px; margin: 8px 0 4px; }
+  .hud .pill { background: #16324a; border: 1px solid #2a4d68; border-radius: 999px;
+    padding: 8px 12px; font-size: 15px; font-weight: 700; }
+  .hud .pill b { color: #ffb703; }
+  .progress { height: 10px; background: #16324a; border-radius: 99px; overflow: hidden; margin: 6px 0 12px; }
+  .progress > div { height: 100%; background: #ffb703; width: 0%; }
+  .stmt { font-size: 23px; line-height: 1.35; font-weight: 700; margin: 6px 0; }
+  .prompt { color: #9fc3d8; font-size: 15px; margin: 0 0 4px; }
+  .catbtn { display: block; width: 100%; min-height: 62px; font-size: 20px; font-weight: 800;
+    border: none; border-radius: 14px; cursor: pointer; margin: 8px 0; color: #fff; text-align: left;
+    padding: 10px 16px; }
+  .catbtn small { display: block; font-size: 13px; font-weight: 400; opacity: .9; }
+  .catbtn.fact { background: #1b6ca8; }
+  .catbtn.opinion { background: #7a4fa3; }
+  .catbtn.claim { background: #b3541e; }
+  .catbtn:disabled { opacity: .45; }
+  .catbtn.picked { outline: 4px solid #ffb703; }
+  .evbtn { display: block; width: 100%; min-height: 54px; font-size: 16px; line-height: 1.35;
+    font-weight: 600; border: 2px solid #3a6b8c; border-radius: 12px; cursor: pointer;
+    margin: 8px 0; background: #0f2436; color: #eaf4fb; text-align: left; padding: 10px 14px; }
+  .evbtn:disabled { opacity: .55; }
+  .evbtn.picked { border-color: #ffb703; background: #274b66; }
+  .feedback { border-radius: 14px; padding: 14px; margin: 10px 0; font-size: 16px; line-height: 1.45; }
+  .feedback.good { background: #0e4d3a; border: 1px solid #2fae7d; }
+  .feedback.bad { background: #5a1f1f; border: 1px solid #d96a6a; }
+  .feedback .fbtitle { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+  .feedback .why { margin-top: 8px; color: #d7ecf7; }
+  .tipslist { font-size: 16px; line-height: 1.55; padding-left: 20px; margin: 8px 0; }
+  .tipslist li { margin-bottom: 10px; }
+  .endbig { font-size: 44px; text-align: center; margin: 10px 0 0; }
+  .endstat { text-align: center; font-size: 19px; line-height: 1.6; margin: 6px 0 14px; }
+  .endstat b { color: #ffb703; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ TITLE ============ -->
+  <div id="titleScr">
+    <div class="topbar">
+      <div class="tags"><span class="tag">SOLVE</span><span class="tag skill">Critical Thinking</span></div>
+      <button class="iconbtn" id="muteBtn" aria-label="Mute or unmute sound">🔊</button>
+    </div>
+    <h1>🔍 Claim Checker</h1>
+    <p class="sub">Fact? Opinion? Or a claim that needs evidence? Sort each statement,
+      then pick the evidence that would actually test it. Solo game for grades 4–12.</p>
+
+    <div class="card">
+      <p class="prompt" style="margin:0 0 8px;">Choose your level:</p>
+      <div class="bandrow">
+        <button class="bandbtn sel" id="bandYoung" data-band="young">Grades 4–6<small>Clearer items</small></button>
+        <button class="bandbtn" id="bandOld" data-band="old">Grades 7–12<small>Trickier weasel words</small></button>
+      </div>
+    </div>
+
+    <button class="bigbtn" id="startBtn">▶&nbsp; Start — 10 rounds</button>
+    <button class="bigbtn secondary" id="tipsBtn">💡 How to spot a weak claim</button>
+    <p class="bestline" id="bestLine">Best score: —</p>
+    <p class="kbd-hint">Keyboard: 1 = FACT · 2 = OPINION · 3 = CLAIM · then 1–4 for evidence · Enter = Next</p>
+  </div>
+
+  <!-- ============ TIPS ============ -->
+  <div id="tipsScr" class="hidden">
+    <div class="topbar">
+      <div class="tags"><span class="tag">SOLVE</span><span class="tag skill">Critical Thinking</span></div>
+      <button class="iconbtn" id="muteBtn2" aria-label="Mute or unmute sound">🔊</button>
+    </div>
+    <h1>How to spot a weak claim</h1>
+    <div class="card">
+      <ul class="tipslist">
+        <li><b>Ask: can it be proven true or false?</b> If yes, it is a fact — or a claim waiting for evidence. If it is a feeling or a judgment (“best”, “boring”, “should”), it is an opinion.</li>
+        <li><b>Watch for weasel words:</b> “everyone knows”, “studies show”, “most people”, “scientists agree”, “proven”. If no study, person, or number is named, the claim is unsupported.</li>
+        <li><b>“Always” and “never” are warning signs.</b> One huge word can turn a small truth into a false claim.</li>
+        <li><b>One story is not proof.</b> “My cousin tried it and it worked” is an anecdote. A fair test compares two groups that are alike except for the one thing being tested.</li>
+        <li><b>Ask who benefits if you believe it.</b> Ads and sales pages want you to believe their claim — that is a reason to check, not a reason to trust.</li>
+        <li><b>Strong evidence is specific and checkable:</b> a measurement, a fair comparison, or a real study you can look up. Weak evidence is a feeling, one person's story, or something unrelated.</li>
+      </ul>
+    </div>
+    <button class="bigbtn" id="tipsBackBtn">← Back</button>
+  </div>
+
+  <!-- ============ GAME ============ -->
+  <div id="gameScr" class="hidden">
+    <div class="topbar">
+      <div class="tags"><span class="tag">SOLVE</span><span class="tag skill">Critical Thinking</span></div>
+      <button class="iconbtn" id="muteBtn3" aria-label="Mute or unmute sound">🔊</button>
+    </div>
+    <div class="hud">
+      <span class="pill">Round <b id="hRound">1</b>/10</span>
+      <span class="pill">Score <b id="hScore">0</b></span>
+      <span class="pill">🔥 Streak <b id="hStreak">0</b></span>
+    </div>
+    <div class="progress"><div id="progBar"></div></div>
+
+    <div class="card">
+      <p class="prompt" id="phaseLabel">Is this a FACT, an OPINION, or a CLAIM THAT NEEDS EVIDENCE?</p>
+      <p class="stmt" id="stmtText"></p>
+    </div>
+
+    <div id="catRow">
+      <button class="catbtn fact" id="catFact" data-cat="fact">1 · FACT<small>Can be proven true or false</small></button>
+      <button class="catbtn opinion" id="catOpinion" data-cat="opinion">2 · OPINION<small>A feeling or judgment</small></button>
+      <button class="catbtn claim" id="catClaim" data-cat="claim">3 · CLAIM<small>Sounds factual, but needs evidence</small></button>
+    </div>
+
+    <div id="evRow" class="hidden">
+      <p class="prompt" id="evQ" style="font-weight:700;color:#f2f7fa;"></p>
+      <div id="evOpts"></div>
+    </div>
+
+    <div id="feedback" class="feedback hidden"></div>
+    <button class="bigbtn hidden" id="nextBtn">Next →</button>
+  </div>
+
+  <!-- ============ END ============ -->
+  <div id="endScr" class="hidden">
+    <div class="topbar">
+      <div class="tags"><span class="tag">SOLVE</span><span class="tag skill">Critical Thinking</span></div>
+      <button class="iconbtn" id="muteBtn4" aria-label="Mute or unmute sound">🔊</button>
+    </div>
+    <p class="endbig" id="endEmoji">🏆</p>
+    <h1 style="text-align:center;" id="endTitle">Round complete!</h1>
+    <p class="endstat" id="endStats"></p>
+    <button class="bigbtn" id="againBtn">↻ Play again</button>
+    <button class="bigbtn ghost" id="homeBtn">← Back to menu</button>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+/* ---------- storage guards: EVERY localStorage access goes through these ---------- */
+function safeGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* storage unavailable: play on without saving */ } }
+
+/* ---------- audio: synthesized only, iOS playback route, close on hide ---------- */
+var ctx = null, muted = safeGet("cc_muted") === "1";
+function setAudioSession() { try { if ("audioSession" in navigator) navigator.audioSession.type = "playback"; } catch (e) {} }
+function ac() {
+  setAudioSession();
+  try {
+    if (!ctx || ctx.state === "closed") {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      window.__maCtx = ctx;
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  } catch (e) { return null; }
+}
+function tone(freq, dur, type, when) {
+  if (muted) return;
+  var c = ac(); if (!c) return;
+  try {
+    var o = c.createOscillator(), g = c.createGain();
+    o.type = type || "triangle"; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, c.currentTime + (when || 0));
+    g.gain.exponentialRampToValueAtTime(0.18, c.currentTime + (when || 0) + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + (when || 0) + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(c.currentTime + (when || 0)); o.stop(c.currentTime + (when || 0) + dur + 0.05);
+  } catch (e) {}
+}
+function sfx(name) {
+  if (name === "click") tone(440, 0.08, "triangle");
+  else if (name === "good") { tone(523, 0.12, "triangle"); tone(784, 0.18, "triangle", 0.11); }
+  else if (name === "bad") tone(160, 0.25, "square");
+  else if (name === "win") { tone(523, 0.14, "triangle"); tone(659, 0.14, "triangle", 0.12); tone(784, 0.22, "triangle", 0.24); }
+}
+document.addEventListener("pointerdown", setAudioSession, true);
+document.addEventListener("touchstart", setAudioSession, true);
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden && window.__maCtx && window.__maCtx.state !== "closed") {
+    try { window.__maCtx.close(); } catch (e) {}
+    ctx = null;
+  }
+});
+
+/* ---------- item bank: [statement, category, why, evidence options[4], correct index] ----------
+   Categories: fact (provable true/false), opinion (feeling/judgment), claim (sounds factual, unsupported).
+   Evidence options are shuffled at render time; `k` marks the one strong-evidence answer. */
+var BANK = {
+young: [
+["Water boils at 100°C at sea level.", "fact", "This can be tested and proven true or false — heat water and measure it.",
+ ["Heat water at sea level and read a thermometer", "Ask a friend whether water feels hot", "Count the pots in the kitchen", "Look at a photo of a kettle"], 0],
+["The Moon orbits the Earth.", "fact", "Astronomers can observe and measure the Moon's path — it is checkable.",
+ ["Track the Moon's position in the sky over a month", "Ask one person what they believe about the Moon", "Read a poem about the Moon", "Draw a picture of the Moon"], 0],
+["There are 60 minutes in one hour.", "fact", "Count the minutes on a clock — it is a measurable fact.",
+ ["Time one hour with a clock and count the minutes", "Ask a friend to guess how many minutes there are", "Look at a calendar", "Sing a song about time"], 0],
+["A triangle has three sides.", "fact", "Count the sides of any triangle — it is true by definition and checkable.",
+ ["Count the sides of several triangles", "Ask someone their favorite shape", "Draw a square", "Read a story about triangles"], 0],
+["Penguins are birds that cannot fly.", "fact", "Scientists can observe penguins — they have feathers and wings but swim instead of flying.",
+ ["Observe penguins and check whether they fly", "Ask a friend if they like penguins", "Watch a cartoon penguin", "Count penguins in a picture book"], 0],
+["The capital of France is Paris.", "fact", "You can check an atlas or official records — it is a verifiable fact.",
+ ["Check an atlas or an official list of capitals", "Ask one tourist where they stayed in France", "Taste French food", "Watch a movie set in France"], 0],
+["Plants need sunlight to grow.", "fact", "Grow two identical plants, one in light and one in darkness, and compare them.",
+ ["Grow two plants, one in sunlight and one in the dark, and compare them", "Ask a gardener if they enjoy sunshine", "Water one plant and ignore the other", "Put a plant in a closet and never look at it"], 0],
+["Ice melts when it gets warm.", "fact", "Put ice in a warm room and watch — it is directly observable.",
+ ["Leave ice in a warm room and watch what happens", "Ask a friend if they like cold drinks", "Draw an ice cube", "Put ice in a freezer and watch it stay frozen"], 0],
+["A spider has eight legs.", "fact", "Count the legs on a real spider — it is observable.",
+ ["Count the legs on several real spiders", "Ask someone how many legs they think a spider has", "Watch a cartoon spider", "Count the legs on a toy spider"], 0],
+["The school library is the best place to study.", "opinion", "'Best' is a judgment — it depends on what you like, not on a measurement.",
+ ["Explain your reasons and compare it with other study spots", "Measure the library with a ruler", "Count the books in the library", "Ask a scientist to prove it in a lab"], 0],
+["Chocolate ice cream tastes better than vanilla.", "opinion", "Taste is personal — no test can prove one flavor is better for everyone.",
+ ["Give your reasons and ask others which they prefer and why", "Measure the temperature of both ice creams", "Count the scoops in each bowl", "Check the ingredients list"], 0],
+["Soccer is the most exciting sport to watch.", "opinion", "'Most exciting' is a feeling, not something you can measure.",
+ ["Share what excites you about it and compare it with other sports", "Count the players on the field", "Measure the size of the soccer ball", "Time how long a game lasts"], 0],
+["Summer is the best season of the year.", "opinion", "'Best' is a matter of taste — different people pick different seasons.",
+ ["Explain what you love about summer and hear other views", "Measure the temperature on one summer day", "Count the days in summer", "Look up the date summer starts"], 0],
+["Dogs make better pets than cats.", "opinion", "'Better' is a judgment — it depends on what a person wants in a pet.",
+ ["Give reasons and compare what dogs and cats are like as pets", "Count how many dogs live on your street", "Measure a dog's height", "Weigh a cat"], 0],
+["Math is the hardest subject in school.", "opinion", "'Hardest' depends on the person — it is an opinion, not a fact.",
+ ["Explain why you find it hard and compare it with other subjects", "Count the pages in a math book", "Time one math lesson", "Check how many math teachers the school has"], 0],
+["Pizza is the tastiest food in the world.", "opinion", "Taste can't be proven — 'tastiest' is a personal judgment.",
+ ["Describe what you love about pizza and compare it with other foods", "Measure the size of a pizza", "Count the toppings on one pizza", "Check the price of a pizza"], 0],
+["Reading books is boring.", "opinion", "'Boring' is a feeling — other people find reading exciting.",
+ ["Explain what bores you and ask others what they enjoy about books", "Count the pages in a book", "Measure a bookshelf", "Check the year a book was printed"], 0],
+["Blue is the prettiest color.", "opinion", "'Prettiest' is a matter of taste — there is no test for beauty.",
+ ["Say why you like blue and ask others their favorite colors", "Measure the wavelength of blue light", "Count blue objects in the room", "Check what blue paint costs"], 0],
+["Video games rot your brain.", "claim", "'Rot your brain' is vague and unsupported — it sounds factual but gives no evidence.",
+ ["Compare the memory and focus of gamers and non-gamers in a fair test", "Ask one gamer how they feel", "Read a video game company's ad", "Ask your friend's little brother"], 0],
+["Everyone knows the cafeteria food is unhealthy.", "claim", "'Everyone knows' is a weasel phrase — it claims agreement without any evidence.",
+ ["Check the cafeteria menu's nutrition facts and compare them with health guidelines", "Ask one student in line", "Repeat the sentence louder", "Look at a photo of the cafeteria"], 0],
+["Drinking chocolate milk makes you run faster.", "claim", "It sounds testable, but no evidence is given — you would need a fair comparison.",
+ ["Time runners who drink chocolate milk and runners who drink water, with everything else the same", "Ask one runner what they drank today", "Read the chocolate milk carton", "Watch a race on TV"], 0],
+["Most kids are afraid of spiders.", "claim", "'Most kids' is a big claim with no numbers behind it.",
+ ["Survey a large group of kids and count how many say they are afraid", "Ask your best friend", "Count the spiders in your garden", "Read a story about a spider"], 0],
+["Listening to music while you study always helps you remember more.", "claim", "'Always' is a huge word — one person's experience can't prove it for everyone.",
+ ["Test two groups studying the same material, one with music and one without", "Ask one student who likes music", "Listen to a song once", "Read the lyrics of a song"], 0],
+["This toothpaste whitens teeth in just one day.", "claim", "A bold promise with no test shown — an ad claim until it is checked.",
+ ["Compare teeth before and after using it, with a group using plain toothpaste too", "Believe the picture on the box", "Ask the person who sells it", "Smell the toothpaste"], 0],
+["Sugar makes kids hyper.", "claim", "A popular belief, but fair tests find little effect — it needs a real test, not one birthday party.",
+ ["Compare children's activity after sugar and after a sugar-free snack, without telling them which they had", "Ask one parent what they think", "Watch one child at a birthday party", "Read a candy wrapper"], 0],
+["You only use 10% of your brain.", "claim", "A famous myth — brain scans show we use nearly all of our brain over a day.",
+ ["Look at brain scans showing which parts are active during different tasks", "Repeat the saying because you've heard it often", "Ask one person how much brain they think they use", "Count the pages in a brain book"], 0],
+["Cracking your knuckles causes arthritis.", "claim", "It sounds medical, but studies comparing knuckle-crackers and others found no link.",
+ ["Compare arthritis rates in people who crack their knuckles and people who don't", "Ask one person whose knuckles crack", "Listen to the cracking sound", "Read a joke about knuckles"], 0]
+],
+old: [
+["The chemical symbol for gold is Au.", "fact", "Check the periodic table — it is a standard, verifiable fact.",
+ ["Check the periodic table", "Ask a friend to guess the symbol", "Look at a gold ring", "Weigh a gold coin"], 0],
+["Sound travels faster through water than through air.", "fact", "Measure the speed of sound in each — it is a testable fact.",
+ ["Measure the speed of sound in water and in air and compare", "Shout underwater once", "Listen to music in the rain", "Ask a swimmer how sound feels"], 0],
+["The Great Wall of China can be seen from space with the naked eye.", "fact", "This is a fact-type statement — and it is false. Astronauts report it is not visible to the naked eye.",
+ ["Ask astronauts and check photos taken from orbit", "Believe it because it is in a trivia book", "Look at the wall from a hilltop", "Measure the wall's length"], 0],
+["Light travels faster than sound.", "fact", "Measure both speeds — light is far faster, which is why you see lightning before hearing thunder.",
+ ["Measure the speed of light and the speed of sound and compare", "Clap your hands once", "Watch a fireworks show", "Ask a friend which is faster"], 0],
+["The Amazon rainforest is in South America.", "fact", "Check a map — its location is a verifiable fact.",
+ ["Check a world map", "Ask someone who likes rain", "Count the trees in a park", "Watch a nature documentary about Africa"], 0],
+["Bacteria can be seen with a microscope.", "fact", "Put a sample under a microscope and look — it is directly observable.",
+ ["Look at a sample under a microscope", "Stare at a drop of water with your eyes", "Ask a friend if they can see bacteria", "Read a story about germs"], 0],
+["The Earth takes about 365 days to orbit the Sun.", "fact", "Astronomers measure the orbit — it is a checkable fact.",
+ ["Measure the time between one New Year's Day and the next", "Count the days in one month", "Watch one sunset", "Ask someone their birthday"], 0],
+["Sharks existed before trees.", "fact", "Fossils show sharks appeared about 450 million years ago, trees about 360 million — checkable in the fossil record.",
+ ["Compare the ages of the oldest shark and tree fossils", "Ask a surfer what they think", "Draw a shark next to a tree", "Count the trees at a beach"], 0],
+["A leap year has 366 days.", "fact", "Check a calendar — leap years add February 29, making 366 days.",
+ ["Count the days in a leap-year calendar", "Guess how many days February has", "Look at a calendar from any year", "Count the months in a year"], 0],
+["Video games are a waste of time.", "opinion", "'Waste of time' is a judgment — it depends on what you value, not on a measurement.",
+ ["Give reasons about what counts as time well spent and compare views", "Count how many hours one person plays", "Measure a game's file size", "Check the price of a console"], 0],
+["Homework should be banned.", "opinion", "'Should' makes it a judgment about what ought to happen — an opinion.",
+ ["Give reasons for and against homework and weigh them", "Count tonight's homework pages", "Time how long one worksheet takes", "Check how many teachers assign homework"], 0],
+["The school lunch menu needs more variety.", "opinion", "'Needs' is a judgment — it says what someone thinks ought to change.",
+ ["Compare the menu over a month and explain what variety would add", "Count the trays in the cafeteria", "Weigh one lunch", "Check the price of one meal"], 0],
+["Rap is the best kind of music.", "opinion", "'Best' is a matter of taste — no measurement can settle it.",
+ ["Explain what you love about rap and compare it with other styles", "Count the words in one rap song", "Measure how loud a concert is", "Check the year rap began"], 0],
+["Old movies are boring compared to new ones.", "opinion", "'Boring' is a feeling — many people love old movies.",
+ ["Explain what bores you and ask fans of old films what they enjoy", "Count the movies made in one year", "Measure the length of one old film", "Check the price of a movie ticket"], 0],
+["Everyone should learn to play an instrument.", "opinion", "'Should' is a judgment about what people ought to do.",
+ ["Give reasons for learning an instrument and hear the other side", "Count the instruments in a music room", "Measure a guitar", "Check the price of piano lessons"], 0],
+["The new school mascot looks silly.", "opinion", "'Looks silly' is a personal reaction — it is an opinion, not a fact.",
+ ["Say what you find silly about it and ask others what they think", "Measure the mascot costume", "Count the school's sports teams", "Check when the mascot was chosen"], 0],
+["Winter break is too short.", "opinion", "'Too short' is a judgment — it depends on what you wish for, not a measurement.",
+ ["Explain what you'd do with more time and compare with other breaks", "Count the days in winter break", "Check the date school restarts", "Measure the snowfall"], 0],
+["Camping is more fun than staying in a hotel.", "opinion", "'More fun' is a personal feeling — different people enjoy different things.",
+ ["Compare what you enjoy about each and hear the other side", "Count the tents at a campsite", "Measure a hotel room", "Check the price of a campsite"], 0],
+["Studies show that students who drink energy drinks get better grades.", "claim", "'Studies show' with no study named is a weasel phrase — which study, how many students, compared with what?",
+ ["Find the actual study and check how many students were tested and how", "Believe it because it says 'studies show'", "Ask one student who drinks energy drinks", "Read the energy drink can"], 0],
+["Eating carrots gives you perfect eyesight.", "claim", "Carrots have vitamin A, but 'perfect eyesight' is an exaggerated, unsupported promise.",
+ ["Compare the eyesight of people who eat carrots often and people who rarely do", "Eat one carrot and test your eyes", "Believe it because carrots are orange", "Ask a rabbit"], 0],
+["This phone battery lasts twice as long as any other phone.", "claim", "'Twice as long as any other' is a huge comparison with no test shown.",
+ ["Test this phone and other phones doing the same tasks until their batteries die", "Read the phone's ad", "Ask the salesperson", "Charge the phone once and guess"], 0],
+["Most scientists agree that homework causes stress.", "claim", "'Most scientists agree' names no survey — real agreement needs a real count.",
+ ["Find a survey of scientists and check how many actually agree", "Ask one scientist", "Count the homework assignments this week", "Believe it because it sounds official"], 0],
+["A new study proves that homework is bad for your health.", "claim", "One unnamed study can't 'prove' a big health claim — check the study's size and methods.",
+ ["Read the study itself and check how many students it followed and how it measured health", "Share the headline without reading the study", "Ask a friend who dislikes homework", "Read a blog post about the headline"], 0],
+["Everyone knows that multitasking makes you smarter.", "claim", "'Everyone knows' is not evidence — and tests of multitasking usually show the opposite.",
+ ["Test people doing one task at a time against people multitasking on the same tasks", "Ask one person who multitasks", "Try multitasking once and see how it feels", "Repeat the saying until it sounds true"], 0],
+["This app is proven to double your memory in one week.", "claim", "'Proven' and 'double' are bold words with no test shown — an ad claim until checked.",
+ ["Test the app with a group using it and a group not using it, and compare memory scores", "Download the app and trust the ad", "Ask the app's maker", "Use it once and guess your memory doubled"], 0],
+["Cold weather makes you catch a cold.", "claim", "Colds are caused by viruses, not cold air — but you would need a fair test to check the claim.",
+ ["Compare cold rates in people kept warm and people kept cold, with the same virus exposure", "Stand outside once and see if you sneeze", "Ask one person who caught a cold in winter", "Count the colds in your class in December"], 0],
+["Left-handed people are more creative than right-handed people.", "claim", "A sweeping comparison with no evidence given — it needs a fair creativity test of both groups.",
+ ["Give the same creativity tasks to large groups of left- and right-handed people and compare scores", "Ask one left-handed artist", "Count left-handed people in your class", "Read a list of famous left-handed people"], 0]
+]
+};
+var EVQ = {
+  fact: "Which would best CHECK this statement?",
+  opinion: "Which is the best way to SUPPORT this opinion?",
+  claim: "Which evidence would best TEST this claim?"
+};
+var CATNAME = { fact: "FACT", opinion: "OPINION", claim: "CLAIM THAT NEEDS EVIDENCE" };
+var ROUND_LEN = 10;
+
+/* ---------- state ---------- */
+var band = "young";
+var items = [], idx = 0, score = 0, streak = 0, bestStreak = 0, catCorrect = 0, phase = "cat";
+var evOrder = [], evCorrectPos = 0;
+var $ = function (id) { return document.getElementById(id); };
+
+function show(id) { ["titleScr", "tipsScr", "gameScr", "endScr"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); }); }
+function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function bestKey() { return "cc_best_" + band; }
+function refreshBestLine() {
+  var b = safeGet(bestKey());
+  $("bestLine").textContent = "Best score (" + (band === "young" ? "Grades 4–6" : "Grades 7–12") + "): " + (b === null ? "—" : b + " / 200");
+}
+function syncMuteIcons() { ["muteBtn", "muteBtn2", "muteBtn3", "muteBtn4"].forEach(function (id) { $(id).textContent = muted ? "🔇" : "🔊"; }); }
+function toggleMute() { muted = !muted; safeSet("cc_muted", muted ? "1" : "0"); syncMuteIcons(); if (!muted) sfx("click"); }
+
+/* ---------- game flow ---------- */
+function startGame() {
+  sfx("click");
+  items = shuffle(BANK[band].slice()).slice(0, ROUND_LEN);
+  idx = 0; score = 0; streak = 0; bestStreak = 0; catCorrect = 0;
+  show("gameScr");
+  renderItem();
+}
+function renderItem() {
+  var it = items[idx];
+  phase = "cat";
+  $("hRound").textContent = String(idx + 1);
+  $("hScore").textContent = String(score);
+  $("hStreak").textContent = String(streak);
+  $("progBar").style.width = (idx / ROUND_LEN * 100) + "%";
+  $("stmtText").textContent = it[0];
+  $("phaseLabel").textContent = "Is this a FACT, an OPINION, or a CLAIM THAT NEEDS EVIDENCE?";
+  $("catRow").classList.remove("hidden");
+  $("evRow").classList.add("hidden");
+  $("feedback").classList.add("hidden");
+  $("nextBtn").classList.add("hidden");
+  ["catFact", "catOpinion", "catClaim"].forEach(function (id) { $(id).disabled = false; $(id).classList.remove("picked"); });
+}
+function pickCategory(cat, btn) {
+  if (phase !== "cat") return;
+  var it = items[idx];
+  btn.classList.add("picked");
+  ["catFact", "catOpinion", "catClaim"].forEach(function (id) { $(id).disabled = true; });
+  var fb = $("feedback");
+  if (cat === it[1]) {
+    score += 10; catCorrect++; streak++; bestStreak = Math.max(bestStreak, streak);
+    $("hScore").textContent = String(score); $("hStreak").textContent = String(streak);
+    sfx("good");
+    fb.className = "feedback good";
+    fb.innerHTML = "<div class='fbtitle'>✅ Correct — it's a " + CATNAME[it[1]] + "!</div><div class='why'>" + it[2] + "</div>";
+    fb.classList.remove("hidden");
+    /* evidence step */
+    phase = "ev";
+    $("phaseLabel").textContent = "Now check the evidence:";
+    $("evQ").textContent = EVQ[it[1]];
+    evOrder = shuffle([0, 1, 2, 3]);
+    evCorrectPos = evOrder.indexOf(it[4]);
+    var box = $("evOpts"); box.innerHTML = "";
+    evOrder.forEach(function (oi, pos) {
+      var b = document.createElement("button");
+      b.className = "evbtn"; b.textContent = (pos + 1) + ". " + it[3][oi];
+      b.dataset.pos = String(pos);
+      b.addEventListener("click", function () { pickEvidence(pos, b); });
+      box.appendChild(b);
+    });
+    $("evRow").classList.remove("hidden");
+  } else {
+    streak = 0; $("hStreak").textContent = "0";
+    sfx("bad");
+    fb.className = "feedback bad";
+    fb.innerHTML = "<div class='fbtitle'>❌ Not quite — it's a " + CATNAME[it[1]] + ".</div><div class='why'>" + it[2] + "</div>";
+    fb.classList.remove("hidden");
+    phase = "done";
+    $("nextBtn").classList.remove("hidden");
+  }
+}
+function pickEvidence(pos, btn) {
+  if (phase !== "ev") return;
+  var it = items[idx];
+  Array.prototype.forEach.call(document.querySelectorAll(".evbtn"), function (b) { b.disabled = true; });
+  btn.classList.add("picked");
+  var fb = $("feedback");
+  if (pos === evCorrectPos) {
+    score += 10; $("hScore").textContent = String(score);
+    sfx("good");
+    fb.innerHTML += "<div class='why'>✅ <b>Strong evidence!</b> That is the check that would actually settle it.</div>";
+  } else {
+    sfx("bad");
+    fb.innerHTML += "<div class='why'>⚠️ <b>Weak evidence.</b> The strongest check is: “" + it[3][it[4]] + "” — one story, one person, or an ad can't settle a claim.</div>";
+  }
+  phase = "done";
+  $("nextBtn").classList.remove("hidden");
+}
+function nextItem() {
+  sfx("click");
+  idx++;
+  if (idx >= items.length) endGame();
+  else renderItem();
+}
+function endGame() {
+  show("endScr");
+  var prevBest = parseInt(safeGet(bestKey()) || "0", 10);
+  var isNewBest = score > prevBest;
+  if (isNewBest) safeSet(bestKey(), String(score));
+  $("endEmoji").textContent = score >= 170 ? "🏆" : score >= 120 ? "🎉" : "💪";
+  $("endTitle").textContent = isNewBest ? "New best score!" : "Round complete!";
+  $("endStats").innerHTML = "Score: <b>" + score + " / 200</b><br>Categories right: <b>" + catCorrect + " / " + items.length +
+    "</b><br>Best streak: <b>" + bestStreak + "</b><br>Best score: <b>" + Math.max(score, prevBest) + "</b>";
+  if (score >= 120) sfx("win");
+}
+
+/* ---------- wiring ---------- */
+$("bandYoung").addEventListener("click", function () { band = "young"; $("bandYoung").classList.add("sel"); $("bandOld").classList.remove("sel"); refreshBestLine(); sfx("click"); });
+$("bandOld").addEventListener("click", function () { band = "old"; $("bandOld").classList.add("sel"); $("bandYoung").classList.remove("sel"); refreshBestLine(); sfx("click"); });
+$("startBtn").addEventListener("click", startGame);
+$("tipsBtn").addEventListener("click", function () { sfx("click"); show("tipsScr"); });
+$("tipsBackBtn").addEventListener("click", function () { sfx("click"); show("titleScr"); });
+$("nextBtn").addEventListener("click", nextItem);
+$("againBtn").addEventListener("click", startGame);
+$("homeBtn").addEventListener("click", function () { sfx("click"); refreshBestLine(); show("titleScr"); });
+["catFact", "catOpinion", "catClaim"].forEach(function (id) {
+  $(id).addEventListener("click", function () { pickCategory(this.dataset.cat, this); });
+});
+["muteBtn", "muteBtn2", "muteBtn3", "muteBtn4"].forEach(function (id) { $(id).addEventListener("click", toggleMute); });
+document.addEventListener("keydown", function (e) {
+  if ($("gameScr").classList.contains("hidden")) return;
+  if (phase === "cat") {
+    if (e.key === "1") $("catFact").click();
+    else if (e.key === "2") $("catOpinion").click();
+    else if (e.key === "3") $("catClaim").click();
+  } else if (phase === "ev") {
+    var n = parseInt(e.key, 10);
+    if (n >= 1 && n <= 4) { var b = document.querySelectorAll(".evbtn")[n - 1]; if (b) b.click(); }
+  } else if (phase === "done" && (e.key === "Enter" || e.key === " ")) {
+    if (!$("nextBtn").classList.contains("hidden")) nextItem();
+  }
+});
+
+refreshBestLine();
+syncMuteIcons();
+</script>
+</body>
+</html>

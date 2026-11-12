@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Robot Routes — Program a Robot!</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, #0f2a4a 0%, #123f63 55%, #0f2a4a 100%);
+    color: #eef6ff; min-height: 100vh;
+  }
+  #app { max-width: 430px; margin: 0 auto; padding: 10px 12px 28px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  header h1 { font-size: 24px; margin: 6px 0 2px; letter-spacing: .3px; }
+  .tag { font-size: 12px; font-weight: 700; color: #ffd94d; letter-spacing: .4px; }
+  .tag span { color: #bfe3ff; font-weight: 600; }
+  button { font-family: inherit; cursor: pointer; }
+  .iconBtn {
+    min-width: 48px; min-height: 48px; font-size: 20px; border-radius: 12px;
+    border: 2px solid #ffffff33; background: #ffffff1c; color: #fff;
+  }
+  .hidden { display: none !important; }
+  .card {
+    background: #ffffff14; border: 1px solid #ffffff22; border-radius: 16px;
+    padding: 14px; margin-top: 12px;
+  }
+  .card h2 { margin: 0 0 6px; font-size: 19px; }
+  .card p { margin: 6px 0; font-size: 15px; line-height: 1.45; }
+  .bigBtn {
+    display: block; width: 100%; min-height: 56px; margin-top: 12px;
+    font-size: 19px; font-weight: 800; color: #123;
+    background: #ffd94d; border: none; border-radius: 14px;
+  }
+  .bigBtn:active { transform: scale(.98); }
+  .ghostBtn {
+    display: block; width: 100%; min-height: 48px; margin-top: 8px;
+    font-size: 16px; font-weight: 700; color: #eef6ff;
+    background: #ffffff1c; border: 2px solid #ffffff33; border-radius: 12px;
+  }
+  .lvlGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .lvlBtn {
+    min-height: 58px; border-radius: 12px; border: 2px solid #ffffff2e;
+    background: #ffffff17; color: #fff; font-size: 17px; font-weight: 800;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  }
+  .lvlBtn small { font-size: 12px; font-weight: 600; color: #ffd94d; }
+  .lvlBtn.locked { opacity: .38; }
+  .lvlBtn.done { border-color: #ffd94d; }
+  /* ---- game screen ---- */
+  #levelBar { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  #levelBar h2 { margin: 0; font-size: 19px; }
+  #levelBar .meta { font-size: 13px; color: #bfe3ff; }
+  #hint { font-size: 14px; color: #ffe9a8; margin: 6px 0 0; line-height: 1.4; }
+  #boardWrap { display: flex; justify-content: center; margin-top: 10px; }
+  #board {
+    display: grid; gap: 3px; width: min(92vw, 340px);
+    background: #0a1f36; border: 3px solid #ffffff2b; border-radius: 12px; padding: 4px;
+  }
+  .cell {
+    aspect-ratio: 1 / 1; border-radius: 6px; background: #dfeefc;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; line-height: 1; position: relative; overflow: hidden;
+  }
+  .cell.wall { background: #33475e; }
+  .cell.goal { background: #b8f5c8; }
+  .cell.start { background: #fff3bf; }
+  .cell .robot { display: inline-block; transition: transform .18s ease; font-size: 24px; }
+  .cell .bump { animation: bump .3s ease; }
+  @keyframes bump { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  #statusLine { min-height: 22px; font-size: 14px; color: #cfe8ff; margin: 8px 2px 0; line-height: 1.35; }
+  #progLabel { font-size: 13px; font-weight: 700; color: #ffd94d; margin: 10px 0 4px; }
+  #progStrip {
+    display: flex; flex-wrap: wrap; gap: 6px; min-height: 62px; align-content: flex-start;
+    background: #0a1f36; border: 2px dashed #ffffff33; border-radius: 12px; padding: 8px;
+  }
+  #progStrip .empty { color: #9db8d2; font-size: 14px; padding: 6px 2px; }
+  .tok {
+    min-width: 44px; min-height: 44px; padding: 4px 8px; border-radius: 10px;
+    border: 2px solid #ffffff2e; background: #2f6db3; color: #fff;
+    font-size: 15px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center;
+  }
+  .tok.loop { background: #7a4fb5; }
+  .tok.end { background: #5a6b7d; }
+  .tok.pick { background: #2e8b57; }
+  .tok.active { outline: 3px solid #ffd94d; transform: scale(1.08); }
+  #palette { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .cmdBtn {
+    min-height: 52px; border-radius: 12px; border: 2px solid #ffffff2e;
+    background: #ffffff17; color: #fff; font-size: 16px; font-weight: 700;
+  }
+  .cmdBtn.loop { background: #7a4fb566; }
+  .cmdBtn.pick { background: #2e8b5766; }
+  .cmdBtn:disabled { opacity: .4; }
+  #runRow { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .runBtn { min-height: 54px; border-radius: 12px; border: none; font-size: 17px; font-weight: 800; color: #123; background: #58d68d; }
+  .stepBtn { min-height: 54px; border-radius: 12px; border: 2px solid #ffffff33; font-size: 16px; font-weight: 700; color: #fff; background: #ffffff1c; }
+  #editRow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .editBtn { min-height: 46px; border-radius: 12px; border: 2px solid #ffffff33; font-size: 15px; font-weight: 700; color: #fff; background: #ffffff14; }
+  #failBanner {
+    margin-top: 10px; background: #ff5a5a22; border: 2px solid #ff8a8a;
+    border-radius: 12px; padding: 12px; font-size: 15px; line-height: 1.45;
+  }
+  #failBanner b { color: #ffc9c9; }
+  #winPanel {
+    margin-top: 12px; background: #ffd94d1f; border: 2px solid #ffd94d;
+    border-radius: 14px; padding: 14px; text-align: center;
+  }
+  #winPanel h2 { margin: 0 0 4px; font-size: 21px; }
+  #winStars { font-size: 34px; letter-spacing: 4px; margin: 4px 0; }
+  #winPanel p { margin: 6px 0; font-size: 15px; }
+  .foot { font-size: 12px; color: #9db8d2; text-align: center; margin-top: 14px; line-height: 1.5; }
+  kbd { background: #ffffff22; border-radius: 4px; padding: 0 5px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1>🤖 Robot Routes</h1>
+      <div class="tag">SOLVE &nbsp;·&nbsp; <span>Critical Thinking &amp; Systems Thinking</span></div>
+    </div>
+    <button class="iconBtn" id="muteBtn" aria-label="Mute or unmute sound">🔊</button>
+  </header>
+
+  <!-- ============ TITLE / LEVEL SELECT ============ -->
+  <div id="titleScr">
+    <div class="card">
+      <h2>Program a robot, debug your commands!</h2>
+      <p>Build a program from blocks, press <b>▶ RUN</b>, and watch your robot follow it step by step. If it bumps a wall or misses the goal, change your program and try again — that's debugging!</p>
+      <p>⭐ <b>Pick up every star</b> with the <b>✋ Pick Up</b> block, then finish standing on the 🏁 goal. 🔋 Batteries are a bonus. 🔁 <b>Loops</b> repeat blocks — fewer blocks can earn more stars!</p>
+      <p>Tap a block in your program to remove it. Keys: <kbd>↑</kbd> forward, <kbd>←</kbd> <kbd>→</kbd> turn, <kbd>P</kbd> pick up, <kbd>Enter</kbd> run.</p>
+      <button class="bigBtn" id="startBtn">▶ Start</button>
+      <button class="ghostBtn" id="howBtn">How to play</button>
+      <div id="howBox" class="hidden">
+        <p>1️⃣ Tap command blocks to add them to your program.<br>
+        2️⃣ <b>Forward</b> moves one square. <b>Turn Left / Right</b> spins the robot in place.<br>
+        3️⃣ <b>Pick Up</b> grabs a star or battery on the robot's square.<br>
+        4️⃣ <b>Loop ×2 / ×3 / ×4 / ×5</b> repeats everything up to <b>End Loop</b>.<br>
+        5️⃣ Press <b>▶ RUN</b> to watch it play, or <b>STEP</b> to run one block at a time.<br>
+        6️⃣ Finish your program standing on the 🏁 with all ⭐ collected. Shorter programs earn more stars — 3 stars means you matched the cleverest solution!</p>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Choose a level</h2>
+      <div class="lvlGrid" id="lvlGrid"></div>
+      <p style="font-size:13px;color:#bfe3ff">Progress saves on this device. 🔒 levels unlock as you finish each one.</p>
+    </div>
+    <p class="foot">Solo game · Grades ~1–12 · Difficulty grows: walls, more stars, loops, tight command budgets.<br>Original game · Sound: synthesized, no downloads · Works offline</p>
+  </div>
+
+  <!-- ============ GAME ============ -->
+  <div id="gameScr" class="hidden">
+    <div id="levelBar">
+      <h2 id="levelTitle">Level 1</h2>
+      <span class="meta" id="levelMeta"></span>
+    </div>
+    <p id="hint"></p>
+    <div id="boardWrap"><div id="board"></div></div>
+    <div id="statusLine">Build your program, then press ▶ RUN.</div>
+
+    <div id="progLabel">MY PROGRAM — tap a block to remove it · <span id="budgetLine"></span></div>
+    <div id="progStrip"><span class="empty">Tap blocks below to add them here…</span></div>
+
+    <div id="palette">
+      <button class="cmdBtn" data-cmd="F">⬆️ Forward</button>
+      <button class="cmdBtn" data-cmd="L">↩️ Turn Left</button>
+      <button class="cmdBtn" data-cmd="R">↪️ Turn Right</button>
+      <button class="cmdBtn pick" data-cmd="P">✋ Pick Up</button>
+      <button class="cmdBtn loop" data-cmd="LOOP2">🔁 Loop ×2</button>
+      <button class="cmdBtn loop" data-cmd="LOOP3">🔁 Loop ×3</button>
+      <button class="cmdBtn loop" data-cmd="LOOP4">🔁 Loop ×4</button>
+      <button class="cmdBtn loop" data-cmd="LOOP5">🔁 Loop ×5</button>
+      <button class="cmdBtn loop" data-cmd="END">⏹ End Loop</button>
+    </div>
+
+    <div id="runRow">
+      <button class="runBtn" id="runBtn">▶ RUN</button>
+      <button class="stepBtn" id="stepBtn">👣 STEP</button>
+      <button class="stepBtn" id="stopBtn">■ STOP</button>
+    </div>
+    <div id="editRow">
+      <button class="editBtn" id="undoBtn">↩ Undo</button>
+      <button class="editBtn" id="clearBtn">🗑 Clear</button>
+      <button class="editBtn" id="levelsBtn">🗺 Levels</button>
+    </div>
+
+    <div id="failBanner" class="hidden"></div>
+
+    <div id="winPanel" class="hidden">
+      <h2>🎉 Level Complete!</h2>
+      <div id="winStars">⭐⭐⭐</div>
+      <p id="winText"></p>
+      <button class="bigBtn" id="nextBtn">Next Level ▶</button>
+      <button class="ghostBtn" id="replayBtn">↻ Replay this level</button>
+      <button class="ghostBtn" id="winLevelsBtn">🗺 Level Select</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- storage guards: EVERY localStorage access goes through these ---------- */
+function safeGet(k){ try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v){ try { window.localStorage.setItem(k, v); } catch (e) { /* storage unavailable: progress just won't persist */ } }
+function safeParse(k, fallback){ try { const v = safeGet(k); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
+
+/* ---------- audio: synthesized only, iOS playback route, close on hide ---------- */
+var AC = null;
+var muted = safeGet("rr_mute") === "1";
+function setAudioSession(){
+  try { if (typeof navigator !== "undefined" && "audioSession" in navigator) { navigator.audioSession.type = "playback"; } } catch (e) {}
+}
+function initAudio(){
+  setAudioSession();
+  try {
+    if (!AC || AC.state === "closed") {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      AC = new Ctx();
+      window.__maCtx = AC;
+    }
+    if (AC.state === "suspended") { AC.resume(); }
+    return AC;
+  } catch (e) { return null; }
+}
+function tone(freq, dur, type, vol, when){
+  if (muted) return;
+  var ac = initAudio(); if (!ac) return;
+  try {
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || "triangle"; o.frequency.value = freq;
+    var t = ac.currentTime + (when || 0);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || 0.18, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  } catch (e) {}
+}
+var sfx = {
+  click: function(){ tone(440, 0.07, "triangle", 0.12); },
+  move:  function(){ tone(330, 0.09, "triangle", 0.14); },
+  turn:  function(){ tone(262, 0.08, "triangle", 0.12); },
+  pick:  function(){ tone(523, 0.1, "triangle", 0.16); tone(784, 0.16, "triangle", 0.16, 0.09); },
+  crash: function(){ tone(196, 0.25, "square", 0.16); tone(147, 0.3, "square", 0.14, 0.05); },
+  win:   function(){ var n=[523,659,784,1047]; for (var i=0;i<n.length;i++) tone(n[i], 0.22, "triangle", 0.16, i*0.11); },
+  fail:  function(){ tone(311, 0.2, "triangle", 0.14); tone(233, 0.3, "triangle", 0.14, 0.12); }
+};
+document.addEventListener("pointerdown", setAudioSession, true);
+document.addEventListener("touchstart", setAudioSession, true);
+document.addEventListener("visibilitychange", function(){
+  if (document.hidden) {
+    stopRun(true);
+    try { if (AC && AC.state !== "closed") { AC.close(); } } catch (e) {}
+    AC = null; window.__maCtx = null;
+  }
+});
+
+/* ---------- levels: grid legend  . empty  # wall  S start  G goal  * star  B battery ---------- */
+var LEVELS = [
+  { name: "First Steps", hint: "Go straight, pick up the star, stop on the goal.", budget: 6, sol: ["F","P","F"],
+    grid: [".....",".S*G.",".....",".....","....."] },
+  { name: "Take a Turn", hint: "Forward isn't always enough — turn to change direction!", budget: 10, sol: ["F","R","F","P","F","L","F"],
+    grid: [".....",".S...","..*..","...G.","....."] },
+  { name: "Around the Wall", hint: "The wall blocks the direct path. Go around it!", budget: 12, sol: ["R","F","F","P","L","F","F","L","F","F"],
+    grid: [".....",".S#G.",".....",".*...","....."] },
+  { name: "Two Stars", hint: "Collect both stars. Batteries are a bonus — you don't need them.", budget: 14, sol: ["R","F","F","L","F","P","R","F","L","F","P","F"],
+    grid: ["......",".S..B.","..##..","..*#..","...*G.","......"] },
+  { name: "Loop It!", hint: "The same two blocks repeat 3 times. A Loop ×3 does the work of 6 blocks — and the budget only allows 6!", budget: 6, sol: ["LOOP3","F","P","END","F"],
+    grid: ["......",".S***G","......","......","......","......"] },
+  { name: "The Long Way Round", hint: "You pass the goal before you have all the stars — that's fine! The level only ends when your program ends.", budget: 20, sol: ["LOOP4","F","END","P","R","LOOP3","F","END","R","LOOP4","F","END","P","R","R","LOOP4","F","END"],
+    grid: ["......",".S...*",".#.#..",".#.#..",".*...G","......"] },
+  { name: "Zigzag", hint: "Down, across, up, back down again. Plan the whole route before you run it.", budget: 22, sol: ["R","F","F","F","F","L","F","F","F","L","F","P","F","F","P","R","R","F","F","L","F"],
+    grid: [".......",".S#....","..#.*..","..#....","..##*G.",".....B.","......."] },
+  { name: "There and Back", hint: "Grab the star on the right, then walk all the way back for the one on the left.", budget: 26, sol: ["F","F","F","R","F","F","L","F","P","R","R","F","F","F","F","P","R","R","F","F","F","F","R","F","F"],
+    grid: [".......",".S.....",".###...",".*...*.",".###...",".....G.","......."] },
+  { name: "The Comb", hint: "Weave between the walls: down, in, back out, down again.", budget: 31, sol: ["F","R","F","F","R","F","P","R","R","F","R","F","F","R","F","P","R","R","F","R","F","F","L","F","F","F","F","F","L","F"],
+    grid: ["........",".S......",".#.###..",".*...#..",".#.###..",".*...#..",".#.###.G","........"] },
+  { name: "Three Stars", hint: "Three stars, one battery, and walls that punish shortcuts. Loops can shorten the long walks.", budget: 20, sol: ["F","F","P","F","F","R","F","F","R","F","P","L","F","F","L","F","P","F"],
+    grid: ["........",".S.*.B..","..##....","....*...",".##.....",".....*G.","........","........"] },
+  { name: "Star Patrol", hint: "Patrol the top row, drop down, patrol the bottom row. Loops turn 30 blocks into 21!", budget: 24, sol: ["LOOP4","F","P","END","F","R","LOOP5","F","END","R","LOOP4","F","P","END","R","R","LOOP4","F","END"],
+    grid: ["........",".S****..","........",".#####..",".#####..","........","..****G.","........"] },
+  { name: "Grand Tour", hint: "The finale! Top row, middle star, then the bottom row. A loop for the top stars helps a lot.", budget: 32, sol: ["F","P","F","P","F","P","R","F","F","R","F","F","P","R","F","F","R","F","F","R","F","F","F","F","P","L","F","P","F","P","F"],
+    grid: [".......B",".S***#..",".....#..","..*..#..","..#.....","..#.***G","........","........"] }
+];
+window.LEVELS = LEVELS;
+
+/* ---------- progress ---------- */
+var stars = safeParse("rr_stars", {});
+var unlocked = parseInt(safeGet("rr_unlocked") || "1", 10) || 1;
+if (unlocked < 1) unlocked = 1;
+if (unlocked > LEVELS.length) unlocked = LEVELS.length;
+function saveProgress(){
+  safeSet("rr_stars", JSON.stringify(stars));
+  safeSet("rr_unlocked", String(unlocked));
+}
+
+/* ---------- state ---------- */
+var $ = function(id){ return document.getElementById(id); };
+var levelIdx = 0, program = [], running = false, exec = null, execTimer = null;
+var robot = null, gridData = null; /* gridData: {rows, cols, walls:Set, start, goal, stars:Set, batteries:Set} */
+var DIRS = [[0,1],[1,0],[0,-1],[-1,0]]; /* E S W N */
+var DIR_ARROW = ["➡️","⬇️","⬅️","⬆️"];
+var CMD_LABEL = { F: "⬆️ Fwd", L: "↩️ Left", R: "↪️ Right", P: "✋ Pick", LOOP2: "🔁 ×2", LOOP3: "🔁 ×3", LOOP4: "🔁 ×4", LOOP5: "🔁 ×5", END: "⏹ End" };
+
+function parseGrid(rows){
+  var d = { rows: rows.length, cols: rows[0].length, walls: {}, start: null, goal: null, stars: {}, batteries: {} };
+  for (var r = 0; r < rows.length; r++) {
+    for (var c = 0; c < rows[r].length; c++) {
+      var ch = rows[r][c], k = r + "," + c;
+      if (ch === "#") d.walls[k] = true;
+      else if (ch === "S") d.start = { r: r, c: c };
+      else if (ch === "G") d.goal = { r: r, c: c };
+      else if (ch === "*") d.stars[k] = true;
+      else if (ch === "B") d.batteries[k] = true;
+    }
+  }
+  return d;
+}
+function totalStars(){ var n = 0; for (var k in gridData.stars) n++; return n; }
+function starsLeft(){ var n = 0; for (var k in gridData.stars) if (!robot.collected[k]) n++; return n; }
+function batteriesLeft(){ var n = 0; for (var k in gridData.batteries) if (!robot.gotBat[k]) n++; return n; }
+
+function loadLevel(i){
+  levelIdx = i;
+  var L = LEVELS[i];
+  gridData = parseGrid(L.grid);
+  robot = { r: gridData.start.r, c: gridData.start.c, dir: 0, collected: {}, gotBat: {}, bumped: false };
+  program = [];
+  stopRun(true);
+  hide($("failBanner")); hide($("winPanel"));
+  $("levelTitle").textContent = "Level " + (i + 1) + " — " + L.name;
+  $("levelMeta").textContent = "⭐ " + totalStars() + "  ·  🔋 " + Object.keys(gridData.batteries).length + "  ·  Budget " + L.budget;
+  $("hint").textContent = "💡 " + L.hint;
+  $("statusLine").textContent = "Build your program, then press ▶ RUN.";
+  renderBoard(); renderProgram(); updatePalette();
+  $("titleScr").classList.add("hidden");
+  $("gameScr").classList.remove("hidden");
+}
+
+/* ---------- rendering ---------- */
+function renderBoard(){
+  var b = $("board");
+  b.style.gridTemplateColumns = "repeat(" + gridData.cols + ", 1fr)";
+  var html = "";
+  for (var r = 0; r < gridData.rows; r++) {
+    for (var c = 0; c < gridData.cols; c++) {
+      var k = r + "," + c, cls = "cell", inner = "";
+      if (gridData.walls[k]) cls += " wall";
+      else if (gridData.goal.r === r && gridData.goal.c === c) { cls += " goal"; inner = "🏁"; }
+      else if (gridData.start.r === r && gridData.start.c === c) cls += " start";
+      if (gridData.stars[k] && !robot.collected[k]) inner = "⭐";
+      if (gridData.batteries[k] && !robot.gotBat[k]) inner = "🔋";
+      if (robot.r === r && robot.c === c) {
+        var rot = robot.dir === 0 ? 90 : robot.dir === 1 ? 180 : robot.dir === 2 ? 270 : 0;
+        inner = '<span class="robot' + (robot.bumped ? " bump" : "") + '" style="transform:rotate(' + rot + 'deg)">🤖</span>';
+      }
+      html += '<div class="' + cls + '">' + inner + "</div>";
+    }
+  }
+  b.innerHTML = html;
+  $("levelMeta").textContent = "⭐ " + starsLeft() + "/" + totalStars() + " left  ·  🔋 " + batteriesLeft() + "  ·  Budget " + LEVELS[levelIdx].budget;
+}
+function renderProgram(){
+  var strip = $("progStrip");
+  if (!program.length) { strip.innerHTML = '<span class="empty">Tap blocks below to add them here…</span>'; }
+  else {
+    var html = "";
+    for (var i = 0; i < program.length; i++) {
+      var t = program[i];
+      var cls = "tok" + (t.indexOf("LOOP") === 0 ? " loop" : t === "END" ? " end" : t === "P" ? " pick" : "");
+      var active = exec && exec.srcMap && exec.curSrc === i ? " active" : "";
+      html += '<button class="' + cls + active + '" data-i="' + i + '" title="Tap to remove">' + CMD_LABEL[t] + " ×</button>";
+    }
+    strip.innerHTML = html;
+  }
+  var L = LEVELS[levelIdx];
+  $("budgetLine").textContent = program.length + " / " + L.budget + " blocks" + (program.length > L.budget ? " — OVER BUDGET!" : "");
+  $("budgetLine").style.color = program.length > L.budget ? "#ff9a9a" : "#ffd94d";
+}
+function updatePalette(){
+  var dis = running;
+  var btns = document.querySelectorAll("#palette .cmdBtn");
+  for (var i = 0; i < btns.length; i++) btns[i].disabled = dis;
+  $("runBtn").disabled = running && exec && exec.mode === "auto";
+  $("stepBtn").disabled = running && exec && exec.mode === "auto";
+}
+function setStatus(msg){ $("statusLine").textContent = msg; }
+function show(el){ el.classList.remove("hidden"); }
+function hide(el){ el.classList.add("hidden"); }
+
+/* ---------- program editing ---------- */
+function loopBalance(prog){
+  var depth = 0;
+  for (var i = 0; i < prog.length; i++) {
+    if (prog[i].indexOf("LOOP") === 0) depth++;
+    else if (prog[i] === "END") { depth--; if (depth < 0) return -1; }
+  }
+  return depth; /* 0 = balanced, >0 = unclosed, -1 = stray END */
+}
+function addCmd(cmd){
+  if (running) return;
+  var L = LEVELS[levelIdx];
+  if (program.length >= L.budget + 4) { setStatus("That's a lot of blocks! Try a loop to shorten it."); return; }
+  program.push(cmd);
+  sfx.click(); renderProgram();
+}
+function removeToken(i){
+  if (running) return;
+  program.splice(i, 1);
+  sfx.click(); renderProgram();
+}
+
+/* ---------- execution: expand loops to a flat action list (src = program index) ---------- */
+function expandProgram(prog){
+  var out = [];
+  function walk(list, base){
+    for (var i = 0; i < list.length; i++) {
+      if (out.length > 400) return;
+      var tok = list[i];
+      if (tok.indexOf("LOOP") === 0) {
+        var n = parseInt(tok.slice(4), 10) || 2, depth = 1, j = i + 1;
+        while (j < list.length && depth > 0) {
+          if (list[j].indexOf("LOOP") === 0) depth++;
+          else if (list[j] === "END") depth--;
+          j++;
+        }
+        var body = list.slice(i + 1, j - 1);
+        for (var k = 0; k < n; k++) walk(body, base + i + 1);
+        i = j - 1;
+      } else if (tok !== "END") {
+        out.push({ act: tok, src: base + i });
+      }
+    }
+  }
+  walk(prog, 0);
+  return out;
+}
+function resetRobot(){
+  robot = { r: gridData.start.r, c: gridData.start.c, dir: 0, collected: {}, gotBat: {}, bumped: false };
+  renderBoard();
+}
+function stopRun(silent){
+  running = false;
+  if (execTimer) { clearTimeout(execTimer); execTimer = null; }
+  if (exec) { exec = null; }
+  if (!silent) { resetRobot(); setStatus("Stopped. Edit your program and run again!"); renderProgram(); updatePalette(); }
+  else updatePalette();
+}
+function startExec(mode){
+  if (running) return;
+  hide($("failBanner")); hide($("winPanel"));
+  if (!program.length) { setStatus("Your program is empty — tap some blocks first!"); return; }
+  var bal = loopBalance(program);
+  if (bal !== 0) { setStatus(bal > 0 ? "⚠️ A Loop has no End Loop — add an End Loop block!" : "⚠️ An End Loop has no Loop — remove it!"); sfx.fail(); return; }
+  if (program.length > LEVELS[levelIdx].budget) { setStatus("⚠️ Over budget! Your program has " + program.length + " blocks but this level allows " + LEVELS[levelIdx].budget + ". Use loops to shorten it."); sfx.fail(); return; }
+  var actions = expandProgram(program);
+  if (!actions.length) { setStatus("Your program has only loops with nothing inside — add some moves!"); return; }
+  resetRobot();
+  running = true;
+  exec = { actions: actions, idx: 0, mode: mode, curSrc: -1 };
+  setStatus(mode === "auto" ? "▶ Running… watch the robot!" : "👣 Step mode — tap STEP to run the next block.");
+  renderProgram(); updatePalette();
+  if (mode === "auto") scheduleStep();
+}
+function scheduleStep(){
+  execTimer = setTimeout(function(){
+    if (!running || !exec) return;
+    var more = doStep();
+    if (more && running && exec) scheduleStep();
+  }, 430);
+}
+function doStep(){
+  if (!exec || exec.idx >= exec.actions.length) { finishRun(); return false; }
+  var a = exec.actions[exec.idx];
+  exec.curSrc = a.src;
+  var stepNo = exec.idx + 1;
+  if (a.act === "F") {
+    var nr = robot.r + DIRS[robot.dir][0], nc = robot.c + DIRS[robot.dir][1];
+    if (nr < 0 || nr >= gridData.rows || nc < 0 || nc >= gridData.cols || gridData.walls[nr + "," + nc]) {
+      robot.bumped = true; renderBoard();
+      sfx.crash();
+      failRun("💥 BUMP! The robot tried to move " + DIR_ARROW[robot.dir] + " into a wall (or off the grid) at step " + stepNo + ". Change the blocks before that step and run again!");
+      return false;
+    }
+    robot.r = nr; robot.c = nc; sfx.move();
+    setStatus("Step " + stepNo + ": Forward → (" + (nr + 1) + "," + (nc + 1) + ").");
+  } else if (a.act === "L") {
+    robot.dir = (robot.dir + 3) % 4; sfx.turn();
+    setStatus("Step " + stepNo + ": Turn Left — now facing " + ["east ➡️","south ⬇️","west ⬅️","north ⬆️"][robot.dir] + ".");
+  } else if (a.act === "R") {
+    robot.dir = (robot.dir + 1) % 4; sfx.turn();
+    setStatus("Step " + stepNo + ": Turn Right — now facing " + ["east ➡️","south ⬇️","west ⬅️","north ⬆️"][robot.dir] + ".");
+  } else if (a.act === "P") {
+    var k = robot.r + "," + robot.c;
+    if (gridData.stars[k] && !robot.collected[k]) {
+      robot.collected[k] = true; sfx.pick();
+      setStatus("Step " + stepNo + ": ⭐ Picked up a star! " + starsLeft() + " left.");
+    } else if (gridData.batteries[k] && !robot.gotBat[k]) {
+      robot.gotBat[k] = true; sfx.pick();
+      setStatus("Step " + stepNo + ": 🔋 Bonus battery collected!");
+    } else {
+      setStatus("Step " + stepNo + ": Pick Up — nothing here to grab.");
+    }
+  }
+  exec.idx++;
+  renderBoard(); renderProgram();
+  if (exec.idx >= exec.actions.length) { finishRun(); return false; }
+  return true;
+}
+function finishRun(){
+  running = false; exec = null;
+  if (execTimer) { clearTimeout(execTimer); execTimer = null; }
+  updatePalette(); renderProgram();
+  var onGoal = robot.r === gridData.goal.r && robot.c === gridData.goal.c;
+  var missing = starsLeft();
+  if (onGoal && missing === 0) { winLevel(); return; }
+  if (onGoal && missing > 0) {
+    failRun("🏁 The robot reached the goal — but " + missing + " star" + (missing > 1 ? "s are" : " is") + " still uncollected! Add Pick Up blocks on the star squares.");
+  } else {
+    failRun("🛑 Program finished, but the robot stopped at (" + (robot.r + 1) + "," + (robot.c + 1) + ") — not on the 🏁 goal. Fix the route and run again!");
+  }
+}
+function failRun(msg){
+  running = false; exec = null;
+  if (execTimer) { clearTimeout(execTimer); execTimer = null; }
+  updatePalette(); renderProgram();
+  var fb = $("failBanner");
+  fb.innerHTML = "<b>Not quite — debug time! 🔧</b><br>" + msg + "<br>Your program is still there. Edit it and press ▶ RUN again.";
+  show(fb);
+  setStatus("Debug: edit your program, then re-run.");
+  sfx.fail();
+}
+function winLevel(){
+  var L = LEVELS[levelIdx];
+  var len = program.length, par = L.sol.length;
+  var earned = len <= par ? 3 : len <= par + 4 ? 2 : 1;
+  var key = String(levelIdx);
+  if (!stars[key] || stars[key] < earned) stars[key] = earned;
+  if (levelIdx + 1 < LEVELS.length && unlocked < levelIdx + 2) unlocked = levelIdx + 2;
+  if (levelIdx + 1 >= LEVELS.length && unlocked < LEVELS.length) unlocked = LEVELS.length;
+  saveProgress();
+  sfx.win();
+  $("winStars").textContent = earned === 3 ? "⭐⭐⭐" : earned === 2 ? "⭐⭐☆" : "⭐☆☆";
+  $("winText").textContent = "Solved in " + len + " blocks (cleverest: " + par + ")." +
+    (earned < 3 ? " Can you do it in " + par + "? Try a loop!" : " Perfect — you matched the cleverest solution!") +
+    (Object.keys(robot.gotBat).length ? " 🔋 Bonus batteries: " + Object.keys(robot.gotBat).length + "." : "");
+  $("nextBtn").textContent = levelIdx + 1 < LEVELS.length ? "Next Level ▶" : "🏆 Play again from Level 1";
+  show($("winPanel"));
+  setStatus("🎉 Level complete! " + earned + " star" + (earned > 1 ? "s" : "") + " earned.");
+  renderLevelGrid();
+}
+
+/* ---------- title / level select ---------- */
+function renderLevelGrid(){
+  var g = $("lvlGrid"), html = "";
+  for (var i = 0; i < LEVELS.length; i++) {
+    var locked = i + 1 > unlocked;
+    var st = stars[String(i)] || 0;
+    var starTxt = st ? "⭐".repeat(st) + "☆".repeat(3 - st) : "·";
+    html += '<button class="lvlBtn' + (locked ? " locked" : "") + (st ? " done" : "") + '" data-lvl="' + i + '"' + (locked ? " disabled" : "") + '>' +
+      (i + 1) + "<small>" + starTxt + "</small></button>";
+  }
+  g.innerHTML = html;
+}
+function updMuteBtn(){ $("muteBtn").textContent = muted ? "🔇" : "🔊"; }
+
+/* ---------- wiring ---------- */
+$("startBtn").addEventListener("click", function(){
+  initAudio(); sfx.click();
+  var next = 0;
+  for (var i = 0; i < LEVELS.length; i++) { if (!stars[String(i)]) { next = i; break; } next = i; }
+  if (next + 1 > unlocked) next = unlocked - 1;
+  loadLevel(next);
+});
+$("howBtn").addEventListener("click", function(){ $("howBox").classList.toggle("hidden"); sfx.click(); });
+$("muteBtn").addEventListener("click", function(){
+  muted = !muted; safeSet("rr_mute", muted ? "1" : "0"); updMuteBtn();
+  if (!muted) { initAudio(); sfx.click(); }
+});
+$("lvlGrid").addEventListener("click", function(e){
+  var b = e.target.closest("[data-lvl]"); if (!b || b.disabled) return;
+  initAudio(); sfx.click();
+  loadLevel(parseInt(b.getAttribute("data-lvl"), 10));
+});
+document.querySelectorAll("#palette .cmdBtn").forEach(function(b){
+  b.addEventListener("click", function(){ addCmd(b.getAttribute("data-cmd")); });
+});
+$("progStrip").addEventListener("click", function(e){
+  var t = e.target.closest("[data-i]"); if (!t) return;
+  removeToken(parseInt(t.getAttribute("data-i"), 10));
+});
+$("runBtn").addEventListener("click", function(){ initAudio(); startExec("auto"); });
+$("stepBtn").addEventListener("click", function(){
+  initAudio();
+  if (!running) { startExec("step"); if (!running) return; }
+  if (exec && exec.mode === "step") doStep();
+});
+$("stopBtn").addEventListener("click", function(){ stopRun(false); });
+$("undoBtn").addEventListener("click", function(){
+  if (running) return;
+  program.pop(); sfx.click(); renderProgram();
+});
+$("clearBtn").addEventListener("click", function(){
+  if (running) return;
+  program = []; sfx.click(); renderProgram(); setStatus("Program cleared. Build a new one!");
+});
+$("levelsBtn").addEventListener("click", function(){
+  stopRun(true); renderLevelGrid();
+  $("gameScr").classList.add("hidden");
+  $("titleScr").classList.remove("hidden");
+});
+$("nextBtn").addEventListener("click", function(){
+  sfx.click();
+  if (levelIdx + 1 < LEVELS.length) loadLevel(levelIdx + 1);
+  else loadLevel(0);
+});
+$("replayBtn").addEventListener("click", function(){ sfx.click(); loadLevel(levelIdx); });
+$("winLevelsBtn").addEventListener("click", function(){
+  sfx.click(); renderLevelGrid();
+  $("gameScr").classList.add("hidden");
+  $("titleScr").classList.remove("hidden");
+});
+document.addEventListener("keydown", function(e){
+  if ($("gameScr").classList.contains("hidden")) return;
+  if (running) return;
+  var k = e.key;
+  if (k === "ArrowUp") { e.preventDefault(); addCmd("F"); }
+  else if (k === "ArrowLeft") { e.preventDefault(); addCmd("L"); }
+  else if (k === "ArrowRight") { e.preventDefault(); addCmd("R"); }
+  else if (k === "p" || k === "P") { addCmd("P"); }
+  else if (k === "Enter") { initAudio(); startExec("auto"); }
+  else if (k === "Backspace") { e.preventDefault(); program.pop(); renderProgram(); }
+});
+
+/* ---------- boot ---------- */
+updMuteBtn();
+renderLevelGrid();
+</script>
+</body>
+</html>

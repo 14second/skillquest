@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Word Streak — Vocabulary Game</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(160deg,#1d3a6e,#2a7fbf);color:#123;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:520px;padding:14px 14px 30px}
+h1{color:#fff;text-align:center;margin:8px 0 2px;font-size:34px;letter-spacing:.5px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.sub{color:#cfe8ff;text-align:center;margin:0 0 14px;font-size:15px}
+.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.25);margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:19px;color:#1d3a6e}
+.band{display:block;width:100%;min-height:58px;font-size:18px;font-weight:700;background:#eaf3ff;color:#1d3a6e;border:2px solid #bcd8ff;border-radius:14px;margin:8px 0;padding:8px}
+.band.sel{background:#ffd94d;border-color:#e0a800;color:#3a2a00}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:14px}
+.modeRow{display:flex;gap:9px}
+.mode{flex:1;min-height:52px;font-size:16px;font-weight:700;background:#eaf3ff;color:#1d3a6e;border:2px solid #bcd8ff;padding:8px}
+.mode.sel{background:#2a7fbf;color:#fff;border-color:#2a7fbf}
+.bigbtn{width:100%;min-height:60px;font-size:20px;font-weight:800;background:#ff9f1a;color:#fff;box-shadow:0 4px 0 #c77400;margin-top:12px}
+.bigbtn:active{transform:translateY(2px);box-shadow:none}
+.green{background:#2e7d32;box-shadow:0 4px 0 #1b4d1e}
+.ghost{width:100%;min-height:52px;font-size:16px;font-weight:700;background:#eef1f5;color:#334;margin-top:9px}
+#hud{display:flex;gap:8px;margin-bottom:10px}
+.hudbox{flex:1;background:rgba(255,255,255,.16);color:#fff;border-radius:12px;text-align:center;padding:7px 2px;font-size:13px}
+.hudbox b{display:block;font-size:21px}
+#topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#muteBtn{background:rgba(255,255,255,.2);color:#fff;font-size:19px;width:48px;height:48px;border-radius:50%}
+#quitBtn{background:rgba(255,255,255,.2);color:#fff;font-size:15px;font-weight:700;padding:12px 16px;min-height:48px}
+.qtype{color:#5a6b80;font-size:14px;font-weight:700;margin:2px 0 4px;text-transform:uppercase;letter-spacing:.6px}
+#qtext{font-size:23px;line-height:1.35;color:#14273f;margin:2px 0 6px;font-weight:600}
+body.young #qtext{font-size:28px}
+body.young .choice{font-size:24px;min-height:72px}
+body.young .qtype{font-size:16px}
+.speak{background:#eaf3ff;border:2px solid #bcd8ff;font-size:15px;font-weight:700;color:#1d3a6e;padding:10px 14px;min-height:48px}
+.choice{display:block;width:100%;min-height:62px;font-size:20px;font-weight:700;background:#f4f9ff;border:2px solid #bcd8ff;color:#14273f;margin:9px 0;padding:10px;text-align:left}
+.choice:active{transform:scale(.98)}
+.choice.right{background:#c8f2c0;border-color:#43a047}
+.choice.wrong{background:#ffd2d2;border-color:#e53935}
+#timerWrap{display:none;background:#dbe9f7;border-radius:999px;height:22px;overflow:hidden;margin:10px 0 2px;position:relative}
+#timerBar{height:100%;background:#ff9f1a;width:100%}
+#timerTxt{position:absolute;right:10px;top:1px;font-size:13px;font-weight:800;color:#5b3a00}
+#hintBox{display:none;background:#fff8d6;border:2px dashed #e0a800;border-radius:12px;padding:10px 12px;font-size:16px;margin:10px 0;color:#5b4a00;line-height:1.45}
+#feedback{display:none}
+#feedback.ok{background:#eefbe9}#feedback.bad{background:#fdeeee}
+#fbWord{font-size:26px;font-weight:800;color:#14273f}
+.pos{font-style:italic;color:#5a6b80;font-size:16px}
+#fbEx{font-size:18px;line-height:1.4;margin:8px 0}
+#fbWhy{font-size:16px;line-height:1.4;background:rgba(255,255,255,.65);border-radius:10px;padding:8px 10px}
+.study{font-size:16px;line-height:1.45}
+.study li{margin:7px 0}
+.small{font-size:14px;color:#5a6b80}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar"><button id="muteBtn" aria-label="Mute or unmute">🔊</button><button id="quitBtn" class="hidden">✕ Quit run</button></div>
+  <h1>📚 Word Streak</h1>
+  <p class="sub">How many words can you get right in a row?</p>
+
+  <div id="titleScr">
+    <div class="card"><h2>1. Pick your grade level</h2><div id="bandList"></div></div>
+    <div class="card"><h2>2. Pick a mode</h2>
+      <div class="modeRow">
+        <button class="mode sel" id="modeLearn">🌱 Learning<br><span style="font-weight:400;font-size:13px">No clock — take your time</span></button>
+        <button class="mode" id="modeTimed">⏱️ Timed<br><span style="font-weight:400;font-size:13px">20 seconds per question</span></button>
+      </div>
+      <button class="bigbtn" id="startBtn">▶ Start Streak</button>
+      <p class="small" id="bestLine"></p>
+    </div>
+  </div>
+
+  <div id="gameScr" class="hidden">
+    <div id="hud">
+      <div class="hudbox">🔥 Streak<b id="hStreak">0</b></div>
+      <div class="hudbox">⭐ Score<b id="hScore">0</b></div>
+      <div class="hudbox">🏆 Best<b id="hBest">0</b></div>
+      <div class="hudbox">✔ Answered<b id="hAns">0</b></div>
+    </div>
+    <div class="card">
+      <button class="speak hidden" id="speakDef" style="float:right">🔊 Hear the clue</button>
+      <div class="qtype" id="qType">What word means this?</div>
+      <div id="qtext"></div>
+      <div id="timerWrap"><div id="timerBar"></div><span id="timerTxt">20</span></div>
+      <div id="choices"></div>
+      <div id="hintBox"></div>
+      <button class="ghost" id="hintBtn">💡 Hint (this question earns half points)</button>
+    </div>
+    <div class="card" id="feedback">
+      <div><span id="fbWord"></span> <span class="pos" id="fbPos"></span>
+      <button class="speak" id="speakWord" style="float:right">🔊 Say it</button></div>
+      <div id="fbVerdict" style="font-weight:800;font-size:18px;margin-top:6px"></div>
+      <div id="fbEx"></div>
+      <div id="fbWhy"></div>
+      <button class="bigbtn" id="nextBtn">Next ▶</button>
+    </div>
+  </div>
+
+  <div id="endScr" class="hidden">
+    <div class="card">
+      <h2 id="endTitle">Run over!</h2>
+      <p class="study" id="endStats"></p>
+      <h3>✅ Words you knew</h3><ul class="study" id="listRight"></ul>
+      <h3>📖 Words to practice</h3><ul class="study" id="listMiss"></ul>
+      <button class="bigbtn" id="againBtn">▶ Play again — same level</button>
+      <button class="bigbtn green hidden" id="practiceBtn">🎯 Practice missed words</button>
+      <button class="ghost" id="changeBtn">Change grade level</button>
+    </div>
+  </div>
+</div>
+<script>
+"use strict";
+/* Word data per band: [word, part of speech, tier 1-3, definition, example sentence, (optional) word-part note].
+   Definitions are written at the band's reading level and never contain the word itself.
+   Example sentences always use the exact word (the game blanks it out for fill-in-the-blank rounds). */
+const BANDNAMES={"b12":"Grades 1–2","b35":"Grades 3–5","b68":"Grades 6–8","b912":"Grades 9–12"};
+const BANK={
+"b12":[
+["gigantic","adjective",1,"Very, very big.","The gigantic elephant took up the whole road."],
+["tiny","adjective",1,"Very small.","A tiny ant crawled across my shoe."],
+["brave","adjective",1,"Not afraid, even when something is scary.","The brave girl climbed to the top of the slide."],
+["gentle","adjective",1,"Soft, kind, and careful, not rough.","Be gentle when you hold the baby chick."],
+["hungry","adjective",1,"Wanting something to eat.","I feel hungry after playing outside all day."],
+["sleepy","adjective",1,"Feeling ready to go to sleep.","The sleepy puppy closed its eyes."],
+["shiny","adjective",2,"Bright because it bounces light back.","She wore a shiny red ribbon in her hair."],
+["muddy","adjective",1,"Covered in wet, soft dirt.","His boots got muddy in the garden."],
+["speedy","adjective",2,"Able to move very fast.","The speedy rabbit won the race."],
+["grumpy","adjective",2,"In a bad mood and a little cross.","The grumpy cat hid under the porch."],
+["proud","adjective",2,"Feeling happy about something you did well.","I feel proud of my tall block tower."],
+["cozy","adjective",2,"Warm, soft, and comfortable.","We read books in a cozy corner."],
+["curious","adjective",3,"Wanting to know or learn new things.","The curious kitten peeked inside the box."],
+["enormous","adjective",3,"Much bigger than usual; huge.","An enormous whale swam past the boat."],
+["whisper","verb",1,"To speak very, very quietly.","Please whisper so the baby stays asleep."],
+["giggle","verb",1,"To laugh in a short, happy way.","The silly joke made us giggle."],
+["chase","verb",1,"To run after someone or something to catch it.","The dog likes to chase the ball."],
+["build","verb",1,"To make something by putting parts together.","We will build a tower out of blocks."],
+["carry","verb",1,"To hold something and take it somewhere.","Can you carry this bag for me?"],
+["wiggle","verb",1,"To move from side to side with small, quick moves.","The puppy will wiggle when it is happy."],
+["peek","verb",1,"To look quickly, often through a small opening.","Do not peek at your birthday present!"],
+["splash","verb",1,"To make water fly up in drops.","The kids splash in the shallow pool."],
+["climb","verb",2,"To go up something using your hands and feet.","Monkeys climb trees with ease."],
+["munch","verb",2,"To eat with loud, steady bites.","The goat will munch on the crunchy carrots."],
+["dash","verb",2,"To run somewhere very fast and suddenly.","We dash to the door when the bell rings."],
+["rescue","verb",3,"To save someone from danger.","Firefighters rescue people from burning buildings."],
+["vanish","verb",3,"To go away so suddenly that no one can see it anymore.","The rabbit seemed to vanish behind the tree."],
+["invent","verb",3,"To make something brand new that no one has made before.","One day I want to invent a flying bicycle."],
+["puppy","noun",1,"A very young dog.","The puppy chewed on a soft toy."],
+["rainbow","noun",1,"Curved bands of color in the sky after rain.","A rainbow appeared after the storm."],
+["blanket","noun",1,"A soft cover that keeps you warm in bed.","She pulled the blanket up to her chin."],
+["garden","noun",1,"A place where flowers or food plants are grown.","We grow tomatoes in our garden."],
+["shadow","noun",1,"The dark shape made when something blocks the light.","My shadow follows me on sunny days."],
+["bubble","noun",1,"A thin ball of liquid with air inside.","A bubble floated over the yard and popped."],
+["puddle","noun",1,"A small pool of water on the ground after rain.","He jumped over the puddle on the sidewalk."],
+["forest","noun",2,"A large area filled with trees.","Deer live deep in the forest."],
+["ladder","noun",2,"A tool with steps that helps you reach high places.","Dad used a ladder to fix the roof."],
+["island","noun",2,"Land with water all around it.","The island had palm trees and white sand."],
+["feather","noun",2,"One of the light, soft parts that cover a bird.","A feather drifted down from the nest."],
+["treasure","noun",3,"Gold, jewels, or other valuable things, often hidden away.","The pirates buried their treasure on the island."],
+["captain","noun",3,"The person in charge of a ship or a team.","The captain steered the boat through the waves."],
+["adventure","noun",3,"An exciting trip or experience.","Our camping trip turned into a real adventure."]
+],
+"b35":[
+["ancient","adjective",1,"Very old; from a time long, long ago.","We saw ancient tools at the museum."],
+["fragile","adjective",1,"Easy to break or damage.","The fragile glass cup sat high on the shelf."],
+["silent","adjective",1,"Making no sound at all; completely quiet.","The library was silent during reading time."],
+["narrow","adjective",1,"Not wide; thin from side to side.","The narrow path wound through the woods."],
+["eager","adjective",1,"Very excited and ready to start.","The eager students lined up for the field trip."],
+["generous","adjective",2,"Happy to share what you have with others.","She is generous with her colored pencils."],
+["vast","adjective",2,"Extremely large in size or amount.","A vast desert stretched to the horizon."],
+["ordinary","adjective",2,"Usual and normal; not special in any way.","It was an ordinary Tuesday until the surprise party."],
+["fierce","adjective",2,"Wild, strong, and a little frightening.","A fierce wind shook the trees all night."],
+["precious","adjective",2,"Very valuable or loved a great deal.","She kept the precious photo in a frame."],
+["rapid","adjective",3,"Happening or moving very quickly.","The rapid river rushed over the rocks."],
+["hollow","adjective",3,"Empty on the inside.","The hollow log was home to a family of beetles."],
+["graceful","adjective",3,"Moving in a smooth, beautiful way.","The graceful dancer spun across the stage."],
+["splendid","adjective",3,"Wonderful and impressive; truly excellent.","We had a splendid view from the mountaintop."],
+["predict","verb",1,"To say what you think will happen in the future.","I predict that it will rain this weekend.","pre- = before; say something before it happens"],
+["collect","verb",1,"To gather things together, one by one.","He likes to collect smooth stones at the beach."],
+["decide","verb",1,"To make up your mind and choose one thing.","We must decide which game to play first."],
+["imagine","verb",1,"To picture something in your mind that is not real yet.","Imagine a castle floating in the clouds."],
+["observe","verb",2,"To watch something carefully and notice details.","Scientists observe how the plants change each week."],
+["describe","verb",2,"To tell or write what someone or something is like.","Describe your best friend in one sentence."],
+["protect","verb",2,"To keep someone or something safe from harm.","A helmet can protect your head when you ride."],
+["discover","verb",2,"To find or learn something for the first time.","Did you discover the secret path behind the school?"],
+["explore","verb",2,"To travel around a new place to learn about it.","They plan to explore the caves tomorrow."],
+["shiver","verb",2,"To shake a little because you are cold or scared.","I shiver when the icy wind blows."],
+["complain","verb",3,"To say that you are unhappy about something.","Do not complain about the rain; the garden needs it."],
+["arrange","verb",3,"To put things in a certain order or plan something ahead.","Please arrange the chairs in a circle."],
+["persuade","verb",3,"To talk someone into doing or believing something.","She tried to persuade me to try the spicy soup."],
+["create","verb",1,"To make something new, like a drawing, story, or song.","For art class, we create a poster about the ocean."],
+["journey","noun",1,"A long trip from one place to another.","The journey across the desert took three days."],
+["danger","noun",1,"The chance that something bad or harmful might happen.","The sign warns swimmers of danger near the rocks."],
+["weather","noun",1,"What the air outside is like: sunny, rainy, hot, or cold.","The weather today is perfect for a picnic."],
+["energy","noun",2,"The power to be active and do work; also power that makes machines run.","After a good breakfast, I have energy to run and play."],
+["harvest","noun",2,"The crops that are gathered in when they are ready.","This fall's harvest filled two big barns."],
+["mystery","noun",2,"Something that is hard to understand or explain.","The missing keys were a mystery to everyone."],
+["opinion","noun",2,"What a person thinks or feels about something.","In my opinion, dogs make the best pets."],
+["habitat","noun",3,"The natural place where a plant or animal lives.","A swamp is the perfect habitat for frogs."],
+["champion","noun",3,"The winner of a contest or a game.","She became the chess champion of her school."],
+["colony","noun",3,"A place ruled by a faraway country; also a group of animals living together.","An ant colony can hold thousands of ants."],
+["solution","noun",3,"The answer to a problem or puzzle.","He finally found the solution to the riddle."],
+["freedom","noun",3,"The state of being able to act and speak as you choose.","The birds enjoyed their freedom after the cage opened."],
+["lantern","noun",2,"A light with a case around it that you can carry.","She carried a lantern down the dark path."],
+["meadow","noun",1,"A field of grass, often with wild flowers.","Bees buzzed over the sunny meadow."]
+],
+"b68":[
+["vivid","adjective",1,"Bright, strong, and clear, as if real.","The vivid colors of the sunset filled the sky."],
+["previous","adjective",1,"Coming or happening before the present one.","The previous chapter ended on a cliffhanger."],
+["essential","adjective",2,"Completely necessary; needed above all.","Water is essential for every living thing.","essent- relates to being; what a thing must have to be itself"],
+["reluctant","adjective",1,"Not wanting to do something; doing it slowly and unwillingly.","He was reluctant to jump into the cold pool."],
+["cautious","adjective",2,"Careful to avoid danger or mistakes.","Be cautious when crossing the icy bridge."],
+["flexible","adjective",2,"Able to bend easily, or able to change when needed.","The flexible ruler bent around the curve."],
+["numerous","adjective",2,"Many; a large number of.","Numerous stars appeared as the sky darkened."],
+["temporary","adjective",1,"Lasting only a short time; not permanent.","The road closure is temporary while crews work."],
+["dramatic","adjective",2,"Sudden, striking, and full of strong feeling or action.","There was a dramatic change in the weather."],
+["significant","adjective",3,"Important enough to be noticed or to matter.","Graduating was a significant moment in her life."],
+["efficient","adjective",3,"Working well without wasting time, energy, or effort.","The new machine is far more efficient than the old one."],
+["scarce","adjective",3,"Hard to find because there is not much of it.","Fresh water can be scarce in the desert."],
+["frugal","adjective",3,"Careful with money and resources; not wasteful.","His frugal habits helped him save for a bike."],
+["analyze","verb",1,"To study something closely, part by part, in order to understand it.","Scientists analyze the water samples every month.","ana- = thoroughly; break something down to study it"],
+["conclude","verb",2,"To decide something after thinking carefully about the facts; also to end.","After the trials, they conclude that the bridge design is safe."],
+["illustrate","verb",1,"To explain with pictures or examples; to draw pictures for a text.","She will illustrate the story with her own drawings."],
+["require","verb",1,"To need something, or to make it a rule that something must happen.","Most plants require sunlight to grow."],
+["modify","verb",2,"To change something slightly to improve it or make it fit.","We had to modify our plan when it rained."],
+["contribute","verb",2,"To give time, money, or help toward a shared goal.","Everyone can contribute ideas to the project."],
+["oppose","verb",2,"To be against something or to fight against it.","Many residents oppose building the road through the park."],
+["demonstrate","verb",2,"To show clearly how something works or that something is true.","The teacher will demonstrate the experiment first."],
+["summarize","verb",2,"To state the main points of something in a few words.","Please summarize the article in one paragraph."],
+["emphasize","verb",3,"To give special importance to something when speaking or writing.","The coach likes to emphasize teamwork over winning."],
+["anticipate","verb",3,"To expect something to happen and prepare for it.","We anticipate a large crowd at the fair."],
+["insist","verb",3,"To demand something firmly and not take no for an answer.","He continues to insist that he locked the door."],
+["transform","verb",3,"To change completely in form or appearance.","A caterpillar will transform into a butterfly.","trans- = across; change across forms"],
+["consequence","noun",1,"A result or effect of an action, often a negative one.","Missing the bus was an annoying consequence of oversleeping.","con- + sequ- = following after; what follows an action"],
+["evidence","noun",1,"Facts or signs that show whether something is true.","The muddy footprints were evidence that someone had been there."],
+["resource","noun",1,"Something useful that can be used when needed, like water, money, or materials.","The library is a great resource for research."],
+["conflict","noun",1,"A serious disagreement or struggle between people or forces.","The story's main conflict is between the two brothers."],
+["tradition","noun",1,"A custom or way of doing things passed down over many years.","Baking bread together is a family tradition."],
+["perspective","noun",2,"A way of looking at or thinking about something.","Travel can give you a new perspective on your own town."],
+["strategy","noun",2,"A careful plan for reaching a goal, especially in a game or contest.","Their strategy was to save their best players for the final round."],
+["majority","noun",2,"The greater number; more than half of a group.","The majority of students voted for the field trip."],
+["authority","noun",2,"The power to make decisions or give orders; also an expert source.","The mayor has the authority to close the park during storms."],
+["obstacle","noun",2,"Something that stands in the way and makes progress harder.","A fallen tree became an obstacle on the trail."],
+["interval","noun",3,"A period of time or space between two things.","There was a short interval between the two acts of the play."],
+["hypothesis","noun",3,"An idea or explanation that can be tested through experiments.","Their hypothesis was that plants grow faster in sunlight.","hypo- = under; an idea put under a test"],
+["phenomenon","noun",3,"Something that happens or exists and can be observed, especially something unusual.","A rainbow is a natural phenomenon caused by light and rain."],
+["gradual","adjective",2,"Happening slowly over time, little by little.","There was a gradual improvement in her spelling."],
+["debate","verb",2,"To discuss the sides of an issue in an organized way, presenting arguments for and against.","The two teams will debate whether homework should be shorter."],
+["data","noun",1,"Facts and numbers collected for study or reference.","The data from the survey surprised everyone."]
+],
+"b912":[
+["candid","adjective",1,"Honest and direct in a way that does not hide the truth.","Her candid review pointed out both the strengths and the flaws."],
+["concise","adjective",1,"Giving a lot of information in few words; brief but complete.","Write a concise summary of the chapter."],
+["ambiguous","adjective",1,"Open to more than one meaning; unclear in intent.","His ambiguous answer left us unsure whether he agreed.","ambi- = both ways; a meaning that can go two ways"],
+["lucid","adjective",2,"Clear and easy to understand; also clear-thinking.","She gave a lucid explanation of the court's decision."],
+["meticulous","adjective",2,"Extremely careful about small details; precise.","The meticulous editor caught every misplaced comma."],
+["obscure","adjective",2,"Not well known, or hard to see and understand.","He found the quote in an obscure journal from 1910."],
+["resilient","adjective",2,"Able to recover quickly from hard times or damage.","The resilient community rebuilt after the flood."],
+["skeptical","adjective",2,"Doubting whether something is true; not easily convinced.","She was skeptical of the miracle cure claims."],
+["inevitable","adjective",2,"Certain to happen; impossible to avoid.","With both teams exhausted, a tie seemed inevitable."],
+["profound","adjective",2,"Very deep, intense, or having great meaning.","The novel had a profound effect on how he saw the world."],
+["tenacious","adjective",3,"Holding firmly to a goal and refusing to give up.","The tenacious researcher worked on the problem for a decade."],
+["verbose","adjective",3,"Using far more words than needed.","His verbose report could have fit on one page."],
+["austere","adjective",3,"Plain and severe, with little decoration or comfort.","The austere room contained only a bed and a desk."],
+["pragmatic","adjective",3,"Practical; focused on what works in real situations.","They took a pragmatic approach and fixed the cheapest problem first.","pragma = a thing done; focused on deeds, not theories"],
+["comprehend","verb",1,"To fully understand something.","Few students could comprehend the poem on a first reading."],
+["advocate","verb",1,"To publicly support or argue in favor of a cause.","They advocate for cleaner rivers in their town."],
+["assert","verb",1,"To state something confidently and forcefully.","She had to assert her opinion during the debate."],
+["hinder","verb",1,"To make something harder to do; to hold back.","Muddy roads can hinder the delivery trucks."],
+["bolster","verb",2,"To support or strengthen something.","New evidence helped bolster her argument.","A bolster is a firm pillow; to prop something up"],
+["diminish","verb",2,"To become smaller in size, amount, or importance, or to make it so.","The pain began to diminish after a few hours."],
+["elaborate","verb",2,"To explain in greater detail; to add more information.","Please elaborate on your plan for the science fair."],
+["imply","verb",2,"To suggest something without saying it directly.","His tone seemed to imply that he disagreed."],
+["facilitate","verb",3,"To make a process easier or smoother.","A good chairperson can facilitate a productive meeting."],
+["innovate","verb",3,"To introduce new methods, ideas, or products.","Small companies often innovate faster than giant ones.","nov = new; to bring in something new"],
+["scrutinize","verb",3,"To examine something very closely and critically.","Auditors scrutinize every expense report."],
+["undermine","verb",3,"To weaken something gradually, often secretly.","Constant gossip can undermine trust in a team."],
+["validate","verb",3,"To confirm that something is true, correct, or worthwhile.","Researchers repeat experiments to validate their results."],
+["retract","verb",3,"To take back something you said or wrote; to pull back in.","The newspaper had to retract the incorrect story."],
+["bias","noun",1,"A tendency to favor one side unfairly.","Good judges work hard to set aside personal bias."],
+["empathy","noun",1,"The ability to understand and share another person's feelings.","Her empathy made her a trusted counselor.","em- + pathos = feeling into another's feelings"],
+["consensus","noun",2,"General agreement among a group of people.","After long debate, the committee reached a consensus.","con- + sensus = feeling together; shared agreement"],
+["anomaly","noun",2,"Something that differs from what is normal or expected.","The warm day in January was an anomaly."],
+["integrity","noun",2,"Honesty and strong moral principles; also wholeness.","Voters trusted her integrity even when they disagreed with her."],
+["threshold","noun",2,"The level or point at which something begins to happen; also a doorway's sill.","Once profits cross that threshold, taxes increase."],
+["rationale","noun",3,"The set of reasons or logic behind a decision.","He explained the rationale for the new policy."],
+["nuance","noun",3,"A very small difference in meaning, feeling, or tone.","A good translator notices every nuance in the text."],
+["nostalgia","noun",3,"A warm, slightly sad longing for the past.","Old songs filled him with nostalgia for his childhood."],
+["discrepancy","noun",3,"A difference between two things that should match.","There was a discrepancy between the two accounts of the event."],
+["paradigm","noun",3,"A typical example or model that shapes how people think.","The discovery created a new paradigm in physics."],
+["stigma","noun",3,"A mark of shame or disapproval attached to a person or condition.","The campaign works to remove the stigma around asking for help."],
+["vernacular","noun",3,"The everyday language spoken by ordinary people in a place.","The novel is written in the local vernacular."],
+["catalyst","noun",3,"Something that causes an important change or event to happen faster.","The speech became a catalyst for reform in the city.","In chemistry, it speeds a reaction without being used up"]
+]
+};
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- audio (synthesized, iOS-safe) ---------- */
+let AC=null, muted=safeGet("ws_mute") === "1";
+function safeGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+function iosAudio(){try{if("audioSession" in navigator)navigator.audioSession.type="playback";}catch(e){}}
+document.addEventListener("pointerdown",()=>{iosAudio();initAudio();},{capture:true});
+document.addEventListener("touchstart",()=>{iosAudio();initAudio();},{capture:true,passive:true});
+function initAudio(){
+  iosAudio();
+  if(muted)return;
+  try{
+    if(!AC){const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;AC=new Ctx();}
+    if(AC.state==="suspended")AC.resume();
+  }catch(e){}
+}
+function tone(f,t0,d,type,vol){
+  if(!AC||muted)return;
+  try{
+    const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+t0;
+    o.type=type||"triangle";o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||0.15,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+    o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+0.05);
+  }catch(e){}
+}
+const sfx={
+  click(){tone(440,0,0.07,"triangle",0.08);},
+  good(){tone(523,0,0.12);tone(659,0.08,0.12);tone(784,0.16,0.2);},
+  bad(){tone(196,0,0.18,"square",0.07);tone(147,0.1,0.28,"square",0.07);},
+  over(){tone(392,0,0.15);tone(523,0.14,0.15);tone(659,0.28,0.15);tone(784,0.42,0.35);}
+};
+function updMuteBtn(){$("muteBtn").textContent=muted?"🔇":"🔊";}
+$("muteBtn").addEventListener("click",()=>{muted=!muted;safeSet("ws_mute",muted?"1":"0");updMuteBtn();if(!muted){initAudio();sfx.click();}});
+updMuteBtn();
+
+/* ---------- speech ---------- */
+const canSpeak=("speechSynthesis" in window);
+function speak(text){
+  if(!canSpeak)return;
+  try{const u=new SpeechSynthesisUtterance(text);u.rate=0.95;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}
+}
+
+/* ---------- game state ---------- */
+let band="b35", mode="learn";
+let streak=0, score=0, answered=0, correctCt=0, best=0;
+let used=new Set(), cur=null, choices=[], isContext=false, nextContext=false;
+let hintUsed=false, runOver=false, lastMiss=false, practice=false;
+let rightList=[], missList=[], missQueue=[], timerInt=null, timeLeft=20;
+
+function bestKey(b){return "ws_best_"+b;}
+function getBest(b){return parseInt(safeGet(bestKey(b))||"0",10)||0;}
+function updBestLine(){
+  $("bestLine").textContent="Best streaks — "+"Grades 1–2: "+getBest("b12")+" · Grades 3–5: "+getBest("b35")+" · Grades 6–8: "+getBest("b68")+" · Grades 9–12: "+getBest("b912");
+}
+const bandList=$("bandList");
+Object.keys(BANDNAMES).forEach(k=>{
+  const b=document.createElement("button");
+  b.className="band"+(k===band?" sel":""); b.textContent=BANDNAMES[k]; b.dataset.band=k;
+  b.addEventListener("click",()=>{band=k;document.querySelectorAll(".band").forEach(x=>x.classList.toggle("sel",x.dataset.band===k));initAudio();sfx.click();});
+  bandList.appendChild(b);
+});
+$("modeLearn").addEventListener("click",()=>{mode="learn";$("modeLearn").classList.add("sel");$("modeTimed").classList.remove("sel");sfx.click();});
+$("modeTimed").addEventListener("click",()=>{mode="timed";$("modeTimed").classList.add("sel");$("modeLearn").classList.remove("sel");sfx.click();});
+updBestLine();
+
+function show(id){["titleScr","gameScr","endScr"].forEach(s=>$(s).classList.toggle("hidden",s!==id));$("quitBtn").classList.toggle("hidden",id!=="gameScr");}
+function updHud(){$("hStreak").textContent=streak;$("hScore").textContent=score;$("hBest").textContent=best;$("hAns").textContent=answered;}
+
+function startRun(isPractice, practiceWords){
+  practice=!!isPractice;
+  streak=0;score=0;answered=0;correctCt=0;rightList=[];runOver=false;
+  if(practice){missList=[];missQueue=practiceWords.slice();}
+  else{missList=[];missQueue=[];used=new Set();}
+  best=getBest(band);
+  document.body.classList.toggle("young",band==="b12");
+  show("gameScr");updHud();nextQuestion();
+}
+
+function pickEntry(){
+  if(practice){
+    if(!missQueue.length)return null;
+    return missQueue.shift();
+  }
+  /* missed words re-queue into the same run's tail where a run continues (practice & play-again),
+     and are always offered again via Practice mode; in a main run a miss ends the run by design. */
+  let pool=BANK[band].filter(e=>!used.has(e[0]));
+  if(!pool.length){used.clear();pool=BANK[band].slice();}
+  let want;
+  if(streak<3)want=[1,2]; else if(streak<6)want=[2,3,2]; else want=[3,3,2];
+  let tier=want[Math.floor(Math.random()*want.length)];
+  let cand=pool.filter(e=>e[2]===tier);
+  if(!cand.length)cand=pool;
+  const e=cand[Math.floor(Math.random()*cand.length)];
+  used.add(e[0]);
+  return e;
+}
+
+function blankSentence(e){
+  const re=new RegExp("\\b"+e[0]+"\\b","i");
+  return e[4].replace(re,"_____");
+}
+
+function nextQuestion(){
+  stopTimer();
+  cur=pickEntry();
+  if(!cur){endRun(true);return;}
+  isContext=nextContext; nextContext=false;
+  hintUsed=false; lastMiss=false;
+  $("feedback").style.display="none";
+  $("hintBox").style.display="none";
+  $("hintBtn").disabled=false; $("hintBtn").style.display="block";
+  /* distractors: same part of speech, same band */
+  const samePos=BANK[band].filter(e=>e[1]===cur[1]&&e[0]!==cur[0]);
+  choices=shuffle([cur].concat(shuffle(samePos).slice(0,3)));
+  $("qType").textContent=isContext?"Fill in the blank — which word fits?":"What word means this?";
+  $("qtext").textContent=isContext?blankSentence(cur):cur[3];
+  const sd=$("speakDef");
+  if(band==="b12"&&canSpeak){sd.classList.remove("hidden");sd.onclick=()=>speak($("qtext").textContent);}
+  else sd.classList.add("hidden");
+  const box=$("choices"); box.innerHTML="";
+  choices.forEach((e,i)=>{
+    const b=document.createElement("button");
+    b.className="choice"; b.textContent=(i+1)+".  "+e[0]; b.dataset.word=e[0];
+    b.addEventListener("click",()=>answer(e,b));
+    box.appendChild(b);
+  });
+  if(mode==="timed"&&!practice)startTimer(); else $("timerWrap").style.display="none";
+  window.scrollTo(0,0);
+}
+
+function startTimer(){
+  timeLeft=20;
+  $("timerWrap").style.display="block";
+  const upd=()=>{$("timerTxt").textContent=timeLeft;$("timerBar").style.width=(timeLeft/20*100)+"%";};
+  upd();
+  stopTimer();
+  timerInt=setInterval(()=>{timeLeft--;upd();if(timeLeft<=0){stopTimer();timeoutAnswer();}},1000);
+}
+function stopTimer(){if(timerInt){clearInterval(timerInt);timerInt=null;}}
+
+function revealChoices(pickedWord){
+  document.querySelectorAll(".choice").forEach(b=>{
+    b.disabled=true;
+    if(b.dataset.word===cur[0])b.classList.add("right");
+    else if(b.dataset.word===pickedWord)b.classList.add("wrong");
+  });
+}
+
+function showFeedback(ok, timedOut){
+  const fb=$("feedback");
+  fb.className="card "+(ok?"ok":"bad"); fb.id="feedback"; fb.style.display="block";
+  $("fbWord").textContent=cur[0];
+  $("fbPos").textContent=cur[1];
+  $("fbVerdict").textContent=timedOut?"⏰ Time's up!":(ok?"✅ Correct!":"❌ Not quite — the word was:");
+  $("fbEx").innerHTML="📖 Example: <i>“"+esc(cur[4])+"”</i>";
+  let why="<b>Why it fits:</b> “"+esc(cur[3])+"” — that is exactly what <b>"+esc(cur[0])+"</b> means.";
+  if(cur[5])why+="<br>🔎 Word part: "+esc(cur[5]);
+  $("fbWhy").innerHTML=why;
+  $("speakWord").style.display=canSpeak?"":"none";
+  $("nextBtn").textContent=(!ok&&!practice)?"See my results ▶":"Next ▶";
+  try{if(fb.scrollIntoView)fb.scrollIntoView({behavior:"smooth",block:"nearest"});}catch(e){}
+}
+
+function answer(e,btn){
+  initAudio(); stopTimer();
+  const ok=e[0]===cur[0];
+  revealChoices(e[0]);
+  $("hintBtn").style.display="none";
+  answered++;
+  if(ok){
+    correctCt++; streak++;
+    score+=hintUsed?5:10;
+    rightList.push(cur);
+    if(streak>best){best=streak;safeSet(bestKey(band),String(best));}
+    if(correctCt%5===0)nextContext=true;
+    sfx.good();
+  }else{
+    lastMiss=true;
+    if(!missList.some(m=>m[0]===cur[0]))missList.push(cur);
+    sfx.bad();
+  }
+  updHud(); showFeedback(ok,false);
+}
+
+function timeoutAnswer(){
+  initAudio();
+  revealChoices(null);
+  $("hintBtn").style.display="none";
+  answered++; lastMiss=true;
+  if(!missList.some(m=>m[0]===cur[0]))missList.push(cur);
+  updHud(); showFeedback(false,true); sfx.bad();
+}
+
+$("nextBtn").addEventListener("click",()=>{
+  sfx.click();
+  if(lastMiss&&!practice){endRun(false);return;}
+  if(practice&&lastMiss){missQueue.push(cur);} /* missed practice words cycle back until mastered or exit */
+  nextQuestion();
+});
+
+$("hintBtn").addEventListener("click",()=>{
+  if(!cur||hintUsed)return;
+  hintUsed=true; initAudio(); sfx.click();
+  const e=cur;
+  let h="💡 Starts with: <b>"+esc(e[0].charAt(0).toUpperCase())+"</b> &nbsp;•&nbsp; Sounds like: <b>"+esc(e[0].replace(/[aeiou]/gi,"_"))+"</b><br>📖 In a sentence: <i>“"+esc(blankSentence(e))+"”</i>";
+  if(e[5])h+="<br>🔎 Word part: "+esc(e[5]);
+  const box=$("hintBox"); box.innerHTML=h; box.style.display="block";
+  $("hintBtn").disabled=true;
+});
+
+$("speakWord").addEventListener("click",()=>{if(cur)speak(cur[0]+". "+cur[4]);});
+
+function endRun(finishedBank){
+  stopTimer(); runOver=true; sfx.over();
+  const acc=answered?Math.round(correctCt/answered*100):0;
+  $("endTitle").textContent=practice?"🎯 Practice session done":"🏁 Run over! — "+BANDNAMES[band];
+  $("endStats").innerHTML="🔥 Streak reached: <b>"+streak+"</b> · ⭐ Score: <b>"+score+"</b> · ✔ Accuracy: <b>"+acc+"%</b> ("+correctCt+" of "+answered+") · 🏆 Best ever ("+BANDNAMES[band]+"): <b>"+getBest(band)+"</b>"+(finishedBank?"<br>All caught up — nothing left in this pile!":"");
+  const mk=(list,el)=>{
+    const u=$(el); u.innerHTML="";
+    if(!list.length){u.innerHTML="<li class='small'>None</li>";return;}
+    list.forEach(e=>{
+      const li=document.createElement("li");
+      li.innerHTML="<b>"+esc(e[0])+"</b> <span class='pos'>("+esc(e[1])+")</span> — "+esc(e[3]);
+      u.appendChild(li);
+    });
+  };
+  mk(rightList,"listRight"); mk(missList,"listMiss");
+  $("practiceBtn").classList.toggle("hidden",missList.length===0);
+  show("endScr"); updBestLine();
+  window.scrollTo(0,0);
+}
+
+$("startBtn").addEventListener("click",()=>{initAudio();sfx.click();startRun(false);});
+$("againBtn").addEventListener("click",()=>{sfx.click();startRun(false);});
+$("practiceBtn").addEventListener("click",()=>{sfx.click();startRun(true,missList.slice());});
+$("changeBtn").addEventListener("click",()=>{sfx.click();show("titleScr");});
+$("quitBtn").addEventListener("click",()=>{stopTimer();if($("gameScr").classList.contains("hidden"))return;endRun(false);});
+
+document.addEventListener("keydown",ev=>{
+  if($("gameScr").classList.contains("hidden"))return;
+  if($("feedback").style.display==="block"){if(ev.key==="Enter")$("nextBtn").click();return;}
+  const n=parseInt(ev.key,10);
+  if(n>=1&&n<=4){const bs=document.querySelectorAll(".choice");if(bs[n-1])bs[n-1].click();}
+  if(ev.key==="h"||ev.key==="H")$("hintBtn").click();
+});
+</script>
+</body>
+</html>

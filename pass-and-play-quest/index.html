@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pass-and-Play Quest — The Lost Map</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(160deg,#3a2a12,#8a6d2f);color:#123;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:520px;padding:14px 14px 30px}
+h1{color:#fff;text-align:center;margin:8px 0 2px;font-size:29px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.sub{color:#ffe9b0;text-align:center;margin:0 0 14px;font-size:15px}
+.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.25);margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:19px;color:#3a2a12}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:14px}
+.bigbtn{width:100%;min-height:60px;font-size:20px;font-weight:800;background:#ff9f1a;color:#fff;box-shadow:0 4px 0 #c77400;margin-top:12px}
+.bigbtn:active{transform:translateY(2px);box-shadow:none}
+.green{background:#2e7d32;box-shadow:0 4px 0 #1b4d1e}
+.ghost{width:100%;min-height:52px;font-size:16px;font-weight:700;background:#eef1f5;color:#334;margin-top:9px}
+#topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#muteBtn{background:rgba(255,255,255,.2);color:#fff;font-size:19px;width:48px;height:48px;border-radius:50%}
+#quitBtn{background:rgba(255,255,255,.2);color:#fff;font-size:15px;font-weight:700;padding:12px 16px;min-height:48px}
+#hud{display:flex;gap:8px;margin-bottom:10px}
+.hudbox{flex:1;background:rgba(255,255,255,.16);color:#fff;border-radius:12px;text-align:center;padding:7px 2px;font-size:13px}
+.hudbox b{display:block;font-size:21px}
+.qtext{font-size:21px;line-height:1.4;color:#14273f;margin:6px 0;font-weight:600}
+.cluecard{background:#fff8d6;border:2px dashed #e0a800;border-radius:12px;padding:14px;font-size:20px;line-height:1.45;color:#5b4a00;margin:10px 0;text-align:center}
+.choice{display:block;width:100%;min-height:58px;font-size:19px;font-weight:700;background:#f4f9ff;border:2px solid #bcd8ff;color:#14273f;margin:9px 0;padding:10px;text-align:left}
+.choice:active{transform:scale(.98)}
+.choice.right{background:#c8f2c0;border-color:#43a047}
+.choice.wrong{background:#ffd2d2;border-color:#e53935}
+.choice:disabled{cursor:default}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:10px auto}
+.gcell{aspect-ratio:1;border-radius:12px;border:2px solid #bcd8ff;min-height:68px;font-size:30px;background:#f4f9ff}
+.gcell.picked{border-color:#3a2a12;background:#ffe9b0}
+.gcell.treasure{background:#c8f2c0;border-color:#43a047}
+#feedback{display:none;margin-top:10px;border-radius:12px;padding:12px}
+#feedback.ok{background:#eefbe9}
+#feedback.bad{background:#fdeeee}
+#fbTitle{font-size:20px;font-weight:800;color:#14273f}
+#fbEx{font-size:16px;line-height:1.45;margin:8px 0}
+.study{font-size:16px;line-height:1.45}
+.study li{margin:8px 0}
+.small{font-size:14px;color:#5a6b80}
+.big{font-size:26px;font-weight:800;color:#3a2a12;text-align:center}
+.center{text-align:center}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar"><button id="muteBtn" aria-label="Mute or unmute">🔊</button><button id="quitBtn" class="hidden">✕ Quit quest</button></div>
+  <h1>🗺️ Pass-and-Play Quest</h1>
+  <p class="sub">Two players. One phone. Half a map each.</p>
+
+  <div id="titleScr">
+    <div class="card"><h2>How it works</h2>
+      <p class="study">You and a partner are treasure hunters with <b>a torn map</b> — each of you holds <b>half the clues</b>. Pass the phone back and forth to read your secret clues, then <b>combine them out loud</b> to find the treasure on the island grid.</p>
+      <p class="study">5 islands to explore. Each island: find the treasure (<b>2 stars</b>) and solve the guardian's riddle (<b>1 star</b>). That's <b>15 stars</b> for a perfect quest.</p>
+      <p class="study">Rule of the game: you may <b>say</b> your clue out loud — but never show the phone to your partner until it's their turn!</p>
+      <button class="bigbtn" id="startBtn">▶ Begin the Quest</button>
+      <p class="small center" id="bestLine"></p>
+    </div>
+  </div>
+
+  <div id="gameScr" class="hidden">
+    <div id="hud">
+      <div class="hudbox">🗺️ Island<b id="hIsland">1/5</b></div>
+      <div class="hudbox">⭐ Stars<b id="hStars">0</b></div>
+      <div class="hudbox">🏆 Best<b id="hBest">—</b></div>
+    </div>
+    <div id="qScr" class="card">
+      <p class="qtext" id="qtext"></p>
+      <div id="bodyArea"></div>
+      <div id="feedback"><div id="fbTitle"></div><div id="fbEx"></div><button class="bigbtn green" id="nextBtn">Next ▶</button></div>
+    </div>
+  </div>
+
+  <div id="endScr" class="hidden">
+    <div class="card"><div class="big" id="endTitle">Quest Complete!</div>
+      <p class="center" id="endSummary"></p>
+    </div>
+    <div class="card"><h2>📜 Quest log</h2><ul class="study" id="questLog"></ul></div>
+    <button class="bigbtn" id="againBtn">↻ New Quest</button>
+    <button class="ghost" id="menuBtn">Back to menu</button>
+  </div>
+</div>
+<script>
+"use strict";
+/* ---------- audio: synthesized only, iOS playback route, close on hide ---------- */
+let actx = null, muted = safeGet("pq_muted") === "1";
+function safeGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+function setAudioSession(){ try{ if("audioSession" in navigator) navigator.audioSession.type = "playback"; }catch(e){} }
+function ensureAudio(){
+  setAudioSession();
+  if (muted) return null;
+  if (!actx || actx.state === "closed") {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); window.__maCtx = actx; }
+    catch(e){ return null; }
+  }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, dur, type, vol, when){
+  const ctx = ensureAudio(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type || "triangle"; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.15, ctx.currentTime + (when || 0));
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (when || 0) + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime + (when || 0)); o.stop(ctx.currentTime + (when || 0) + dur + 0.02);
+}
+const sClick = () => tone(520, 0.08, "triangle", 0.10);
+const sGood = () => { tone(523, 0.12, "triangle", 0.15); tone(659, 0.12, "triangle", 0.15, 0.10); tone(784, 0.22, "triangle", 0.15, 0.20); };
+const sBad = () => { tone(196, 0.25, "square", 0.10); tone(147, 0.35, "square", 0.10, 0.18); };
+const sWin = () => { [523,659,784,1047].forEach((f,i)=>tone(f, 0.25, "triangle", 0.15, i*0.13)); };
+document.addEventListener("pointerdown", setAudioSession, true);
+document.addEventListener("touchstart", setAudioSession, true);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && actx && actx.state === "running") { try { actx.close(); } catch(e){} }
+});
+function updateMuteBtn(){ document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊"; }
+document.getElementById("muteBtn").addEventListener("click", () => {
+  muted = !muted; safeSet("pq_muted", muted ? "1" : "0");
+  if (muted && actx) { try { actx.close(); } catch(e){} actx = null; }
+  updateMuteBtn(); sClick();
+});
+updateMuteBtn();
+
+/* ---------- data: 5 islands. grid = 9 landmark emoji; treasure = cell index 0-8;
+   clueA (Player 1's secret), clueB (Player 2's secret); riddle + 4 options + correct + explanation ---------- */
+const ISLANDS = [
+{ name: "Pirate Cove", grid: ["🌴","💧","⛰️","💧","🌴","💧","⛰️","💧","🌴"], treasure: 4,
+  clueA: "The treasure is in the MIDDLE row of the island.",
+  clueB: "The treasure is in the MIDDLE column of the island.",
+  riddle: "I have cities but no houses, forests but no trees, and rivers but no water. What am I?",
+  options: ["A map","A dream","A book","A painting"], correct: 0,
+  explain: "A map shows cities, forests, and rivers — but none of them are real." },
+{ name: "Sandy Desert", grid: ["🐪","🌵","🏜️","🌵","🏜️","🐪","🏜️","🐪","🌵"], treasure: 2,
+  clueA: "The treasure is in the TOP row of the island.",
+  clueB: "The treasure is in the RIGHTMOST column of the island.",
+  riddle: "What has a head and a tail, but no body?",
+  options: ["A snake","A coin","A comet","A hammer"], correct: 1,
+  explain: "A coin has a head side and a tail side — but no body." },
+{ name: "Whispering Jungle", grid: ["🌿","🦜","🌿","🦜","🌿","🦜","🌿","🦜","🌿"], treasure: 6,
+  clueA: "The treasure is in the BOTTOM row of the island.",
+  clueB: "The treasure is in the LEFTMOST column of the island.",
+  riddle: "The more you take, the more you leave behind. What am I?",
+  options: ["Time","Money","Footsteps","Memories"], correct: 2,
+  explain: "Every step you take leaves another footprint behind you." },
+{ name: "Frozen North", grid: ["❄️","🐧","⛄","🐧","❄️","🐧","⛄","🐧","❄️"], treasure: 5,
+  clueA: "The treasure is in the MIDDLE row of the island.",
+  clueB: "The treasure is in the RIGHTMOST column of the island.",
+  riddle: "What comes once in a minute, twice in a moment, but never in a thousand years?",
+  options: ["The letter M","A second","An echo","A snowflake"], correct: 0,
+  explain: "The letter M appears once in “minute”, twice in “moment”, and never in “thousand years”." },
+{ name: "Fire Volcano", grid: ["🌋","🔥","🪨","🔥","🌋","🔥","🪨","🔥","🌋"], treasure: 7,
+  clueA: "The treasure is in the BOTTOM row of the island.",
+  clueB: "The treasure is in the MIDDLE column of the island.",
+  riddle: "What has many keys but can't open a single lock?",
+  options: ["A piano","A treasure chest","A jailer","A locksmith"], correct: 0,
+  explain: "A piano has many keys — but it opens no locks." }
+];
+
+/* ---------- game state ---------- */
+const $ = id => document.getElementById(id);
+const state = { idx: 0, stars: 0, log: [] };
+function bestSaved(){ try { return JSON.parse(safeGet("pq_best") || "null"); } catch(e){ return null; } }
+function showBest(){
+  const b = bestSaved();
+  $("bestLine").textContent = b ? ("🏆 Best quest: " + b.stars + " / 15 stars") : "No quests completed yet — your best result will be saved here.";
+  $("hBest").textContent = b ? b.stars : "—";
+}
+showBest();
+function show(id){
+  ["titleScr","gameScr","endScr"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+  $("quitBtn").classList.toggle("hidden", id !== "gameScr");
+}
+function renderHud(){
+  $("hIsland").textContent = (state.idx + 1) + "/" + ISLANDS.length;
+  $("hStars").textContent = state.stars;
+}
+function showFeedback(ok, title, expl, nextLabel, nextFn){
+  const fb = $("feedback"); fb.style.display = "block"; fb.className = ok ? "ok" : "bad";
+  $("fbTitle").textContent = title;
+  $("fbEx").textContent = expl;
+  const nb = $("nextBtn"); nb.textContent = nextLabel;
+  nb.onclick = () => { sClick(); fb.style.display = "none"; nextFn(); };
+}
+function startQuest(){
+  state.idx = 0; state.stars = 0; state.log = [];
+  show("gameScr"); renderHud(); showClueA(); sClick();
+}
+function showClueA(){
+  const isl = ISLANDS[state.idx];
+  renderHud();
+  $("qtext").textContent = "🏝️ Island " + (state.idx + 1) + ": " + isl.name + " — Player 1's secret clue!";
+  const area = $("bodyArea"); area.innerHTML =
+    '<p class="study center">Player 2: look away! Player 1, read your clue, remember it, then pass the phone.</p>' +
+    '<div class="cluecard">🤫 ' + isl.clueA + '</div>';
+  const b = document.createElement("button"); b.className = "bigbtn"; b.id = "passBtnA"; b.textContent = "I've Got It — Pass to Player 2 ▶";
+  b.addEventListener("click", () => { sClick(); showClueB(); });
+  area.appendChild(b);
+  $("feedback").style.display = "none";
+}
+function showClueB(){
+  const isl = ISLANDS[state.idx];
+  $("qtext").textContent = "🏝️ Island " + (state.idx + 1) + ": " + isl.name + " — Player 2's secret clue!";
+  const area = $("bodyArea"); area.innerHTML =
+    '<p class="study center">Player 1: look away! Player 2, read your clue, remember it, then pass the phone back.</p>' +
+    '<div class="cluecard">🤫 ' + isl.clueB + '</div>';
+  const b = document.createElement("button"); b.className = "bigbtn"; b.id = "passBtnB"; b.textContent = "I've Got It — Find the Treasure Together ▶";
+  b.addEventListener("click", () => { sClick(); showGrid(); });
+  area.appendChild(b);
+}
+function showGrid(){
+  const isl = ISLANDS[state.idx];
+  $("qtext").textContent = "🗺️ Combine your clues out loud — where is the treasure?";
+  const area = $("bodyArea"); area.innerHTML = "";
+  const g = document.createElement("div"); g.className = "grid3";
+  isl.grid.forEach((emoji, i) => {
+    const c = document.createElement("button");
+    c.className = "gcell"; c.dataset.cell = i; c.textContent = emoji;
+    c.setAttribute("aria-label", "Square " + (i + 1));
+    c.addEventListener("click", () => {
+      if (c.disabled) return;
+      area.querySelectorAll(".gcell").forEach(x => x.disabled = true);
+      c.classList.add("picked");
+      if (i === isl.treasure){
+        c.classList.add("treasure"); c.textContent = "💰";
+        state.stars += 2; sGood();
+        state.log.push({ island: isl.name, found: true, riddle: null });
+        showFeedback(true, "💰 Treasure found! +2 stars", "Your clues pointed to the same square — that's teamwork.", "Meet the Guardian 🧩", showRiddle);
+      } else {
+        sBad();
+        const t = area.querySelector('[data-cell="' + isl.treasure + '"]');
+        if (t){ t.classList.add("treasure"); t.textContent = "💰"; }
+        state.log.push({ island: isl.name, found: false, riddle: null });
+        showFeedback(false, "❌ No treasure there — it was at the " + ["top-left","top-middle","top-right","middle-left","center","middle-right","bottom-left","bottom-middle","bottom-right"][isl.treasure] + " square.", "Compare your clues again: one named the row, one named the column.", "Meet the Guardian 🧩", showRiddle);
+      }
+      renderHud();
+    });
+    g.appendChild(c);
+  });
+  area.appendChild(g);
+}
+function showRiddle(){
+  const isl = ISLANDS[state.idx];
+  $("qtext").textContent = "🧩 The Guardian's Riddle — solve it together!";
+  const area = $("bodyArea"); area.innerHTML = '<p class="qtext">“' + isl.riddle + '”</p>';
+  const order = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+  order.forEach(oi => {
+    const b = document.createElement("button");
+    b.className = "choice"; b.dataset.opt = oi;
+    b.innerHTML = "<b>" + "ABCD"[order.indexOf(oi)] + ".</b> " + isl.options[oi];
+    b.addEventListener("click", () => {
+      if (b.disabled) return;
+      area.querySelectorAll(".choice").forEach(x => x.disabled = true);
+      const entry = state.log[state.log.length - 1];
+      if (oi === isl.correct){
+        b.classList.add("right"); state.stars += 1; sGood();
+        entry.riddle = true;
+        showFeedback(true, "✅ Riddle solved! +1 star", isl.explain, nextLabel(), nextIsland);
+      } else {
+        b.classList.add("wrong"); sBad();
+        const rb = area.querySelector('[data-opt="' + isl.correct + '"]');
+        if (rb) rb.classList.add("right");
+        entry.riddle = false;
+        showFeedback(false, "❌ The answer was: " + isl.options[isl.correct], isl.explain, nextLabel(), nextIsland);
+      }
+      renderHud();
+    });
+    area.appendChild(b);
+  });
+}
+function nextLabel(){ return state.idx === ISLANDS.length - 1 ? "Finish the Quest 🏆" : "Next Island ▶"; }
+function nextIsland(){
+  state.idx++;
+  if (state.idx >= ISLANDS.length) endQuest(); else showClueA();
+}
+function endQuest(){
+  const b = bestSaved();
+  const better = !b || state.stars > b.stars;
+  if (better) safeSet("pq_best", JSON.stringify({ stars: state.stars }));
+  $("endTitle").textContent = state.stars === 15 ? "👑 Legendary Treasure Hunters!" : state.stars >= 11 ? "🗺️ Quest Complete — Great Teamwork!" : "🗺️ Quest Complete!";
+  $("endSummary").innerHTML = "Your team earned <b>" + state.stars + " of 15 stars</b>" + (better ? "<br>🎉 New best result!" : "");
+  $("questLog").innerHTML = state.log.map(l =>
+    "<li><b>" + l.island + ":</b> treasure " + (l.found ? "found 💰" : "missed") + " · riddle " + (l.riddle ? "solved ✅" : l.riddle === false ? "missed ❌" : "—") + "</li>").join("");
+  if (state.stars >= 11) sWin();
+  show("endScr"); showBest();
+}
+$("startBtn").addEventListener("click", startQuest);
+$("againBtn").addEventListener("click", startQuest);
+$("menuBtn").addEventListener("click", () => { show("titleScr"); showBest(); });
+$("quitBtn").addEventListener("click", () => { if (confirm("Quit this quest? Your progress will be lost.")) { show("titleScr"); showBest(); } });
+window.__pq = { state, ISLANDS };
+</script>
+</body>
+</html>

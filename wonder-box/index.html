@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Wonder Box — Curiosity Game</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, #1b2a4a 0%, #274b73 55%, #2f6f6a 100%);
+    color: #fff; min-height: 100vh; min-height: 100dvh;
+    display: flex; justify-content: center;
+  }
+  .wrap { width: 100%; max-width: 430px; padding: 14px 14px 28px; }
+  .hidden { display: none !important; }
+  h1 { font-size: 34px; margin: 6px 0 2px; text-align: center; }
+  .tagrow { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 6px 0 12px; }
+  .tag { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
+    border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 700; }
+  .tag.learn { background: #f5b301; color: #231a00; border-color: #f5b301; }
+  .card { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.25);
+    border-radius: 16px; padding: 14px; margin: 10px 0; }
+  .card h2 { margin: 0 0 8px; font-size: 20px; }
+  .card p { margin: 8px 0; line-height: 1.5; font-size: 16px; }
+  .small { font-size: 13px; opacity: .85; line-height: 1.45; }
+  .bigbtn {
+    display: block; width: 100%; min-height: 56px; margin: 8px 0;
+    font-size: 19px; font-weight: 800; color: #231a00; background: #f5b301;
+    border: none; border-radius: 14px; cursor: pointer; padding: 10px 12px;
+  }
+  .bigbtn:active { transform: scale(.98); }
+  .bigbtn.secondary { background: rgba(255,255,255,.18); color: #fff; border: 2px solid rgba(255,255,255,.5); }
+  .diffrow { display: flex; gap: 8px; margin: 8px 0; }
+  .diffbtn {
+    flex: 1; min-height: 52px; font-size: 16px; font-weight: 800; color: #fff;
+    background: rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.4);
+    border-radius: 12px; cursor: pointer; padding: 6px 4px;
+  }
+  .diffbtn.sel { background: #f5b301; color: #231a00; border-color: #f5b301; }
+  .diffbtn .sub { display: block; font-size: 12px; font-weight: 600; opacity: .85; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 4px 0; }
+  .pill { background: rgba(0,0,0,.30); border-radius: 999px; padding: 6px 12px; font-size: 15px; font-weight: 800; }
+  .pill.tokens { background: #f5b301; color: #231a00; }
+  .iconbtn {
+    min-width: 48px; min-height: 48px; font-size: 22px; background: rgba(255,255,255,.16);
+    color: #fff; border: 1px solid rgba(255,255,255,.4); border-radius: 12px; cursor: pointer;
+  }
+  .scenario { font-size: 18px; line-height: 1.5; }
+  .qbtn {
+    display: block; width: 100%; text-align: left; min-height: 52px; margin: 7px 0;
+    font-size: 16px; line-height: 1.35; color: #fff; background: rgba(255,255,255,.13);
+    border: 2px solid rgba(255,255,255,.35); border-radius: 12px; cursor: pointer; padding: 10px 12px;
+  }
+  .qbtn:active { transform: scale(.98); }
+  .qbtn:disabled { opacity: .45; cursor: default; }
+  .qbtn .key { display: inline-block; background: rgba(255,255,255,.22); border-radius: 6px;
+    padding: 1px 7px; font-size: 13px; font-weight: 800; margin-right: 6px; }
+  .clue { background: rgba(245,179,1,.16); border-left: 4px solid #f5b301; border-radius: 8px;
+    padding: 9px 10px; margin: 7px 0; font-size: 15px; line-height: 1.45; }
+  .clue .qtag { font-weight: 800; font-size: 13px; }
+  .clue .qtag.good { color: #8dff9e; }
+  .clue .qtag.weak { color: #ffb3b3; }
+  .clue .qtag.red { color: #ffb3b3; }
+  .guessbtn {
+    display: block; width: 100%; min-height: 50px; margin: 7px 0; font-size: 16px; font-weight: 700;
+    color: #fff; background: rgba(141,255,158,.14); border: 2px solid rgba(141,255,158,.55);
+    border-radius: 12px; cursor: pointer; padding: 10px 12px; text-align: left;
+  }
+  .guessbtn:disabled { opacity: .45; cursor: default; text-decoration: line-through; }
+  .guessbtn.correct { background: #2e7d32; border-color: #8dff9e; text-decoration: none; }
+  .feedback { font-size: 16px; font-weight: 700; min-height: 24px; margin: 6px 0; line-height: 1.4; }
+  .lesson { background: rgba(141,255,158,.13); border: 1px solid rgba(141,255,158,.5);
+    border-radius: 12px; padding: 12px; margin: 10px 0; font-size: 15px; line-height: 1.5; }
+  .lesson b { color: #8dff9e; }
+  .goodlist { font-size: 15px; line-height: 1.5; margin: 8px 0; padding-left: 20px; }
+  .goodlist li { margin: 5px 0; }
+  .score { font-size: 22px; font-weight: 800; text-align: center; margin: 8px 0; }
+  .center { text-align: center; }
+  .bestline { font-size: 14px; opacity: .9; text-align: center; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>&#128270; Wonder Box</h1>
+  <div class="tagrow">
+    <span class="tag learn">LEARN</span>
+    <span class="tag">Curiosity</span>
+    <span class="tag">Solo</span>
+    <span class="tag">Grades 1&ndash;12</span>
+  </div>
+
+  <!-- ============ TITLE SCREEN ============ -->
+  <div id="titleScr">
+    <div class="card">
+      <h2>What&rsquo;s hiding in the box?</h2>
+      <p>A mystery is waiting &mdash; a rattling box, a sideways plant, a footprint
+      that wasn&rsquo;t there yesterday. You get a few <b>question tokens</b>.
+      Ask good questions &mdash; specific, testable ones that narrow the
+      possibilities &mdash; and each answer hands you a clue.</p>
+      <p>Waste tokens on vague questions and you&rsquo;ll run out before you know
+      the answer. When you think you know it, tap your guess. A wrong guess
+      costs a token too!</p>
+      <p class="small">Good detectives ask one thing at a time: <i>What does it
+      look like? What happened just before? What can I test?</i> After each
+      mystery you&rsquo;ll see why the good questions worked.</p>
+    </div>
+    <div class="card">
+      <h2>Pick a difficulty</h2>
+      <div class="diffrow" role="group" aria-label="Difficulty">
+        <button class="diffbtn sel" id="diffEasy" type="button">Easy<span class="sub">6 tokens</span></button>
+        <button class="diffbtn" id="diffMedium" type="button">Medium<span class="sub">5 tokens</span></button>
+        <button class="diffbtn" id="diffHard" type="button">Hard<span class="sub">4 tokens</span></button>
+      </div>
+      <p class="small center">Hard mysteries have trickier questions &mdash; and a
+      couple of red herrings that sound helpful but tell you nothing.</p>
+      <button class="bigbtn" id="startBtn" type="button">Start Investigating</button>
+      <p class="bestline" id="bestLine">No mysteries solved yet &mdash; your first case awaits!</p>
+    </div>
+    <p class="small center">Keyboard: press 1&ndash;8 to ask a question. Sound on for clue chimes.</p>
+  </div>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <div id="gameScr" class="hidden">
+    <div class="topbar">
+      <span class="pill" id="mystCount">Mystery 1 of 4</span>
+      <span class="pill tokens" id="tokensEl">&#128273; Tokens: 6</span>
+      <button class="iconbtn" id="muteBtn" type="button" aria-label="Mute">&#128266;</button>
+    </div>
+
+    <div class="card">
+      <h2 id="mysteryTitle">The Rattling Box</h2>
+      <p class="scenario" id="mysteryText"></p>
+    </div>
+
+    <div class="card">
+      <h2>Ask a question <span class="small">(costs 1 token)</span></h2>
+      <div id="qList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Clues so far</h2>
+      <div id="clueLog"><p class="small">No clues yet. Ask a good question!</p></div>
+    </div>
+
+    <div class="card">
+      <h2>What is it? Tap your guess</h2>
+      <p class="small">A wrong guess costs 1 token and crosses that answer out.</p>
+      <div id="guessList"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+
+    <!-- result panel for the finished mystery -->
+    <div id="resultPanel" class="card hidden">
+      <h2 id="resultTitle">Solved!</h2>
+      <p id="resultText"></p>
+      <div class="score" id="mysteryScore"></div>
+      <div class="lesson" id="lessonEl"></div>
+      <p><b>The good questions were:</b></p>
+      <ul class="goodlist" id="goodList"></ul>
+      <button class="bigbtn" id="nextBtn" type="button">Next Mystery</button>
+    </div>
+  </div>
+
+  <!-- ============ SUMMARY SCREEN ============ -->
+  <div id="sumScr" class="hidden">
+    <div class="card center">
+      <h2>Case File Closed!</h2>
+      <p id="sumText"></p>
+      <div class="score" id="sumScore"></div>
+      <p class="bestline" id="sumBest"></p>
+      <button class="bigbtn" id="againBtn" type="button">Play Again</button>
+      <button class="bigbtn secondary" id="menuBtn" type="button">Change Difficulty</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+/* ================= storage guards (every localStorage touch goes through these) ================= */
+function safeGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage denied: play on without saving */ } }
+
+/* ================= audio (synthesized only, >=130 Hz, playback route) ================= */
+var audioCtx = null, muted = safeGet("wb_muted", "0") === "1";
+function setPlaybackRoute() { try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {} }
+if (typeof document !== "undefined" && document.addEventListener) {
+  document.addEventListener("pointerdown", setPlaybackRoute, true);
+  document.addEventListener("touchstart", setPlaybackRoute, true);
+}
+function initAudio() {
+  setPlaybackRoute();
+  try {
+    if (!window.AudioContext && !window.webkitAudioContext) return null;
+    if (!audioCtx || audioCtx.state === "closed") {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+      window.__maCtx = audioCtx;
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  } catch (e) { return null; }
+}
+function beep(freq, dur, type, when, vol) {
+  if (muted) return;
+  var ctx = initAudio(); if (!ctx) return;
+  try {
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || "triangle"; o.frequency.value = freq;
+    var t = ctx.currentTime + (when || 0);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || 0.18, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  } catch (e) {}
+}
+function sndClick() { beep(440, 0.08, "triangle", 0, 0.12); }
+function sndGood() { beep(523, 0.14, "triangle"); beep(784, 0.22, "triangle", 0.12); }
+function sndWeak() { beep(196, 0.18, "triangle", 0, 0.12); }
+function sndWin() { [523, 659, 784, 1047].forEach(function (f, i) { beep(f, 0.22, "triangle", i * 0.13); }); }
+function sndFail() { beep(330, 0.25, "triangle", 0, 0.14); beep(220, 0.35, "triangle", 0.2, 0.14); }
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) { try { if (audioCtx && audioCtx.state !== "closed") audioCtx.close(); } catch (e) {} }
+});
+
+/* ================= data: 12 original mysteries ================= */
+/* Each question: q = question text, quality = good|weak|red,
+   a = the answer (clue) revealed, out = candidate names this answer rules out.
+   Good questions together must rule out every wrong candidate. */
+var DIFFS = {
+  easy:   { label: "Easy",   tokens: 6, count: 4 },
+  medium: { label: "Medium", tokens: 5, count: 4 },
+  hard:   { label: "Hard",   tokens: 4, count: 4 }
+};
+var MYSTERIES = [
+  { id: "rattle", diff: "easy", title: "The Rattling Box",
+    text: "There is a closed box on the table. When you shake it gently, something inside rattles and rolls from side to side. What is in the box?",
+    answer: "Marbles",
+    candidates: ["Marbles", "A toy car", "A rubber ball", "A bag of rice", "A feather"],
+    lesson: "The good questions worked because each one tested ONE thing you could check — does it roll, does it click like glass, does it bounce? Vague questions like \u201CIs it nice?\u201D can never rule anything out, so they waste tokens.",
+    questions: [
+      { q: "Does it roll when you tip the box?", quality: "good",
+        a: "Yes \u2014 you can hear things rolling side to side.", out: ["A bag of rice", "A feather"] },
+      { q: "Does it make a clicking sound, like glass tapping glass?", quality: "good",
+        a: "Yes \u2014 a light, glassy click-click.", out: ["A toy car", "A rubber ball"] },
+      { q: "Does it bounce when it hits the side?", quality: "good",
+        a: "No \u2014 it just clicks and stops dead.", out: ["A rubber ball"] },
+      { q: "Is it a nice thing?", quality: "weak", a: "It seems nice enough, I suppose.", out: [] },
+      { q: "Is it big or small?", quality: "weak", a: "Sort of medium, I guess.", out: [] },
+      { q: "Was it expensive?", quality: "weak", a: "No idea. Nobody remembers buying it.", out: [] }
+    ] },
+  { id: "plant", diff: "easy", title: "The Sideways Plant",
+    text: "The plant in the classroom grew sideways overnight. Its stem bends sharply toward the window. What is going on?",
+    answer: "Growing toward the light",
+    candidates: ["Growing toward the light", "It needs more water", "The pot is too small", "A bug is eating it", "It is too cold"],
+    lesson: "The good questions checked one possible cause at a time: wet or dry soil, bites on the leaves, and which way it leans. A plant leaning toward the window is reaching for light \u2014 scientists call it phototropism.",
+    questions: [
+      { q: "Is the soil wet or dry?", quality: "good",
+        a: "The soil is nicely damp.", out: ["It needs more water"] },
+      { q: "Are there bite marks or bugs on the leaves?", quality: "good",
+        a: "No bites, no bugs \u2014 the leaves look healthy.", out: ["A bug is eating it"] },
+      { q: "Which way does it lean \u2014 toward the window or away from it?", quality: "good",
+        a: "Straight toward the window, as if it is reaching for the sun.", out: ["The pot is too small", "It is too cold"] },
+      { q: "Is the plant sad?", quality: "weak", a: "Plants do not really feel sad.", out: [] },
+      { q: "Did someone move the plant?", quality: "weak", a: "Nobody touched it all week.", out: [] },
+      { q: "What colour is the pot?", quality: "weak", a: "It is a blue pot.", out: [] }
+    ] },
+  { id: "prints", diff: "easy", title: "Footprints in the Garden",
+    text: "This morning there is a trail of tiny footprints across the garden path. Nobody in the family went out last night. Who left them?",
+    answer: "A cat",
+    candidates: ["A cat", "A dog", "A child", "A rabbit", "A hedgehog"],
+    lesson: "Each good question measured something real: the size of the prints, how many toes, and the pattern they make. One measurement can rule out several suspects at once \u2014 that is high information gain.",
+    questions: [
+      { q: "How big are the footprints?", quality: "good",
+        a: "Tiny \u2014 each one is about the size of a coin.", out: ["A dog", "A child"] },
+      { q: "How many toes show in each print?", quality: "good",
+        a: "Four toes in a neat little row.", out: ["A hedgehog", "A child"] },
+      { q: "Do the prints come in hopping pairs, or one after another in a line?", quality: "good",
+        a: "A single neat line, one paw after another.", out: ["A rabbit"] },
+      { q: "Are the footprints friendly?", quality: "weak", a: "Footprints are not really friendly or unfriendly.", out: [] },
+      { q: "What time did they appear?", quality: "weak", a: "Sometime in the night. Nobody saw.", out: [] },
+      { q: "Are they in the mud or on the path?", quality: "weak", a: "A bit of both.", out: [] }
+    ] },
+  { id: "ice", diff: "easy", title: "The Vanishing Ice Cube",
+    text: "You left an ice cube on a plate in the garden. An hour later the cube is gone and there is a puddle instead. What happened to it?",
+    answer: "The sun warmed it",
+    candidates: ["The sun warmed it", "The freezer broke", "Someone took it", "It slid off the plate", "A bird drank it"],
+    lesson: "Good questions test the story: where was the plate, who was around, and is the water still there? Each answer crossed off a whole explanation at once.",
+    questions: [
+      { q: "Was the plate in the sun or the shade?", quality: "good",
+        a: "In full sunshine all morning.", out: ["The freezer broke"] },
+      { q: "Was anyone \u2014 person or animal \u2014 near the plate?", quality: "good",
+        a: "No one came near it. We watched from the window.", out: ["Someone took it", "A bird drank it"] },
+      { q: "Is the water still on the plate, right where the cube was?", quality: "good",
+        a: "Yes \u2014 a puddle sitting exactly where the cube was.", out: ["It slid off the plate"] },
+      { q: "Was it a good ice cube?", quality: "weak", a: "It was an ordinary ice cube.", out: [] },
+      { q: "Do you like ice?", quality: "weak", a: "Very much, on a hot day.", out: [] },
+      { q: "What colour was the plate?", quality: "weak", a: "White, with a blue rim.", out: [] }
+    ] },
+  { id: "sandwich", diff: "medium", title: "The Soggy Sandwich",
+    text: "You packed a sandwich for lunch. By lunchtime the bread is soggy and wet in the middle, even though the lunchbox stayed shut. What made it soggy?",
+    answer: "The tomato slice",
+    candidates: ["The tomato slice", "Rain leaked into the lunchbox", "The bread was stale", "Someone poured water in it", "The cheese melted"],
+    lesson: "The good questions looked for WHERE the wetness was and WHAT it was like. The wettest spot sat right under the tomato \u2014 the clue was in the pattern, not just in the fact that it was wet.",
+    questions: [
+      { q: "Is the bread soft and wet, or dry and hard?", quality: "good",
+        a: "Soft and wet all through the middle.", out: ["The bread was stale"] },
+      { q: "Is the outside of the lunchbox wet?", quality: "good",
+        a: "Bone dry. No rain got in at all.", out: ["Rain leaked into the lunchbox"] },
+      { q: "Where is the sandwich wettest?", quality: "good",
+        a: "Right under the tomato slice \u2014 the rest is almost dry.", out: ["Someone poured water in it", "The cheese melted"] },
+      { q: "Was it a yummy sandwich?", quality: "weak", a: "It was going to be yummy.", out: [] },
+      { q: "What time did you pack it?", quality: "weak", a: "About 8 in the morning.", out: [] },
+      { q: "Is the lunchbox your favourite colour?", quality: "weak", a: "Yes, it is red. My favourite.", out: [] },
+      { q: "Did you pack a drink too?", quality: "weak", a: "Yes, a water bottle. It did not leak.", out: [] }
+    ] },
+  { id: "hamster", diff: "medium", title: "The Quiet Classroom Pet",
+    text: "The class hamster has not come out of its little house all day. It usually pops out to say hello. What is wrong with it?",
+    answer: "It is sleeping \u2014 hamsters are nocturnal",
+    candidates: ["It is sleeping \u2014 hamsters are nocturnal", "It is sick", "It escaped", "It is scared of its new cage", "It ran out of food"],
+    lesson: "Before assuming something is wrong, a good detective checks the easy facts first: food, water, and whether the animal is even gone. Hamsters sleep all day and wake at night \u2014 knowing how an animal normally behaves is a clue too.",
+    questions: [
+      { q: "Is there food and water in the cage?", quality: "good",
+        a: "A full food bowl and a full water bottle.", out: ["It ran out of food"] },
+      { q: "Is the cage door shut, and is the hamster inside?", quality: "good",
+        a: "Door shut tight \u2014 and the hamster is curled up asleep in its nest.", out: ["It escaped"] },
+      { q: "Does it come out and run on its wheel at night?", quality: "good",
+        a: "Yes \u2014 every night it runs for hours after everyone goes home.", out: ["It is sick", "It is scared of its new cage"] },
+      { q: "Does the hamster like us?", quality: "weak", a: "It seems to like the class.", out: [] },
+      { q: "What is the hamster\u2019s name?", quality: "weak", a: "Nibbles.", out: [] },
+      { q: "Is the cage in a nice spot?", quality: "weak", a: "It is on the shelf by the window.", out: [] },
+      { q: "Did the hamster eat breakfast?", quality: "weak", a: "It nibbled a little last night.", out: [] }
+    ] },
+  { id: "bike", diff: "medium", title: "The Rusty Bike",
+    text: "A bike was left outside all week. Now its chain is covered in flaky orange stuff. What happened to the chain?",
+    answer: "Rain and air made rust",
+    candidates: ["Rain and air made rust", "Someone painted it orange", "The chain was always orange", "Mud stained it", "The sun bleached it"],
+    lesson: "Good questions test how the orange stuff BEHAVES: does it flake, does it wash off, was the bike in the rain? Rust is what happens when iron meets water and air \u2014 and it flakes and will not wash off.",
+    questions: [
+      { q: "Does the orange stuff flake off when you rub it?", quality: "good",
+        a: "Yes \u2014 flaky orange dust comes off on your fingers.", out: ["Someone painted it orange", "The chain was always orange"] },
+      { q: "Was the bike left out in the rain?", quality: "good",
+        a: "Yes, out in the rain all week long.", out: ["The sun bleached it"] },
+      { q: "Can you wash the orange off with water?", quality: "good",
+        a: "No \u2014 it stays, and the metal underneath feels rough.", out: ["Mud stained it"] },
+      { q: "Is orange a nice colour for a bike?", quality: "weak", a: "It looks quite cheerful, actually.", out: [] },
+      { q: "How old is the bike?", quality: "weak", a: "About two years old.", out: [] },
+      { q: "Does the bell still work?", quality: "weak", a: "Yes, the bell still rings.", out: [] },
+      { q: "Was the bike locked up?", quality: "weak", a: "Yes, locked to the fence.", out: [] }
+    ] },
+  { id: "soap", diff: "medium", title: "The Shrinking Soap",
+    text: "The bar of soap by the classroom sink gets a little smaller every week. Nobody has dropped it or cut it. Where is it going?",
+    answer: "Soap dissolves a little each time hands are washed",
+    candidates: ["Soap dissolves a little each time hands are washed", "Someone is stealing bits of it", "It melts in the sun", "It evaporates into the air", "Mice are eating it"],
+    lesson: "The good questions asked WHEN it shrinks and WHAT it looks like. It shrinks fastest after busy handwashing weeks and its surface stays smooth \u2014 that points to dissolving, a little at a time, in water.",
+    questions: [
+      { q: "Is the soap kept by the sink, or in the sun?", quality: "good",
+        a: "By the sink, far from any sunny window.", out: ["It melts in the sun"] },
+      { q: "Are there tiny bite marks on the soap?", quality: "good",
+        a: "No bites at all \u2014 the surface is smooth.", out: ["Mice are eating it"] },
+      { q: "When does it shrink fastest \u2014 after busy weeks, or after holidays?", quality: "good",
+        a: "After busy weeks, when lots of hands get washed.", out: ["Someone is stealing bits of it", "It evaporates into the air"] },
+      { q: "Does the soap smell nice?", quality: "weak", a: "Yes, it smells like lemons.", out: [] },
+      { q: "What colour is the soap?", quality: "weak", a: "Pale yellow.", out: [] },
+      { q: "Who bought the soap?", quality: "weak", a: "The teacher bought it.", out: [] },
+      { q: "Is the sink clean?", quality: "weak", a: "Yes, the sink is very clean.", out: [] }
+    ] },
+  { id: "noise", diff: "hard", title: "The Midnight Tapping",
+    text: "Every night there is a soft tapping sound inside the walls of the house. It starts after bedtime and stops by morning. What is making the noise?",
+    answer: "Pipes creaking as they cool down",
+    candidates: ["Pipes creaking as they cool down", "Mice in the walls", "A ghost", "The wind shaking the house", "A burglar"],
+    lesson: "The good questions looked for a PATTERN: same time every night, near the pipes, no droppings. A sound that keeps perfect time with the heating switching off is a machine-like clue, not an animal or a person. And watch out for red herrings \u2014 \u201Cthe house is old\u201D sounds like an explanation but explains nothing.",
+    questions: [
+      { q: "Does the tapping happen at the same time every night?", quality: "good",
+        a: "Yes \u2014 about an hour after the heating switches off.", out: ["Mice in the walls", "A burglar", "The wind shaking the house"] },
+      { q: "Does the sound come from near the radiators and pipes?", quality: "good",
+        a: "Yes \u2014 right where the hot-water pipes run through the wall.", out: ["A ghost", "The wind shaking the house"] },
+      { q: "Are there any droppings, gnaw marks, or chewed wires?", quality: "good",
+        a: "None at all. The walls are clean inside.", out: ["Mice in the walls"] },
+      { q: "Is the house old?", quality: "red",
+        a: "Yes \u2014 built a hundred years ago. Very creaky and full of character!", out: [] },
+      { q: "Did anyone hear whispering?", quality: "red",
+        a: "Nobody heard voices \u2014 just the tapping.", out: [] },
+      { q: "Is the noise scary?", quality: "weak", a: "A little bit, in the dark.", out: [] },
+      { q: "Does it tap fast or slow?", quality: "weak", a: "Slow taps, then quiet, then more taps.", out: [] },
+      { q: "What colour are the walls?", quality: "weak", a: "Pale green in the hallway.", out: [] }
+    ] },
+  { id: "pond", diff: "hard", title: "The Green Pond",
+    text: "The garden pond was clear blue last month. Now the whole pond has turned green, and the fish are hard to see. What turned the water green?",
+    answer: "Algae growing in the sunlight",
+    candidates: ["Algae growing in the sunlight", "Someone poured green paint in it", "The frogs turned the water green", "Rotting leaves", "A green hose leaked dye"],
+    lesson: "The good questions checked whether the green was IN the water or ON it, whether sunshine made it worse, and what the green looked like up close. Tiny green specks that grow after sunny days are living algae \u2014 one-time spills do not grow.",
+    questions: [
+      { q: "Is the green in the water itself, or just floating on top?", quality: "good",
+        a: "The whole water is green \u2014 even a cup scooped out looks green.", out: ["Rotting leaves"] },
+      { q: "Does it get greener after sunny days?", quality: "good",
+        a: "Yes \u2014 much greener after a sunny week.", out: ["Someone poured green paint in it", "A green hose leaked dye"] },
+      { q: "Look closely \u2014 are there tiny green specks floating in it?", quality: "good",
+        a: "Yes \u2014 thousands of tiny green dots drifting in the water.", out: ["Someone poured green paint in it", "The frogs turned the water green"] },
+      { q: "Are there more frogs in the pond this year?", quality: "red",
+        a: "Yes \u2014 lots of frogs! They love the pond.", out: [] },
+      { q: "Is the pond bigger than it was last year?", quality: "red",
+        a: "It looks about the same size as always.", out: [] },
+      { q: "Is green your favourite colour?", quality: "weak", a: "Green is a lovely colour for a pond.", out: [] },
+      { q: "Do the fish like it?", quality: "weak", a: "The fish seem fine, just harder to spot.", out: [] },
+      { q: "When was the pond built?", quality: "weak", a: "About five years ago.", out: [] }
+    ] },
+  { id: "table", diff: "hard", title: "The Wobbly Table",
+    text: "One table in the classroom wobbles every time anyone touches it. The other tables are steady. What is wrong with this table?",
+    answer: "One leg is shorter than the others",
+    candidates: ["One leg is shorter than the others", "The floor is sloped", "The table is broken in the middle", "Someone keeps kicking it", "The screws are loose"],
+    lesson: "The cleverest question was the folded-paper test: if one piece of paper under one leg fixes it, the leg must be short. Good questions do not just ask \u2014 they TEST. And remember, \u201Cthe table is old\u201D is a red herring: old things can still stand straight.",
+    questions: [
+      { q: "Does it wobble in the same way when you move it across the room?", quality: "good",
+        a: "Yes \u2014 it wobbles no matter where it stands.", out: ["The floor is sloped"] },
+      { q: "If you fold a piece of paper under one leg, does the wobble stop?", quality: "good",
+        a: "Yes \u2014 one folded paper and the table stands perfectly still.", out: ["The table is broken in the middle", "The screws are loose"] },
+      { q: "Does it wobble when nobody is near it and you just tap it?", quality: "good",
+        a: "Yes \u2014 one light tap and it rocks.", out: ["Someone keeps kicking it"] },
+      { q: "Is the table very old?", quality: "red",
+        a: "Very old \u2014 older than the school hall itself!", out: [] },
+      { q: "Is the table made of wood?", quality: "red",
+        a: "Yes, solid wood, like all the other tables.", out: [] },
+      { q: "Is the table heavy?", quality: "weak", a: "Quite heavy. Two people to lift it.", out: [] },
+      { q: "What do you keep on the table?", quality: "weak", a: "Books, pencils, and a plant.", out: [] },
+      { q: "Is it the biggest table in the room?", quality: "weak", a: "No, it is a medium one.", out: [] }
+    ] },
+  { id: "egg", diff: "hard", title: "The Egg That Floats",
+    text: "You drop an egg into a glass of water, and instead of sinking it floats up to the top. The egg looks perfectly normal. Why does it float?",
+    answer: "The egg is old \u2014 air has built up inside it",
+    candidates: ["The egg is old \u2014 air has built up inside it", "The water is salty", "The egg is made of plastic", "The glass is magic", "The egg is hollow"],
+    lesson: "The good questions compared things: a fresh egg from the same box, plain tap water, a real egg versus a toy. Comparisons are powerful questions \u2014 they change ONE thing and see what happens. (And a floating egg is stale, so do not eat it!)",
+    questions: [
+      { q: "Is it a real egg from the fridge, or a toy egg?", quality: "good",
+        a: "A real egg, bought weeks ago.", out: ["The egg is made of plastic", "The egg is hollow"] },
+      { q: "Is the water plain tap water, or salty water?", quality: "good",
+        a: "Plain tap water. No salt was added.", out: ["The water is salty"] },
+      { q: "Does a fresh egg from the same box sink in the same glass?", quality: "good",
+        a: "Yes \u2014 the fresh egg sinks straight to the bottom.", out: ["The glass is magic"] },
+      { q: "Is the egg brown?", quality: "red",
+        a: "Yes, a brown shell. Brown eggs are very common.", out: [] },
+      { q: "Is the glass a big one?", quality: "red",
+        a: "A normal drinking glass, full of water.", out: [] },
+      { q: "Do you like eggs?", quality: "weak", a: "Scrambled eggs are the best.", out: [] },
+      { q: "Was the egg cold from the fridge?", quality: "weak", a: "Yes, it was cold.", out: [] },
+      { q: "What day is it today?", quality: "weak", a: "Today is a school day.", out: [] }
+    ] }
+];
+
+/* ================= state ================= */
+var state = {
+  diff: "easy", order: [], idx: 0, tokens: 6, asked: {},
+  goodAsked: 0, solved: 0, totalScore: 0, over: false
+};
+function $(id) { return document.getElementById(id); }
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function currentMystery() { return MYSTERIES[state.order[state.idx]]; }
+function bestKey(diff) { return "wb_best_" + diff; }
+function refreshBestLine() {
+  var solved = parseInt(safeGet("wb_solved", "0"), 10) || 0;
+  var bE = parseInt(safeGet(bestKey("easy"), "0"), 10) || 0;
+  var bM = parseInt(safeGet(bestKey("medium"), "0"), 10) || 0;
+  var bH = parseInt(safeGet(bestKey("hard"), "0"), 10) || 0;
+  $("bestLine").textContent = solved > 0
+    ? "Mysteries solved: " + solved + "  \u00B7  Best scores \u2014 Easy " + bE + " \u00B7 Medium " + bM + " \u00B7 Hard " + bH
+    : "No mysteries solved yet \u2014 your first case awaits!";
+}
+function show(id) { ["titleScr", "gameScr", "sumScr"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); }); }
+
+/* ================= run flow ================= */
+function startRun() {
+  initAudio(); sndClick();
+  var pool = MYSTERIES.map(function (m, i) { return i; }).filter(function (i) { return MYSTERIES[i].diff === state.diff; });
+  state.order = shuffle(pool);
+  state.idx = 0; state.solved = 0; state.totalScore = 0; state.over = false;
+  show("gameScr");
+  loadMystery();
+}
+function loadMystery() {
+  var m = currentMystery(), d = DIFFS[state.diff];
+  state.tokens = d.tokens; state.asked = {}; state.goodAsked = 0; state.over = false;
+  $("mystCount").textContent = "Mystery " + (state.idx + 1) + " of " + state.order.length + " \u00B7 " + d.label;
+  $("mysteryTitle").textContent = m.title;
+  $("mysteryText").textContent = m.text;
+  $("resultPanel").classList.add("hidden");
+  $("feedback").textContent = "";
+  $("clueLog").innerHTML = '<p class="small">No clues yet. Ask a good question!</p>';
+  updateTokens();
+  // question buttons, shuffled so the good ones are not always first
+  var ql = $("qList"); ql.innerHTML = "";
+  shuffle(m.questions.map(function (q, i) { return i; })).forEach(function (qi, pos) {
+    var q = m.questions[qi];
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "qbtn"; b.dataset.qi = qi;
+    b.id = "qbtn-" + qi;
+    b.innerHTML = '<span class="key">' + (pos + 1) + '</span>' + q.q;
+    b.addEventListener("click", function () { askQuestion(qi); });
+    ql.appendChild(b);
+  });
+  // guess buttons
+  var gl = $("guessList"); gl.innerHTML = "";
+  m.candidates.forEach(function (c, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "guessbtn"; b.dataset.cand = c;
+    b.id = "guess-" + i; b.textContent = c;
+    b.addEventListener("click", function () { makeGuess(c, b); });
+    gl.appendChild(b);
+  });
+}
+function updateTokens() { $("tokensEl").textContent = "\uD83D\uDD11 Tokens: " + state.tokens; }
+function askQuestion(qi) {
+  if (state.over || state.asked[qi]) return;
+  var m = currentMystery(), q = m.questions[qi];
+  state.asked[qi] = true; state.tokens--; updateTokens();
+  var btn = $("qbtn-" + qi); if (btn) btn.disabled = true;
+  if (q.quality === "good") { state.goodAsked++; sndGood(); } else { sndWeak(); }
+  var log = $("clueLog");
+  if (log.querySelector(".small") && log.children.length === 1) log.innerHTML = "";
+  var div = document.createElement("div"); div.className = "clue";
+  var tag = q.quality === "good" ? "Great question! \u2713" : (q.quality === "red" ? "Red herring\u2026" : "Hmm, that didn\u2019t help much.");
+  div.innerHTML = "<div><b>Q:</b> " + q.q + "</div><div><b>A:</b> " + q.a + "</div>" +
+    '<div class="qtag ' + q.quality + '">' + tag + "</div>";
+  log.appendChild(div);
+  // cross out ruled-out candidates in the guess list
+  q.out.forEach(function (name) {
+    var g = document.querySelector('[data-cand="' + name.replace(/"/g, "") + '"]');
+    if (g) { g.style.opacity = "0.45"; }
+  });
+  if (state.tokens <= 0) { endMystery(false, "Out of tokens!"); }
+}
+function makeGuess(name, btn) {
+  if (state.over) return;
+  var m = currentMystery();
+  if (name === m.answer) { endMystery(true, ""); return; }
+  state.tokens--; updateTokens();
+  if (btn) btn.disabled = true;
+  sndWeak();
+  $("feedback").textContent = "\u201C" + name + "\u201D is not it. That wrong guess cost a token.";
+  if (state.tokens <= 0) { endMystery(false, "Out of tokens!"); }
+}
+function endMystery(won, reason) {
+  state.over = true;
+  var m = currentMystery();
+  // disable remaining controls
+  Array.prototype.forEach.call(document.querySelectorAll(".qbtn"), function (b) { b.disabled = true; });
+  Array.prototype.forEach.call(document.querySelectorAll(".guessbtn"), function (b) { b.disabled = true; });
+  var score = 0;
+  if (won) {
+    score = 100 + 20 * state.tokens + 10 * state.goodAsked;
+    state.solved++;
+    var total = (parseInt(safeGet("wb_solved", "0"), 10) || 0) + 1;
+    safeSet("wb_solved", String(total));
+    var ids = safeGet("wb_solved_ids", "[]");
+    try { var arr = JSON.parse(ids); if (arr.indexOf(m.id) === -1) arr.push(m.id); safeSet("wb_solved_ids", JSON.stringify(arr)); }
+    catch (e) { safeSet("wb_solved_ids", JSON.stringify([m.id])); }
+    sndWin();
+  } else { score = 10 * state.goodAsked; sndFail(); }
+  state.totalScore += score;
+  $("resultTitle").textContent = won ? "\uD83C\uDF89 Solved: " + m.answer + "!" : "\u23F0 " + reason + " It was: " + m.answer;
+  $("resultText").textContent = won
+    ? "You cracked the case with " + state.tokens + " token" + (state.tokens === 1 ? "" : "s") + " to spare, asking " + state.goodAsked + " great question" + (state.goodAsked === 1 ? "" : "s") + "."
+    : "You ran out of tokens before cracking it. The good questions below would have got you there \u2014 try them next time!";
+  $("mysteryScore").textContent = "Mystery score: " + score;
+  $("lessonEl").innerHTML = "<b>Why the good questions worked:</b> " + m.lesson;
+  var gl = $("goodList"); gl.innerHTML = "";
+  m.questions.filter(function (q) { return q.quality === "good"; }).forEach(function (q) {
+    var li = document.createElement("li");
+    li.textContent = q.q + " \u2014 " + q.a;
+    gl.appendChild(li);
+  });
+  $("nextBtn").textContent = state.idx + 1 >= state.order.length ? "See My Results" : "Next Mystery";
+  $("resultPanel").classList.remove("hidden");
+  try { if ($("resultPanel").scrollIntoView) $("resultPanel").scrollIntoView({ block: "nearest" }); } catch (e) {}
+}
+function nextMystery() {
+  sndClick();
+  state.idx++;
+  if (state.idx >= state.order.length) { showSummary(); return; }
+  loadMystery();
+  try { window.scrollTo(0, 0); } catch (e) {}
+}
+function showSummary() {
+  var best = parseInt(safeGet(bestKey(state.diff), "0"), 10) || 0;
+  if (state.totalScore > best) { safeSet(bestKey(state.diff), String(state.totalScore)); best = state.totalScore; }
+  $("sumText").textContent = "You solved " + state.solved + " of " + state.order.length +
+    " " + DIFFS[state.diff].label + " mysteries.";
+  $("sumScore").textContent = "Total score: " + state.totalScore;
+  $("sumBest").textContent = "Best " + DIFFS[state.diff].label + " score: " + best +
+    "  \u00B7  Mysteries solved overall: " + (parseInt(safeGet("wb_solved", "0"), 10) || 0);
+  show("sumScr");
+  try { window.scrollTo(0, 0); } catch (e) {}
+}
+
+/* ================= wiring ================= */
+["easy", "medium", "hard"].forEach(function (d) {
+  $("diff" + d.charAt(0).toUpperCase() + d.slice(1)).addEventListener("click", function () {
+    state.diff = d; sndClick();
+    ["easy", "medium", "hard"].forEach(function (x) {
+      $("diff" + x.charAt(0).toUpperCase() + x.slice(1)).classList.toggle("sel", x === d);
+    });
+  });
+});
+$("startBtn").addEventListener("click", startRun);
+$("nextBtn").addEventListener("click", nextMystery);
+$("againBtn").addEventListener("click", function () { show("titleScr"); refreshBestLine(); startRun(); });
+$("menuBtn").addEventListener("click", function () { show("titleScr"); refreshBestLine(); });
+$("muteBtn").addEventListener("click", function () {
+  muted = !muted; safeSet("wb_muted", muted ? "1" : "0");
+  $("muteBtn").textContent = muted ? "\uD83D\uDD07" : "\uD83D\uDD0A";
+  if (!muted) sndClick();
+});
+document.addEventListener("keydown", function (e) {
+  if ($("gameScr").classList.contains("hidden") || state.over) return;
+  var n = parseInt(e.key, 10);
+  if (n >= 1 && n <= 8) {
+    var btns = document.querySelectorAll(".qbtn");
+    if (btns[n - 1] && !btns[n - 1].disabled) btns[n - 1].click();
+  }
+});
+if (muted) $("muteBtn").textContent = "\uD83D\uDD07";
+refreshBestLine();
+</script>
+</body>
+</html>
